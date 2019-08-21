@@ -7,6 +7,7 @@ module Elm.CodeGen exposing
     , import_
     , ImportsAndExposing, deDupeImportsAndExposing, emptyImportsAndExposing, addImport, addExposing
     , functionDeclaration, aliasDeclaration, customTypeDeclaration, portDeclaration, destructuring
+    , signature
     , pipe, chain, unitExpr, application, operatorApplication, functionOrValue, simpleVal, ifBlock, prefixOperator
     , operator, integer, hex, floatable, negation, literal, charLiteral, tupledExpression, parenthesizedExpression
     , letExpression, caseExpression, lambdaExpression, recordExpr, listExpr, recordAccess, recordAccessFunction
@@ -58,6 +59,11 @@ exposings that it needs and they can be combined and de-duplicated to produce a 
 # Functions for building top-level declarations.
 
 @docs functionDeclaration, aliasDeclaration, customTypeDeclaration, portDeclaration, destructuring
+
+
+# Functions for building Elm type signatures.
+
+@docs signature
 
 
 # Functions for building Elm expressions.
@@ -838,6 +844,8 @@ paranthesizedPattern pattern =
 --== Elm.Syntax.Signature
 
 
+{-| Creates a type signature.
+-}
 signature : String -> TypeAnnotation -> Signature
 signature name annotation =
     { name = nodify name
