@@ -62,16 +62,19 @@ prettyModuleName name =
 
 prettyDefaultModuleData : DefaultModuleData -> Doc
 prettyDefaultModuleData moduleData =
-    Pretty.lines
-        [ prettyModuleName (denode moduleData.moduleName)
+    Pretty.join Pretty.space
+        [ Pretty.string "module"
+        , prettyModuleName (denode moduleData.moduleName)
+        , Pretty.string "exposing"
         , prettyExposing (denode moduleData.exposingList)
         ]
 
 
 prettyEffectModuleData : EffectModuleData -> Doc
 prettyEffectModuleData moduleData =
-    Pretty.lines
-        [ prettyModuleName (denode moduleData.moduleName)
+    Pretty.join Pretty.space
+        [ Pretty.string "module"
+        , prettyModuleName (denode moduleData.moduleName)
         , prettyExposing (denode moduleData.exposingList)
         , prettyMaybe Pretty.string (denodeMaybe moduleData.command)
         , prettyMaybe Pretty.string (denodeMaybe moduleData.subscription)
@@ -92,8 +95,9 @@ prettyImports imports =
 
 prettyImport : Import -> Doc
 prettyImport import_ =
-    Pretty.join (Pretty.string " ")
-        [ prettyModuleName (denode import_.moduleName)
+    Pretty.join Pretty.space
+        [ Pretty.string "import"
+        , prettyModuleName (denode import_.moduleName)
         , prettyMaybe prettyModuleName (denodeMaybe import_.moduleAlias)
         , prettyMaybe prettyExposing (denodeMaybe import_.exposingList)
         ]
@@ -101,7 +105,42 @@ prettyImport import_ =
 
 prettyExposing : Exposing -> Doc
 prettyExposing exposing_ =
-    Pretty.string "exp"
+    case exposing_ of
+        All _ ->
+            Pretty.string ".."
+                |> Pretty.parens
+
+        Explicit tll ->
+            prettyTopLevelExposes (denodeAll tll)
+                |> Pretty.parens
+
+
+prettyTopLevelExposes : List TopLevelExpose -> Doc
+prettyTopLevelExposes exposes =
+    List.map prettyTopLevelExpose exposes
+        |> Pretty.join (Pretty.string ",")
+
+
+prettyTopLevelExpose : TopLevelExpose -> Doc
+prettyTopLevelExpose tlExpose =
+    case tlExpose of
+        InfixExpose val ->
+            Pretty.string val
+
+        FunctionExpose val ->
+            Pretty.string val
+
+        TypeOrAliasExpose val ->
+            Pretty.string val
+
+        TypeExpose exposedType ->
+            case exposedType.open of
+                Nothing ->
+                    Pretty.string exposedType.name
+
+                Just _ ->
+                    Pretty.string exposedType.name
+                        |> Pretty.a (Pretty.string "(..)")
 
 
 prettyDeclarations : List Declaration -> Doc
@@ -109,7 +148,11 @@ prettyDeclarations _ =
     Pretty.string "declarations"
 
 
+
+--== Helpers
+
+
 prettyMaybe : (a -> Doc) -> Maybe a -> Doc
 prettyMaybe prettyFn maybeVal =
     Maybe.map prettyFn maybeVal
-        |> Maybe.withDefault (Pretty.string "")
+        |> Maybe.withDefault Pretty.empty
