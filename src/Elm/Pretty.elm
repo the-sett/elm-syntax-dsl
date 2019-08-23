@@ -1,5 +1,6 @@
 module Elm.Pretty exposing (pretty)
 
+import Elm.Syntax.Comments exposing (Comment)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Exposing exposing (ExposedType, Exposing(..), TopLevelExpose(..))
 import Elm.Syntax.Expression exposing (Case, CaseBlock, Expression(..), Function, FunctionImplementation, Lambda, LetBlock, LetDeclaration(..), RecordSetter)
@@ -18,21 +19,25 @@ import Elm.Syntax.TypeAnnotation exposing (RecordDefinition, RecordField, TypeAn
 import Pretty exposing (Doc)
 
 
-deNode =
+denode =
     Node.value
 
 
-deNodeAll =
-    List.map deNode
+denodeAll =
+    List.map denode
+
+
+denodeMaybe =
+    Maybe.map denode
 
 
 pretty : File -> Doc
 pretty file =
     Pretty.lines
-        [ prettyModule (deNode file.moduleDefinition)
-        , prettyComments (deNodeAll file.comments)
-        , prettyImports (deNodeAll file.imports)
-        , prettyDeclarations (deNodeAll file.declarations)
+        [ prettyModule (denode file.moduleDefinition)
+        , prettyComments (denodeAll file.comments)
+        , prettyImports (denodeAll file.imports)
+        , prettyDeclarations (denodeAll file.declarations)
         ]
 
 
@@ -47,3 +52,64 @@ prettyModule mod =
 
         EffectModule effectModuleData ->
             prettyEffectModuleData effectModuleData
+
+
+prettyModuleName : ModuleName -> Doc
+prettyModuleName name =
+    List.map Pretty.string name
+        |> Pretty.join (Pretty.string ".")
+
+
+prettyDefaultModuleData : DefaultModuleData -> Doc
+prettyDefaultModuleData moduleData =
+    Pretty.lines
+        [ prettyModuleName (denode moduleData.moduleName)
+        , prettyExposing (denode moduleData.exposingList)
+        ]
+
+
+prettyEffectModuleData : EffectModuleData -> Doc
+prettyEffectModuleData moduleData =
+    Pretty.lines
+        [ prettyModuleName (denode moduleData.moduleName)
+        , prettyExposing (denode moduleData.exposingList)
+        , prettyMaybe Pretty.string (denodeMaybe moduleData.command)
+        , prettyMaybe Pretty.string (denodeMaybe moduleData.subscription)
+        ]
+
+
+prettyComments : List Comment -> Doc
+prettyComments comments =
+    List.map Pretty.string comments
+        |> Pretty.lines
+
+
+prettyImports : List Import -> Doc
+prettyImports imports =
+    List.map prettyImport imports
+        |> Pretty.lines
+
+
+prettyImport : Import -> Doc
+prettyImport import_ =
+    Pretty.join (Pretty.string " ")
+        [ prettyModuleName (denode import_.moduleName)
+        , prettyMaybe prettyModuleName (denodeMaybe import_.moduleAlias)
+        , prettyMaybe prettyExposing (denodeMaybe import_.exposingList)
+        ]
+
+
+prettyExposing : Exposing -> Doc
+prettyExposing exposing_ =
+    Pretty.string "exp"
+
+
+prettyDeclarations : List Declaration -> Doc
+prettyDeclarations _ =
+    Pretty.string "declarations"
+
+
+prettyMaybe : (a -> Doc) -> Maybe a -> Doc
+prettyMaybe prettyFn maybeVal =
+    Maybe.map prettyFn maybeVal
+        |> Maybe.withDefault (Pretty.string "")
