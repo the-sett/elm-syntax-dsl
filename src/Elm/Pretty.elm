@@ -61,6 +61,18 @@ prettyModuleName name =
         |> Pretty.join dot
 
 
+prettyModuleNameDot : ModuleName -> Doc
+prettyModuleNameDot name =
+    case name of
+        [] ->
+            Pretty.empty
+
+        _ ->
+            List.map Pretty.string name
+                |> Pretty.join dot
+                |> Pretty.a dot
+
+
 prettyDefaultModuleData : DefaultModuleData -> Doc
 prettyDefaultModuleData moduleData =
     Pretty.join Pretty.space
@@ -188,7 +200,11 @@ prettyDocumentation docs =
 
 prettySignature : Signature -> Doc
 prettySignature sig =
-    Pretty.string "sig"
+    [ Pretty.string (denode sig.name)
+    , Pretty.string ":"
+    , prettyTypeAnnotation (denode sig.typeAnnotation)
+    ]
+        |> Pretty.words
 
 
 prettyFunctionImplementation : FunctionImplementation -> Doc
@@ -236,14 +252,8 @@ prettyExpression expression =
                 |> Pretty.group
 
         FunctionOrValue modl val ->
-            case modl of
-                [] ->
-                    Pretty.string val
-
-                _ ->
-                    prettyModuleName modl
-                        |> Pretty.a dot
-                        |> Pretty.a (Pretty.string val)
+            prettyModuleNameDot modl
+                |> Pretty.a (Pretty.string val)
 
         IfBlock exprBool exprTrue exprFalse ->
             Pretty.string "if"
@@ -296,7 +306,7 @@ prettyExpression expression =
             List.map prettyExpression (denodeAll exprs)
                 |> Pretty.lines
                 |> Pretty.group
-                |> Pretty.sqParens
+                |> sqParens
 
         RecordAccess expr field ->
             Pretty.string "record.get"
@@ -309,6 +319,51 @@ prettyExpression expression =
 
         GLSLExpression val ->
             Pretty.string "glsl"
+
+
+prettyTypeAnnotation : TypeAnnotation -> Doc
+prettyTypeAnnotation typeAnn =
+    case typeAnn of
+        GenericType val ->
+            Pretty.string val
+
+        Typed fqName anns ->
+            let
+                ( moduleName, typeName ) =
+                    denode fqName
+
+                typeDoc =
+                    prettyModuleNameDot moduleName
+                        |> Pretty.a (Pretty.string typeName)
+
+                argsDoc =
+                    List.map prettyTypeAnnotation (denodeAll anns)
+                        |> Pretty.words
+            in
+            [ typeDoc
+            , argsDoc
+            ]
+                |> Pretty.words
+
+        Unit ->
+            Pretty.string "()"
+
+        Tupled anns ->
+            List.map prettyTypeAnnotation (denodeAll anns)
+                |> Pretty.join (Pretty.string ", ")
+                |> Pretty.parens
+
+        Record recordDef ->
+            Pretty.string "record"
+
+        GenericRecord paramName recordDef ->
+            Pretty.string "genrec"
+
+        FunctionTypeAnnotation fromAnn toAnn ->
+            [ prettyTypeAnnotation (denode fromAnn)
+            , prettyTypeAnnotation (denode toAnn)
+            ]
+                |> Pretty.join (Pretty.string " -> ")
 
 
 
