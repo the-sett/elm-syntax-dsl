@@ -24,8 +24,11 @@ pretty : File -> Doc
 pretty file =
     Pretty.lines
         [ prettyModule (denode file.moduleDefinition)
+        , Pretty.string ""
         , prettyComments (denodeAll file.comments)
+        , Pretty.line
         , prettyImports (denodeAll file.imports)
+        , Pretty.line
         , prettyDeclarations (denodeAll file.declarations)
         ]
 
