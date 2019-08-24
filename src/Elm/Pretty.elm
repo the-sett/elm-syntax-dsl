@@ -279,6 +279,7 @@ prettyExpression expression =
             List.map prettyExpression (denodeAll exprs)
                 |> Pretty.lines
                 |> Pretty.group
+                |> Pretty.nest 4
 
         OperatorApplication symbol direction exprl exprr ->
             [ prettyExpression (denode exprl)
@@ -288,7 +289,7 @@ prettyExpression expression =
                 |> Pretty.a (prettyExpression (denode exprr))
             ]
                 |> Pretty.lines
-                |> Pretty.group
+                |> Pretty.hang 4
 
         FunctionOrValue modl val ->
             prettyModuleNameDot modl
