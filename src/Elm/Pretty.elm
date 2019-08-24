@@ -20,18 +20,6 @@ import Elm.Syntax.TypeAnnotation exposing (RecordDefinition, RecordField, TypeAn
 import Pretty exposing (Doc)
 
 
-denode =
-    Node.value
-
-
-denodeAll =
-    List.map denode
-
-
-denodeMaybe =
-    Maybe.map denode
-
-
 pretty : File -> Doc
 pretty file =
     Pretty.lines
@@ -158,7 +146,9 @@ prettyTopLevelExpose tlExpose =
 
 prettyDeclarations : List Declaration -> Doc
 prettyDeclarations decls =
-    List.map prettyDeclaration decls
+    List.map
+        (\decl -> prettyDeclaration decl |> Pretty.a Pretty.line |> Pretty.a Pretty.line)
+        decls
         |> Pretty.lines
 
 
@@ -368,6 +358,18 @@ prettyTypeAnnotation typeAnn =
 
 
 --== Helpers
+
+
+denode =
+    Node.value
+
+
+denodeAll =
+    List.map denode
+
+
+denodeMaybe =
+    Maybe.map denode
 
 
 prettyMaybe : (a -> Doc) -> Maybe a -> Doc
