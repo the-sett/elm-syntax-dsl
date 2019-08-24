@@ -147,7 +147,11 @@ prettyTopLevelExpose tlExpose =
 prettyDeclarations : List Declaration -> Doc
 prettyDeclarations decls =
     List.map
-        (\decl -> prettyDeclaration decl |> Pretty.a Pretty.line |> Pretty.a Pretty.line)
+        (\decl ->
+            prettyDeclaration decl
+                |> Pretty.a Pretty.line
+                |> Pretty.a Pretty.line
+        )
         decls
         |> Pretty.lines
 
@@ -159,10 +163,10 @@ prettyDeclaration decl =
             prettyFun fn
 
         AliasDeclaration tAlias ->
-            Pretty.string "alias"
+            prettyTypeAlias tAlias
 
         CustomTypeDeclaration type_ ->
-            Pretty.string "type"
+            prettyCustomType type_
 
         PortDeclaration sig ->
             Pretty.string "sig"
@@ -181,6 +185,48 @@ prettyFun fn =
         , prettyMaybe prettySignature (denodeMaybe fn.signature)
         , prettyFunctionImplementation (denode fn.declaration)
         ]
+
+
+prettyTypeAlias : TypeAlias -> Doc
+prettyTypeAlias tAlias =
+    [ prettyMaybe prettyDocumentation (denodeMaybe tAlias.documentation)
+    , Pretty.string "type alias"
+    , Pretty.string (denode tAlias.name)
+    , List.map Pretty.string (denodeAll tAlias.generics) |> Pretty.words
+    , Pretty.string "="
+    ]
+        |> Pretty.words
+        |> Pretty.a Pretty.line
+        |> Pretty.a (prettyTypeAnnotation (denode tAlias.typeAnnotation))
+        |> Pretty.hang 4
+
+
+prettyCustomType : Type -> Doc
+prettyCustomType type_ =
+    [ prettyMaybe prettyDocumentation (denodeMaybe type_.documentation)
+    , Pretty.string "type"
+    , Pretty.string (denode type_.name)
+    , List.map Pretty.string (denodeAll type_.generics) |> Pretty.words
+    ]
+        |> Pretty.words
+        |> Pretty.a Pretty.line
+        |> Pretty.a (Pretty.string "= ")
+        |> Pretty.a (prettyValueConstructors (denodeAll type_.constructors))
+        |> Pretty.hang 4
+
+
+prettyValueConstructors : List ValueConstructor -> Doc
+prettyValueConstructors constructors =
+    List.map prettyValueConstructor constructors
+        |> Pretty.join (Pretty.line |> Pretty.a (Pretty.string "| "))
+
+
+prettyValueConstructor : ValueConstructor -> Doc
+prettyValueConstructor cons =
+    [ Pretty.string (denode cons.name)
+    , List.map prettyTypeAnnotation (denodeAll cons.arguments) |> Pretty.words
+    ]
+        |> Pretty.words
 
 
 prettyDocumentation : Documentation -> Doc
