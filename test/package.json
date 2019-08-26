@@ -1,0 +1,23 @@
+{
+  "name": "tink-data",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=6.10.0"
+  },
+  "description": "Turn some CSV into POSTs to Tink APIs.",
+  "author": "Rupert Smith <rupert.smith@rbs.co.uk>",
+  "license": "MIT",
+  "main": "src-bridge/index.js",
+  "scripts": {
+    "clobber": "rm -rf elm-stuff",
+    "rebuild": "npm run clobber && npm install && npm run build",
+    "build": "elm make --output=src/elm.js src/elm/Top.elm",
+    "start": "npm run build && node src/index.js"
+  },
+  "dependencies": {
+    "glob": "^7.1.4"
+  },
+  "devDependencies": {
+    "elm": "^0.19.0"
+  }
+}

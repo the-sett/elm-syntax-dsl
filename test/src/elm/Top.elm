@@ -61,7 +61,23 @@ init _ =
 update msg model =
     case ( model, msg ) of
         ( Normal, ModelData name val ) ->
-            ( model, Cmd.none )
+            let
+                elmAstResult =
+                    Elm.Parser.parse val
+                        |> Result.map (Elm.Processing.process Elm.Processing.init)
+            in
+            case elmAstResult of
+                Err _ ->
+                    ( Error, Cmd.none )
+
+                Ok file ->
+                    let
+                        pretty =
+                            Elm.Pretty.pretty file
+                                |> Pretty.pretty 120
+                                |> Debug.log "pretty"
+                    in
+                    ( model, codeOutPort pretty )
 
         ( _, _ ) ->
             ( model, Cmd.none )
