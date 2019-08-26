@@ -1,6 +1,9 @@
 port module Top exposing (main)
 
+import Elm.Parser
 import Elm.Pretty
+import Elm.Processing
+import Elm.RawFile exposing (RawFile)
 import Pretty
 
 
