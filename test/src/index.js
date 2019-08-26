@@ -8,7 +8,7 @@ const {
 
 const app = Elm.Top.init();
 
-glob("test/examples/*.elm", function(er, files) {
+glob("examples/*.elm", function(er, files) {
   files.forEach(function(file) {
       fs.readFile(file, 'utf8', function(err, contents) {
         app.ports.modelInPort.send([file, contents]);
