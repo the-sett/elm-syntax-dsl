@@ -1,17 +1,7 @@
 port module Top exposing (main)
 
-import Codec
-import Dict exposing (Dict)
-import Diff
 import Elm.Pretty
-import Elm.Writer
-import Json.Decode as Decode
-import Json.Decode.Generic as Generic
 import Pretty
-import Random exposing (Seed)
-import Task
-import Templates.Api
-import Time exposing (Posix)
 
 
 
@@ -35,7 +25,7 @@ port codeOutPort : String -> Cmd msg
 
 subscriptions model =
     case model of
-        Error _ ->
+        Error ->
             Sub.none
 
         _ ->
@@ -48,8 +38,9 @@ subscriptions model =
 -- State Machine
 
 
-type alias Model =
-    ()
+type Model
+    = Error
+    | Normal
 
 
 
@@ -61,12 +52,12 @@ type Msg
 
 
 init _ =
-    ( (), Cmd.none )
+    ( Normal, Cmd.none )
 
 
 update msg model =
     case ( model, msg ) of
-        ( (), ModelData name val ) ->
+        ( Normal, ModelData name val ) ->
             ( model, Cmd.none )
 
         ( _, _ ) ->
