@@ -296,45 +296,59 @@ prettyExpression expression =
                 |> Pretty.a (Pretty.string val)
 
         IfBlock exprBool exprTrue exprFalse ->
-            Pretty.string "if"
+            [ [ Pretty.string "if"
+              , prettyExpression (denode exprBool)
+              , Pretty.string "then"
+              ]
+                |> Pretty.words
+            , prettyExpression (denode exprTrue) |> Pretty.indent 4
+            , Pretty.string "else"
+            , prettyExpression (denode exprFalse) |> Pretty.indent 4
+            ]
+                |> Pretty.lines
 
         PrefixOperator symbol ->
-            Pretty.string "op"
+            Pretty.string symbol
 
         Operator symbol ->
-            Pretty.string "op"
+            Pretty.string symbol
 
         Integer val ->
-            Pretty.string "int"
+            Pretty.string (String.fromInt val)
 
         Hex val ->
             Pretty.string "hex"
 
         Floatable val ->
-            Pretty.string "float"
+            Pretty.string (String.fromFloat val)
 
         Negation expr ->
-            Pretty.string "neg"
+            Pretty.string "-"
+                |> Pretty.a (prettyExpression (denode expr))
 
         Literal val ->
             Pretty.string val
                 |> quotes
 
         CharLiteral val ->
-            Pretty.string "char"
+            Pretty.string (String.fromChar val)
+                |> singleQuotes
 
         TupledExpression exprs ->
-            Pretty.string "(tuple)"
+            List.map prettyExpression (denodeAll exprs)
+                |> Pretty.join (Pretty.string ", ")
+                |> Pretty.group
+                |> Pretty.parens
 
         ParenthesizedExpression expr ->
             prettyExpression (denode expr)
                 |> Pretty.parens
 
         LetExpression letBlock ->
-            Pretty.string "let"
+            prettyLetBlock letBlock
 
         CaseExpression caseBlock ->
-            Pretty.string "case"
+            prettyCaseBlock caseBlock
 
         LambdaExpression lambda ->
             Pretty.string "\\lambda"
@@ -359,6 +373,49 @@ prettyExpression expression =
 
         GLSLExpression val ->
             Pretty.string "glsl"
+
+
+prettyLetBlock : LetBlock -> Doc
+prettyLetBlock letBlock =
+    [ Pretty.string "let"
+    , List.map prettyLetDeclaration (denodeAll letBlock.declarations)
+        |> Pretty.lines
+        |> Pretty.indent 4
+    , Pretty.string "in"
+    , prettyExpression (denode letBlock.expression)
+    ]
+        |> Pretty.lines
+
+
+prettyLetDeclaration : LetDeclaration -> Doc
+prettyLetDeclaration letDecl =
+    case letDecl of
+        LetFunction fn ->
+            prettyFun fn
+
+        _ ->
+            Pretty.string "letDestructuring"
+
+
+prettyCaseBlock : CaseBlock -> Doc
+prettyCaseBlock caseBlock =
+    ([ Pretty.string "case"
+     , prettyExpression (denode caseBlock.expression)
+     , Pretty.string "of"
+     ]
+        |> Pretty.words
+    )
+        :: List.map
+            (\( pattern, expr ) ->
+                [ Pretty.string "pat"
+                , Pretty.string "->"
+                , prettyExpression (denode expr)
+                ]
+                    |> Pretty.words
+                    |> Pretty.indent 4
+            )
+            caseBlock.cases
+        |> Pretty.lines
 
 
 prettyTypeAnnotation : TypeAnnotation -> Doc
@@ -436,6 +493,11 @@ dot =
 quotes : Doc -> Doc
 quotes doc =
     Pretty.surround (Pretty.char '"') (Pretty.char '"') doc
+
+
+singleQuotes : Doc -> Doc
+singleQuotes doc =
+    Pretty.surround (Pretty.char '\'') (Pretty.char '\'') doc
 
 
 sqParens : Doc -> Doc

@@ -75,7 +75,6 @@ update msg model =
                         pretty =
                             Elm.Pretty.pretty file
                                 |> Pretty.pretty 120
-                                |> Debug.log "pretty"
                     in
                     ( model, codeOutPort pretty )
 
