@@ -463,10 +463,19 @@ prettyExpression expression =
                 |> Pretty.group
 
         ListExpr exprs ->
-            List.map prettyExpression (denodeAll exprs)
-                |> Pretty.lines
-                |> Pretty.group
-                |> sqParens
+            case exprs of
+                [] ->
+                    Pretty.string "[]"
+
+                _ ->
+                    Pretty.space
+                        |> Pretty.a
+                            (List.map prettyExpression (denodeAll exprs)
+                                |> Pretty.lines
+                                |> Pretty.group
+                            )
+                        |> Pretty.a Pretty.space
+                        |> sqParens
 
         RecordAccess expr field ->
             prettyExpression (denode expr)
