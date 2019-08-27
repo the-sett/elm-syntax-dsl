@@ -178,7 +178,12 @@ prettyDeclaration decl =
             Pretty.string "infix"
 
         Destructuring pattern expr ->
-            Pretty.string "pattern"
+            [ prettyPattern (denode pattern)
+            , Pretty.string "="
+            , prettyExpression (denode expr)
+            ]
+                |> Pretty.lines
+                |> Pretty.group
 
 
 prettyFun : Function -> Doc
@@ -314,7 +319,13 @@ prettyPattern pattern =
             Pretty.string var
 
         NamedPattern qnRef listPats ->
-            Pretty.string "namedPattern"
+            prettyModuleNameDot qnRef.moduleName
+                |> Pretty.a (Pretty.string qnRef.name)
+                |> Pretty.a Pretty.space
+                |> Pretty.a
+                    (List.map prettyPattern (denodeAll listPats)
+                        |> Pretty.words
+                    )
 
         AsPattern pat name ->
             [ prettyPattern (denode pat)
@@ -342,8 +353,7 @@ prettyExpression expression =
 
         OperatorApplication symbol direction exprl exprr ->
             [ prettyExpression (denode exprl)
-            , Pretty.empty
-                |> Pretty.a (Pretty.string symbol)
+            , Pretty.string symbol
                 |> Pretty.a Pretty.space
                 |> Pretty.a (prettyExpression (denode exprr))
             ]
