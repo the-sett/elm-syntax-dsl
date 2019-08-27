@@ -301,8 +301,12 @@ prettyPattern pattern =
             Pretty.string (String.fromFloat val)
 
         TuplePattern vals ->
-            List.map prettyPattern (denodeAll vals)
-                |> Pretty.join (Pretty.string ", ")
+            Pretty.space
+                |> Pretty.a
+                    (List.map prettyPattern (denodeAll vals)
+                        |> Pretty.join (Pretty.string ", ")
+                    )
+                |> Pretty.a Pretty.space
                 |> Pretty.parens
 
         RecordPattern fields ->
@@ -412,9 +416,13 @@ prettyExpression expression =
                 |> singleQuotes
 
         TupledExpression exprs ->
-            List.map prettyExpression (denodeAll exprs)
-                |> Pretty.join (Pretty.string ", ")
-                |> Pretty.group
+            Pretty.space
+                |> Pretty.a
+                    (List.map prettyExpression (denodeAll exprs)
+                        |> Pretty.join (Pretty.string ", ")
+                        |> Pretty.group
+                    )
+                |> Pretty.a Pretty.space
                 |> Pretty.parens
 
         ParenthesizedExpression expr ->
