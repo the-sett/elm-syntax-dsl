@@ -66,7 +66,7 @@ prettyModuleNameDot name =
 
 prettyDefaultModuleData : DefaultModuleData -> Doc
 prettyDefaultModuleData moduleData =
-    Pretty.join Pretty.space
+    Pretty.words
         [ Pretty.string "module"
         , prettyModuleName (denode moduleData.moduleName)
         , prettyExposing (denode moduleData.exposingList)
@@ -75,7 +75,7 @@ prettyDefaultModuleData moduleData =
 
 prettyEffectModuleData : EffectModuleData -> Doc
 prettyEffectModuleData moduleData =
-    Pretty.join Pretty.space
+    Pretty.words
         [ Pretty.string "module"
         , prettyModuleName (denode moduleData.moduleName)
         , prettyExposing (denode moduleData.exposingList)
@@ -524,13 +524,13 @@ prettyCaseBlock caseBlock =
     )
         :: List.map
             (\( pattern, expr ) ->
-                [ prettyPattern (denode pattern)
-                , Pretty.string "->"
-                , Pretty.line
-                , prettyExpression (denode expr) |> Pretty.indent 4
-                , Pretty.line
-                ]
+                [ [ prettyPattern (denode pattern)
+                  , Pretty.string "->"
+                  ]
                     |> Pretty.words
+                , prettyExpression (denode expr) |> Pretty.indent 4
+                ]
+                    |> Pretty.lines
                     |> Pretty.indent 4
             )
             caseBlock.cases
