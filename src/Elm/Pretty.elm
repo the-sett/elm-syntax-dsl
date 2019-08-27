@@ -548,19 +548,19 @@ prettyCaseBlock caseBlock =
      ]
         |> Pretty.words
     )
-        :: List.map
-            (\( pattern, expr ) ->
-                [ [ prettyPattern (denode pattern)
-                  , Pretty.string "->"
-                  ]
-                    |> Pretty.words
-                , prettyExpression (denode expr) |> Pretty.indent 4
-                ]
-                    |> Pretty.join (Pretty.a Pretty.line Pretty.line)
-                    |> Pretty.indent 4
+        |> Pretty.a Pretty.line
+        |> Pretty.a
+            (List.map
+                (\( pattern, expr ) ->
+                    prettyPattern (denode pattern)
+                        |> Pretty.a (Pretty.string " ->")
+                        |> Pretty.a Pretty.line
+                        |> Pretty.a (prettyExpression (denode expr) |> Pretty.indent 4)
+                        |> Pretty.indent 4
+                )
+                caseBlock.cases
+                |> Pretty.join (Pretty.a Pretty.line Pretty.line)
             )
-            caseBlock.cases
-        |> Pretty.lines
 
 
 prettyTypeAnnotation : TypeAnnotation -> Doc
