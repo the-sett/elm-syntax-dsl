@@ -556,7 +556,7 @@ prettyCaseBlock caseBlock =
                     |> Pretty.words
                 , prettyExpression (denode expr) |> Pretty.indent 4
                 ]
-                    |> Pretty.lines
+                    |> Pretty.join (Pretty.a Pretty.line Pretty.line)
                     |> Pretty.indent 4
             )
             caseBlock.cases
