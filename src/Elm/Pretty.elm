@@ -266,7 +266,66 @@ prettyArgs args =
 
 prettyPattern : Pattern -> Doc
 prettyPattern pattern =
-    Pretty.string "pat"
+    case pattern of
+        AllPattern ->
+            Pretty.string "_"
+
+        UnitPattern ->
+            Pretty.string "()"
+
+        CharPattern val ->
+            Pretty.string (String.fromChar val)
+
+        StringPattern val ->
+            Pretty.string val
+
+        IntPattern val ->
+            Pretty.string (String.fromInt val)
+
+        HexPattern val ->
+            Pretty.string "hexPattern"
+
+        FloatPattern val ->
+            Pretty.string (String.fromFloat val)
+
+        TuplePattern vals ->
+            List.map prettyPattern (denodeAll vals)
+                |> Pretty.join (Pretty.string ", ")
+                |> Pretty.parens
+
+        RecordPattern fields ->
+            List.map Pretty.string (denodeAll fields)
+                |> Pretty.join (Pretty.string ", ")
+                |> Pretty.braces
+
+        UnConsPattern hdPat tlPat ->
+            [ prettyPattern (denode hdPat)
+            , Pretty.string "::"
+            , prettyPattern (denode tlPat)
+            ]
+                |> Pretty.words
+
+        ListPattern listPats ->
+            List.map prettyPattern (denodeAll listPats)
+                |> Pretty.join (Pretty.string ", ")
+                |> sqParens
+
+        VarPattern var ->
+            Pretty.string var
+
+        NamedPattern qnRef listPats ->
+            Pretty.string "namedPattern"
+
+        AsPattern pat name ->
+            [ prettyPattern (denode pat)
+            , Pretty.string "as"
+            , Pretty.string (denode name)
+            ]
+                |> Pretty.words
+
+        ParenthesizedPattern pat ->
+            prettyPattern (denode pat)
+                |> Pretty.parens
 
 
 prettyExpression : Expression -> Doc
@@ -448,7 +507,7 @@ prettyCaseBlock caseBlock =
     )
         :: List.map
             (\( pattern, expr ) ->
-                [ Pretty.string "pat"
+                [ prettyPattern (denode pattern)
                 , Pretty.string "->"
                 , Pretty.line
                 , prettyExpression (denode expr) |> Pretty.indent 4
