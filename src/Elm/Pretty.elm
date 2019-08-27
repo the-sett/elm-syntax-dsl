@@ -69,7 +69,6 @@ prettyDefaultModuleData moduleData =
     Pretty.join Pretty.space
         [ Pretty.string "module"
         , prettyModuleName (denode moduleData.moduleName)
-        , Pretty.string "exposing"
         , prettyExposing (denode moduleData.exposingList)
         ]
 
@@ -110,14 +109,19 @@ prettyImport import_ =
 
 prettyExposing : Exposing -> Doc
 prettyExposing exposing_ =
-    case exposing_ of
-        All _ ->
-            Pretty.string ".."
-                |> Pretty.parens
+    let
+        exposings =
+            case exposing_ of
+                All _ ->
+                    Pretty.string ".." |> Pretty.parens
 
-        Explicit tll ->
-            prettyTopLevelExposes (denodeAll tll)
-                |> Pretty.parens
+                Explicit tll ->
+                    prettyTopLevelExposes (denodeAll tll)
+                        |> Pretty.parens
+    in
+    Pretty.string "exposing"
+        |> Pretty.a Pretty.space
+        |> Pretty.a exposings
 
 
 prettyTopLevelExposes : List TopLevelExpose -> Doc
@@ -131,6 +135,7 @@ prettyTopLevelExpose tlExpose =
     case tlExpose of
         InfixExpose val ->
             Pretty.string val
+                |> Pretty.parens
 
         FunctionExpose val ->
             Pretty.string val
@@ -176,7 +181,7 @@ prettyDeclaration decl =
             Pretty.string "sig"
 
         InfixDeclaration infix_ ->
-            Pretty.string "infix"
+            Pretty.empty
 
         Destructuring pattern expr ->
             [ prettyPattern (denode pattern)

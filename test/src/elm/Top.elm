@@ -23,7 +23,7 @@ main =
 port modelInPort : (( String, String ) -> msg) -> Sub msg
 
 
-port codeOutPort : String -> Cmd msg
+port codeOutPort : ( String, String ) -> Cmd msg
 
 
 subscriptions model =
@@ -76,7 +76,7 @@ update msg model =
                             Elm.Pretty.pretty file
                                 |> Pretty.pretty 120
                     in
-                    ( model, codeOutPort pretty )
+                    ( model, codeOutPort ( name, pretty ) )
 
         ( _, _ ) ->
             ( model, Cmd.none )

@@ -1,5 +1,7 @@
 var fs = require('fs');
 var glob = require('glob');
+var path = require('path');
+const { exec } = require('child_process');
 
 //const { Elm }  = require('./Top.elm'); -- do it this way if using webpack-loader
 const {
@@ -10,18 +12,25 @@ const app = Elm.Top.init();
 
 glob("examples/*.elm", function(er, files) {
   files.forEach(function(file) {
-      fs.readFile(file, 'utf8', function(err, contents) {
-        app.ports.modelInPort.send([file, contents]);
-      });
+    fs.readFile(file, 'utf8', function(err, contents) {
+      var filename = path.basename(file);
+      app.ports.modelInPort.send([filename, contents]);
     });
+  });
 });
 
-// fs.readFile('api/dynamodb-2012-08-10.normal.json', 'utf8', function(err, contents) {
-//   app.ports.modelInPort.send(['api/dynamodb-2012-08-10.normal.json', contents]);
-// });
-
 app.ports.codeOutPort.subscribe(request => {
-  fs.writeFile('example.txt', request, (err) => {
+  fs.writeFile('pre/' + request[0], request[1], (err) => {
     if (err) throw err;
   })
+});
+
+glob("pre/*.elm", function(er, files) {
+  files.forEach(function(file) {
+    fs.readFile(file, 'utf8', function(err, contents) {
+      var filename = path.basename(file);
+
+      exec('"elm-format" pre/' + filename + '  --output post/' + filename);
+    });
+  });
 });
