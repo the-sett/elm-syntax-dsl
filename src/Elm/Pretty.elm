@@ -437,8 +437,9 @@ prettyExpression expression =
 
         LambdaExpression lambda ->
             [ Pretty.string "\\"
-            , Pretty.string "args"
-            , Pretty.string "->"
+                |> Pretty.a (Pretty.string "args")
+                |> Pretty.a Pretty.space
+                |> Pretty.a (Pretty.string "->")
             , prettyExpression (denode lambda.expression)
             ]
                 |> Pretty.lines
