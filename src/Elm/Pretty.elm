@@ -382,11 +382,19 @@ prettyExpression expression =
               , Pretty.string "then"
               ]
                 |> Pretty.words
-            , prettyExpression (denode exprTrue) |> Pretty.indent 4
-            , Pretty.string "else"
-            , prettyExpression (denode exprFalse) |> Pretty.indent 4
+            , prettyExpression (denode exprTrue)
             ]
                 |> Pretty.lines
+                |> Pretty.hang 4
+                |> Pretty.a Pretty.line
+                |> Pretty.a Pretty.line
+                |> Pretty.a
+                    ([ Pretty.string "else"
+                     , prettyExpression (denode exprFalse)
+                     ]
+                        |> Pretty.lines
+                        |> Pretty.hang 4
+                    )
 
         PrefixOperator symbol ->
             Pretty.string symbol
