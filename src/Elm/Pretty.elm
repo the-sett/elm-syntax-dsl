@@ -289,6 +289,7 @@ prettyExpression expression =
                 |> Pretty.a (prettyExpression (denode exprr))
             ]
                 |> Pretty.lines
+                |> Pretty.group
                 |> Pretty.hang 4
 
         FunctionOrValue modl val ->
@@ -351,10 +352,31 @@ prettyExpression expression =
             prettyCaseBlock caseBlock
 
         LambdaExpression lambda ->
-            Pretty.string "\\lambda"
+            [ Pretty.string "\\"
+            , Pretty.string "args"
+            , Pretty.string "->"
+            , prettyExpression (denode lambda.expression)
+            ]
+                |> Pretty.lines
+                |> Pretty.group
 
-        RecordExpr recordSetters ->
-            Pretty.string "set"
+        RecordExpr setters ->
+            [ Pretty.string "{"
+            , List.map
+                (\( fld, val ) ->
+                    [ Pretty.string (denode fld)
+                    , Pretty.string "="
+                    , prettyExpression (denode val)
+                    ]
+                        |> Pretty.join (Pretty.string ", ")
+                )
+                (denodeAll setters)
+                |> Pretty.lines
+                |> Pretty.group
+            , Pretty.string "}"
+            ]
+                |> Pretty.lines
+                |> Pretty.group
 
         ListExpr exprs ->
             List.map prettyExpression (denodeAll exprs)
@@ -363,13 +385,32 @@ prettyExpression expression =
                 |> sqParens
 
         RecordAccess expr field ->
-            Pretty.string "record.get"
+            prettyExpression (denode expr)
+                |> Pretty.a dot
+                |> Pretty.a (Pretty.string (denode field))
 
         RecordAccessFunction field ->
             Pretty.a (Pretty.string field) dot
 
-        RecordUpdateExpression expr setters ->
-            Pretty.string "[val|set]"
+        RecordUpdateExpression var setters ->
+            [ Pretty.string "["
+            , Pretty.string (denode var)
+            , Pretty.string "|"
+            , List.map
+                (\( fld, val ) ->
+                    [ Pretty.string (denode fld)
+                    , Pretty.string "="
+                    , prettyExpression (denode val)
+                    ]
+                        |> Pretty.join (Pretty.string ", ")
+                )
+                (denodeAll setters)
+                |> Pretty.lines
+                |> Pretty.group
+            , Pretty.string "]"
+            ]
+                |> Pretty.lines
+                |> Pretty.group
 
         GLSLExpression val ->
             Pretty.string "glsl"
@@ -409,7 +450,9 @@ prettyCaseBlock caseBlock =
             (\( pattern, expr ) ->
                 [ Pretty.string "pat"
                 , Pretty.string "->"
-                , prettyExpression (denode expr)
+                , Pretty.line
+                , prettyExpression (denode expr) |> Pretty.indent 4
+                , Pretty.line
                 ]
                     |> Pretty.words
                     |> Pretty.indent 4
