@@ -582,8 +582,12 @@ prettyTypeAnnotation typeAnn =
             Pretty.string "()"
 
         Tupled anns ->
-            List.map prettyTypeAnnotation (denodeAll anns)
-                |> Pretty.join (Pretty.string ", ")
+            Pretty.space
+                |> Pretty.a
+                    (List.map prettyTypeAnnotation (denodeAll anns)
+                        |> Pretty.join (Pretty.string ", ")
+                    )
+                |> Pretty.a Pretty.space
                 |> Pretty.parens
 
         Record recordDef ->
