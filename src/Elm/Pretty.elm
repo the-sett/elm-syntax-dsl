@@ -87,8 +87,9 @@ prettyEffectModuleData moduleData =
 
 prettyComments : List Comment -> Doc
 prettyComments comments =
-    List.map Pretty.string comments
-        |> Pretty.lines
+    -- List.map Pretty.string comments
+    --     |> Pretty.lines
+    Pretty.empty
 
 
 prettyImports : List Import -> Doc
@@ -239,7 +240,8 @@ prettyValueConstructor cons =
 
 prettyDocumentation : Documentation -> Doc
 prettyDocumentation docs =
-    Pretty.string docs
+    --Pretty.string docs
+    Pretty.empty
 
 
 prettySignature : Signature -> Doc
