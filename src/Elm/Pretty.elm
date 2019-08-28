@@ -64,6 +64,17 @@ prettyModuleNameDot name =
                 |> Pretty.a dot
 
 
+prettyModuleNameAlias : ModuleName -> Doc
+prettyModuleNameAlias name =
+    case name of
+        [] ->
+            Pretty.empty
+
+        _ ->
+            Pretty.string "as "
+                |> Pretty.a (List.map Pretty.string name |> Pretty.join dot)
+
+
 prettyDefaultModuleData : DefaultModuleData -> Doc
 prettyDefaultModuleData moduleData =
     Pretty.words
@@ -102,7 +113,7 @@ prettyImport import_ =
     Pretty.join Pretty.space
         [ Pretty.string "import"
         , prettyModuleName (denode import_.moduleName)
-        , prettyMaybe prettyModuleName (denodeMaybe import_.moduleAlias)
+        , prettyMaybe prettyModuleNameAlias (denodeMaybe import_.moduleAlias)
         , prettyMaybe prettyExposing (denodeMaybe import_.exposingList)
         ]
 
