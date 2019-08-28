@@ -161,7 +161,7 @@ prettyDeclarations decls =
                 |> Pretty.a Pretty.line
         )
         decls
-        |> Pretty.join (Pretty.a Pretty.line Pretty.line)
+        |> doubleLines
 
 
 prettyDeclaration : Declaration -> Doc
@@ -519,7 +519,7 @@ prettyLetBlock : LetBlock -> Doc
 prettyLetBlock letBlock =
     [ Pretty.string "let"
     , List.map prettyLetDeclaration (denodeAll letBlock.declarations)
-        |> Pretty.join (Pretty.a Pretty.line Pretty.line)
+        |> doubleLines
         |> Pretty.indent 4
     , Pretty.string "in"
     , prettyExpression (denode letBlock.expression)
@@ -556,7 +556,7 @@ prettyCaseBlock caseBlock =
                         |> Pretty.indent 4
                 )
                 caseBlock.cases
-                |> Pretty.join (Pretty.a Pretty.line Pretty.line)
+                |> doubleLines
             )
 
 
@@ -649,3 +649,8 @@ singleQuotes doc =
 sqParens : Doc -> Doc
 sqParens doc =
     Pretty.surround (Pretty.char '[') (Pretty.char ']') doc
+
+
+doubleLines : List Doc -> Doc
+doubleLines =
+    Pretty.join (Pretty.a Pretty.line Pretty.line)
