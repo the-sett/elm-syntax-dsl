@@ -520,7 +520,7 @@ prettyLetBlock : LetBlock -> Doc
 prettyLetBlock letBlock =
     [ Pretty.string "let"
     , List.map prettyLetDeclaration (denodeAll letBlock.declarations)
-        |> Pretty.lines
+        |> Pretty.join (Pretty.a Pretty.line Pretty.line)
         |> Pretty.indent 4
     , Pretty.string "in"
     , prettyExpression (denode letBlock.expression)
