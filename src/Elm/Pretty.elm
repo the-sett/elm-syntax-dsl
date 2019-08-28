@@ -22,15 +22,15 @@ import Pretty exposing (Doc)
 
 pretty : File -> Doc
 pretty file =
-    Pretty.lines
-        [ prettyModule (denode file.moduleDefinition)
-        , Pretty.string ""
-        , prettyComments (denodeAll file.comments)
-        , Pretty.line
-        , prettyImports (denodeAll file.imports)
-        , Pretty.line
-        , prettyDeclarations (denodeAll file.declarations)
-        ]
+    prettyModule (denode file.moduleDefinition)
+        |> Pretty.a Pretty.line
+        |> Pretty.a Pretty.line
+        |> Pretty.a (prettyComments (denodeAll file.comments))
+        |> Pretty.a (prettyImports (denodeAll file.imports))
+        |> Pretty.a Pretty.line
+        |> Pretty.a Pretty.line
+        |> Pretty.a Pretty.line
+        |> Pretty.a (prettyDeclarations (denodeAll file.declarations))
 
 
 prettyModule : Module -> Doc
@@ -196,7 +196,7 @@ prettyDeclaration decl =
             Pretty.string "sig"
 
         InfixDeclaration infix_ ->
-            Pretty.empty
+            prettyInfix infix_
 
         Destructuring pattern expr ->
             [ prettyPattern (denode pattern)
@@ -254,6 +254,30 @@ prettyValueConstructor : ValueConstructor -> Doc
 prettyValueConstructor cons =
     [ Pretty.string (denode cons.name)
     , List.map prettyTypeAnnotation (denodeAll cons.arguments) |> Pretty.words
+    ]
+        |> Pretty.words
+
+
+prettyInfix : Infix -> Doc
+prettyInfix infix_ =
+    let
+        dirToString direction =
+            case direction of
+                Left ->
+                    "left"
+
+                Right ->
+                    "right"
+
+                Non ->
+                    "non"
+    in
+    [ Pretty.string "infix"
+    , Pretty.string (dirToString (denode infix_.direction))
+    , Pretty.string (String.fromInt (denode infix_.precedence))
+    , Pretty.string (denode infix_.operator) |> Pretty.parens
+    , Pretty.string "="
+    , Pretty.string (denode infix_.function)
     ]
         |> Pretty.words
 
