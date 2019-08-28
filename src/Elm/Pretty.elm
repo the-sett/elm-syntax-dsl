@@ -468,7 +468,7 @@ prettyExpression expression =
                 |> quotes
 
         CharLiteral val ->
-            Pretty.string (String.fromChar val)
+            Pretty.string (escapeChar val)
                 |> singleQuotes
 
         TupledExpression exprs ->
@@ -528,10 +528,10 @@ prettyExpression expression =
                     Pretty.space
                         |> Pretty.a
                             (List.map prettyExpression (denodeAll exprs)
-                                |> Pretty.lines
+                                |> Pretty.join (Pretty.a (Pretty.string ", ") Pretty.line)
                                 |> Pretty.group
                             )
-                        |> Pretty.a Pretty.space
+                        |> Pretty.a Pretty.line
                         |> sqParens
 
         RecordAccess expr field ->
@@ -715,3 +715,13 @@ doubleLines =
 escape : String -> String
 escape val =
     String.replace "\\" "\\\\" val
+
+
+escapeChar : Char -> String
+escapeChar val =
+    case val of
+        '\'' ->
+            "\\'"
+
+        c ->
+            String.fromChar c
