@@ -126,8 +126,24 @@ prettyExposing exposing_ =
 
 prettyTopLevelExposes : List TopLevelExpose -> Doc
 prettyTopLevelExposes exposes =
-    List.map prettyTopLevelExpose exposes
-        |> Pretty.join (Pretty.string ",")
+    let
+        tleName tle =
+            case tle of
+                InfixExpose val ->
+                    val
+
+                FunctionExpose val ->
+                    val
+
+                TypeOrAliasExpose val ->
+                    val
+
+                TypeExpose exposedType ->
+                    exposedType.name
+    in
+    List.sortBy tleName exposes
+        |> List.map prettyTopLevelExpose
+        |> Pretty.join (Pretty.string ", ")
 
 
 prettyTopLevelExpose : TopLevelExpose -> Doc
