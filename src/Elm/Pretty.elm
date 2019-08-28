@@ -214,8 +214,9 @@ prettyDeclaration decl =
             , Pretty.string "="
             , prettyExpression (denode expr)
             ]
-                |> Pretty.lines
-                |> Pretty.group
+                -- |> Pretty.lines
+                -- |> Pretty.group
+                |> Pretty.words
 
 
 prettyFun : Function -> Doc
@@ -406,9 +407,10 @@ prettyExpression expression =
 
         Application exprs ->
             List.map prettyExpression (denodeAll exprs)
-                |> Pretty.lines
-                |> Pretty.group
-                |> Pretty.nest 4
+                -- |> Pretty.lines
+                -- |> Pretty.group
+                -- |> Pretty.nest 4
+                |> Pretty.words
 
         OperatorApplication symbol direction exprl exprr ->
             [ prettyExpression (denode exprl)
@@ -416,9 +418,10 @@ prettyExpression expression =
                 |> Pretty.a Pretty.space
                 |> Pretty.a (prettyExpression (denode exprr))
             ]
-                |> Pretty.lines
-                |> Pretty.group
-                |> Pretty.hang 4
+                -- |> Pretty.lines
+                -- |> Pretty.group
+                -- |> Pretty.hang 4
+                |> Pretty.words
 
         FunctionOrValue modl val ->
             prettyModuleNameDot modl
@@ -476,7 +479,7 @@ prettyExpression expression =
                 |> Pretty.a
                     (List.map prettyExpression (denodeAll exprs)
                         |> Pretty.join (Pretty.string ", ")
-                        |> Pretty.group
+                     --|> Pretty.group
                     )
                 |> Pretty.a Pretty.space
                 |> Pretty.parens
@@ -498,8 +501,9 @@ prettyExpression expression =
                 |> Pretty.a (Pretty.string "->")
             , prettyExpression (denode lambda.expression)
             ]
-                |> Pretty.lines
-                |> Pretty.group
+                -- |> Pretty.lines
+                -- |> Pretty.group
+                |> Pretty.words
 
         RecordExpr setters ->
             [ Pretty.string "{"
@@ -512,12 +516,14 @@ prettyExpression expression =
                         |> Pretty.join (Pretty.string ", ")
                 )
                 (denodeAll setters)
-                |> Pretty.lines
-                |> Pretty.group
+                -- |> Pretty.lines
+                -- |> Pretty.group
+                |> Pretty.words
             , Pretty.string "}"
             ]
-                |> Pretty.lines
-                |> Pretty.group
+                -- |> Pretty.lines
+                -- |> Pretty.group
+                |> Pretty.words
 
         ListExpr exprs ->
             case exprs of
@@ -528,10 +534,12 @@ prettyExpression expression =
                     Pretty.space
                         |> Pretty.a
                             (List.map prettyExpression (denodeAll exprs)
-                                |> Pretty.join (Pretty.a (Pretty.string ", ") Pretty.line)
-                                |> Pretty.group
+                                |> Pretty.join (Pretty.string ", ")
+                             -- |> Pretty.join (Pretty.a (Pretty.string ", ") Pretty.line)
+                             -- |> Pretty.group
                             )
-                        |> Pretty.a Pretty.line
+                        |> Pretty.a Pretty.space
+                        --|> Pretty.a Pretty.line
                         |> sqParens
 
         RecordAccess expr field ->
@@ -555,12 +563,14 @@ prettyExpression expression =
                         |> Pretty.join (Pretty.string ", ")
                 )
                 (denodeAll setters)
-                |> Pretty.lines
-                |> Pretty.group
+                -- |> Pretty.lines
+                -- |> Pretty.group
+                |> Pretty.words
             , Pretty.string "]"
             ]
-                |> Pretty.lines
-                |> Pretty.group
+                -- |> Pretty.lines
+                -- |> Pretty.group
+                |> Pretty.words
 
         GLSLExpression val ->
             Pretty.string "glsl"
@@ -587,10 +597,15 @@ prettyLetDeclaration letDecl =
         LetDestructuring pattern expr ->
             [ prettyPattern (denode pattern)
             , Pretty.string "="
-            , prettyExpression (denode expr)
             ]
-                |> Pretty.lines
-                |> Pretty.group
+                |> Pretty.words
+                |> Pretty.a Pretty.line
+                |> Pretty.a (prettyExpression (denode expr) |> Pretty.indent 4)
+
+
+
+-- |> Pretty.lines
+-- |> Pretty.group
 
 
 prettyCaseBlock : CaseBlock -> Doc
