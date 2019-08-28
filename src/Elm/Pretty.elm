@@ -584,8 +584,13 @@ prettyLetDeclaration letDecl =
         LetFunction fn ->
             prettyFun fn
 
-        _ ->
-            Pretty.string "letDestructuring"
+        LetDestructuring pattern expr ->
+            [ prettyPattern (denode pattern)
+            , Pretty.string "="
+            , prettyExpression (denode expr)
+            ]
+                |> Pretty.lines
+                |> Pretty.group
 
 
 prettyCaseBlock : CaseBlock -> Doc
