@@ -464,7 +464,7 @@ prettyExpression expression =
                 |> Pretty.a (prettyExpression (denode expr))
 
         Literal val ->
-            Pretty.string val
+            Pretty.string (escape val)
                 |> quotes
 
         CharLiteral val ->
@@ -705,3 +705,8 @@ sqParens doc =
 doubleLines : List Doc -> Doc
 doubleLines =
     Pretty.join (Pretty.a Pretty.line Pretty.line)
+
+
+escape : String -> String
+escape val =
+    String.replace "\\" "\\\\" val
