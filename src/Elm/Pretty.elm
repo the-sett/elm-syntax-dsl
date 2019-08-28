@@ -330,13 +330,11 @@ prettyPattern pattern =
             Pretty.string var
 
         NamedPattern qnRef listPats ->
-            prettyModuleNameDot qnRef.moduleName
+            (prettyModuleNameDot qnRef.moduleName
                 |> Pretty.a (Pretty.string qnRef.name)
-                |> Pretty.a Pretty.space
-                |> Pretty.a
-                    (List.map prettyPattern (denodeAll listPats)
-                        |> Pretty.words
-                    )
+            )
+                :: List.map prettyPattern (denodeAll listPats)
+                |> Pretty.words
 
         AsPattern pat name ->
             [ prettyPattern (denode pat)
