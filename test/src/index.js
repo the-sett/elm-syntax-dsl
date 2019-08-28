@@ -20,17 +20,12 @@ glob("examples/*.elm", function(er, files) {
 });
 
 app.ports.codeOutPort.subscribe(request => {
-  fs.writeFile('pre/' + request[0], request[1], (err) => {
+  var filename = request[0];
+  var contents = request[1];
+
+  fs.writeFile('pre/' + filename, contents, (err) => {
     if (err) throw err;
-  })
-});
-
-glob("pre/*.elm", function(er, files) {
-  files.forEach(function(file) {
-    fs.readFile(file, 'utf8', function(err, contents) {
-      var filename = path.basename(file);
-
-      exec('"elm-format" pre/' + filename + '  --output post/' + filename);
-    });
   });
+
+  exec('"elm-format" pre/' + filename + '  --output post/' + filename);
 });
