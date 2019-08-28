@@ -159,10 +159,9 @@ prettyDeclarations decls =
         (\decl ->
             prettyDeclaration decl
                 |> Pretty.a Pretty.line
-                |> Pretty.a Pretty.line
         )
         decls
-        |> Pretty.lines
+        |> Pretty.join (Pretty.a Pretty.line Pretty.line)
 
 
 prettyDeclaration : Declaration -> Doc
