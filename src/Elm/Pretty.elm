@@ -371,9 +371,14 @@ prettyPattern pattern =
                 |> Pretty.words
 
         ListPattern listPats ->
-            List.map prettyPattern (denodeAll listPats)
-                |> Pretty.join (Pretty.string ", ")
-                |> sqParens
+            case listPats of
+                [] ->
+                    Pretty.string "[]"
+
+                _ ->
+                    List.map prettyPattern (denodeAll listPats)
+                        |> Pretty.join (Pretty.string ", ")
+                        |> sqParens
 
         VarPattern var ->
             Pretty.string var
@@ -538,6 +543,7 @@ prettyExpression expression =
             Pretty.string "glsl"
 
 
+prettyOperatorApplication : String -> Node Expression -> Node Expression -> Doc
 prettyOperatorApplication symbol exprl exprr =
     let
         expandExpr expr =
@@ -566,15 +572,23 @@ prettyOperatorApplication symbol exprl exprr =
         |> Pretty.group
 
 
+prettyList : List (Node Expression) -> Doc
 prettyList exprs =
+    let
+        open =
+            Pretty.a Pretty.space (Pretty.string "[")
+
+        close =
+            Pretty.a (Pretty.string "]") Pretty.line
+    in
     case exprs of
         [] ->
             Pretty.string "[]"
 
         _ ->
             List.map prettyExpression (denodeAll exprs)
-                |> Pretty.lines
-                |> Pretty.group
+                |> Pretty.separators ", "
+                |> Pretty.surround open close
 
 
 prettyLetBlock : LetBlock -> Doc
@@ -715,7 +729,7 @@ singleQuotes doc =
 
 sqParens : Doc -> Doc
 sqParens doc =
-    Pretty.surround (Pretty.char '[') (Pretty.char ']') doc
+    Pretty.surround (Pretty.string "[") (Pretty.string "]") doc
 
 
 doubleLines : List Doc -> Doc
