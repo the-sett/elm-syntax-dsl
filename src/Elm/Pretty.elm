@@ -410,7 +410,8 @@ prettyExpression expression =
 
         Application exprs ->
             List.map prettyExpression (denodeAll exprs)
-                |> Pretty.words
+                |> Pretty.lines
+                |> Pretty.group
 
         OperatorApplication symbol _ exprl exprr ->
             prettyOperatorApplication symbol exprl exprr
@@ -589,6 +590,7 @@ prettyList exprs =
             List.map prettyExpression (denodeAll exprs)
                 |> Pretty.separators ", "
                 |> Pretty.surround open close
+                |> Pretty.group
 
 
 prettyLetBlock : LetBlock -> Doc
