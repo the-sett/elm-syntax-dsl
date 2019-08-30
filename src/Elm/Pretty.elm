@@ -407,13 +407,8 @@ prettyExpression expression =
             List.map prettyExpression (denodeAll exprs)
                 |> Pretty.words
 
-        OperatorApplication symbol direction exprl exprr ->
-            [ prettyExpression (denode exprl)
-            , Pretty.string symbol
-                |> Pretty.a Pretty.space
-                |> Pretty.a (prettyExpression (denode exprr))
-            ]
-                |> Pretty.words
+        OperatorApplication symbol _ exprl exprr ->
+            prettyOperatorApplication symbol exprl exprr
 
         FunctionOrValue modl val ->
             prettyModuleNameDot modl
@@ -511,18 +506,7 @@ prettyExpression expression =
                 |> Pretty.words
 
         ListExpr exprs ->
-            case exprs of
-                [] ->
-                    Pretty.string "[]"
-
-                _ ->
-                    Pretty.space
-                        |> Pretty.a
-                            (List.map prettyExpression (denodeAll exprs)
-                                |> Pretty.join (Pretty.string ", ")
-                            )
-                        |> Pretty.a Pretty.space
-                        |> sqParens
+            prettyList exprs
 
         RecordAccess expr field ->
             prettyExpression (denode expr)
@@ -552,6 +536,45 @@ prettyExpression expression =
 
         GLSLExpression val ->
             Pretty.string "glsl"
+
+
+prettyOperatorApplication symbol exprl exprr =
+    let
+        expandExpr expr =
+            case expr of
+                OperatorApplication sym _ left right ->
+                    innerOpApply sym left right
+
+                _ ->
+                    [ prettyExpression expr ]
+
+        innerOpApply sym left right =
+            let
+                rightSide =
+                    denode right |> expandExpr
+            in
+            case rightSide of
+                hd :: tl ->
+                    List.append (denode left |> expandExpr)
+                        ((Pretty.string symbol |> Pretty.a Pretty.space |> Pretty.a hd) :: tl)
+
+                [] ->
+                    []
+    in
+    innerOpApply symbol exprl exprr
+        |> Pretty.lines
+        |> Pretty.group
+
+
+prettyList exprs =
+    case exprs of
+        [] ->
+            Pretty.string "[]"
+
+        _ ->
+            List.map prettyExpression (denodeAll exprs)
+                |> Pretty.lines
+                |> Pretty.group
 
 
 prettyLetBlock : LetBlock -> Doc
