@@ -237,7 +237,7 @@ prettyTypeAlias tAlias =
         |> Pretty.words
         |> Pretty.a Pretty.line
         |> Pretty.a (prettyTypeAnnotation (denode tAlias.typeAnnotation))
-        |> Pretty.hang 4
+        |> Pretty.nest 4
 
 
 prettyCustomType : Type -> Doc
@@ -251,7 +251,7 @@ prettyCustomType type_ =
         |> Pretty.a Pretty.line
         |> Pretty.a (Pretty.string "= ")
         |> Pretty.a (prettyValueConstructors (denodeAll type_.constructors))
-        |> Pretty.hang 4
+        |> Pretty.nest 4
 
 
 prettyValueConstructors : List ValueConstructor -> Doc
@@ -316,7 +316,7 @@ prettyFunctionImplementation impl =
         ]
         |> Pretty.a Pretty.line
         |> Pretty.a (prettyExpression (denode impl.expression))
-        |> Pretty.hang 4
+        |> Pretty.nest 4
 
 
 prettyArgs : List Pattern -> Doc
@@ -429,7 +429,7 @@ prettyExpression expression =
             , prettyExpression (denode exprTrue)
             ]
                 |> Pretty.lines
-                |> Pretty.hang 4
+                |> Pretty.nest 4
                 |> Pretty.a Pretty.line
                 |> Pretty.a Pretty.line
                 |> Pretty.a
@@ -437,7 +437,7 @@ prettyExpression expression =
                      , prettyExpression (denode exprFalse)
                      ]
                         |> Pretty.lines
-                        |> Pretty.hang 4
+                        |> Pretty.nest 4
                     )
 
         PrefixOperator symbol ->
@@ -571,6 +571,7 @@ prettyOperatorApplication symbol exprl exprr =
     innerOpApply symbol exprl exprr
         |> Pretty.lines
         |> Pretty.group
+        |> Pretty.nest 4
 
 
 prettyList : List (Node Expression) -> Doc
