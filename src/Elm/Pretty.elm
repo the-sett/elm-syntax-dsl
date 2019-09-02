@@ -335,7 +335,8 @@ prettyPattern pattern =
             Pretty.string "()"
 
         CharPattern val ->
-            Pretty.string (String.fromChar val)
+            Pretty.string (escapeChar val)
+                |> singleQuotes
 
         StringPattern val ->
             Pretty.string val
