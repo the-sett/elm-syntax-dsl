@@ -608,13 +608,16 @@ prettyCaseBlock caseBlock =
 
 prettyLambdaExpression : Lambda -> Doc
 prettyLambdaExpression lambda =
-    [ Pretty.string "\\"
-        |> Pretty.a (Pretty.string "args")
-        |> Pretty.a Pretty.space
-        |> Pretty.a (Pretty.string "->")
+    [ [ Pretty.string "\\"
+            |> Pretty.a (Pretty.string "args")
+      , Pretty.string "->"
+      ]
+        |> Pretty.words
     , prettyExpression (denode lambda.expression)
     ]
-        |> Pretty.words
+        |> Pretty.lines
+        |> Pretty.group
+        |> Pretty.nest 4
 
 
 prettyRecordExpr : List (Node RecordSetter) -> Doc
