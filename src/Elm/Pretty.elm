@@ -409,10 +409,7 @@ prettyExpression expression =
             Pretty.string "()"
 
         Application exprs ->
-            List.map prettyExpression (denodeAll exprs)
-                |> Pretty.lines
-                |> Pretty.group
-                |> Pretty.nest 4
+            prettyApplication exprs
 
         OperatorApplication symbol _ exprl exprr ->
             prettyOperatorApplication symbol exprl exprr
@@ -422,24 +419,7 @@ prettyExpression expression =
                 |> Pretty.a (Pretty.string val)
 
         IfBlock exprBool exprTrue exprFalse ->
-            [ [ Pretty.string "if"
-              , prettyExpression (denode exprBool)
-              , Pretty.string "then"
-              ]
-                |> Pretty.words
-            , prettyExpression (denode exprTrue)
-            ]
-                |> Pretty.lines
-                |> Pretty.nest 4
-                |> Pretty.a Pretty.line
-                |> Pretty.a Pretty.line
-                |> Pretty.a
-                    ([ Pretty.string "else"
-                     , prettyExpression (denode exprFalse)
-                     ]
-                        |> Pretty.lines
-                        |> Pretty.nest 4
-                    )
+            prettyIfBlock exprBool exprTrue exprFalse
 
         PrefixOperator symbol ->
             Pretty.string symbol
@@ -469,13 +449,7 @@ prettyExpression expression =
                 |> singleQuotes
 
         TupledExpression exprs ->
-            Pretty.space
-                |> Pretty.a
-                    (List.map prettyExpression (denodeAll exprs)
-                        |> Pretty.join (Pretty.string ", ")
-                    )
-                |> Pretty.a Pretty.space
-                |> Pretty.parens
+            prettyTupledExpression exprs
 
         ParenthesizedExpression expr ->
             prettyExpression (denode expr)
@@ -488,29 +462,10 @@ prettyExpression expression =
             prettyCaseBlock caseBlock
 
         LambdaExpression lambda ->
-            [ Pretty.string "\\"
-                |> Pretty.a (Pretty.string "args")
-                |> Pretty.a Pretty.space
-                |> Pretty.a (Pretty.string "->")
-            , prettyExpression (denode lambda.expression)
-            ]
-                |> Pretty.words
+            prettyLambdaExpression lambda
 
         RecordExpr setters ->
-            [ Pretty.string "{"
-            , List.map
-                (\( fld, val ) ->
-                    [ Pretty.string (denode fld)
-                    , Pretty.string "="
-                    , prettyExpression (denode val)
-                    ]
-                        |> Pretty.join (Pretty.string ", ")
-                )
-                (denodeAll setters)
-                |> Pretty.words
-            , Pretty.string "}"
-            ]
-                |> Pretty.words
+            prettyRecordExpr setters
 
         ListExpr exprs ->
             prettyList exprs
@@ -524,25 +479,38 @@ prettyExpression expression =
             Pretty.a (Pretty.string field) dot
 
         RecordUpdateExpression var setters ->
-            [ Pretty.string "["
-            , Pretty.string (denode var)
-            , Pretty.string "|"
-            , List.map
-                (\( fld, val ) ->
-                    [ Pretty.string (denode fld)
-                    , Pretty.string "="
-                    , prettyExpression (denode val)
-                    ]
-                        |> Pretty.join (Pretty.string ", ")
-                )
-                (denodeAll setters)
-                |> Pretty.words
-            , Pretty.string "]"
-            ]
-                |> Pretty.words
+            prettyRecordUpdateExpression var setters
 
         GLSLExpression val ->
             Pretty.string "glsl"
+
+
+prettyApplication exprs =
+    List.map prettyExpression (denodeAll exprs)
+        |> Pretty.lines
+        |> Pretty.group
+        |> Pretty.nest 4
+
+
+prettyIfBlock exprBool exprTrue exprFalse =
+    [ [ Pretty.string "if"
+      , prettyExpression (denode exprBool)
+      , Pretty.string "then"
+      ]
+        |> Pretty.words
+    , prettyExpression (denode exprTrue)
+    ]
+        |> Pretty.lines
+        |> Pretty.nest 4
+        |> Pretty.a Pretty.line
+        |> Pretty.a Pretty.line
+        |> Pretty.a
+            ([ Pretty.string "else"
+             , prettyExpression (denode exprFalse)
+             ]
+                |> Pretty.lines
+                |> Pretty.nest 4
+            )
 
 
 prettyOperatorApplication : String -> Node Expression -> Node Expression -> Doc
@@ -575,6 +543,43 @@ prettyOperatorApplication symbol exprl exprr =
         |> Pretty.nest 4
 
 
+prettyTupledExpression exprs =
+    Pretty.space
+        |> Pretty.a
+            (List.map prettyExpression (denodeAll exprs)
+                |> Pretty.join (Pretty.string ", ")
+            )
+        |> Pretty.a Pretty.space
+        |> Pretty.parens
+
+
+prettyLambdaExpression lambda =
+    [ Pretty.string "\\"
+        |> Pretty.a (Pretty.string "args")
+        |> Pretty.a Pretty.space
+        |> Pretty.a (Pretty.string "->")
+    , prettyExpression (denode lambda.expression)
+    ]
+        |> Pretty.words
+
+
+prettyRecordExpr setters =
+    [ Pretty.string "{"
+    , List.map
+        (\( fld, val ) ->
+            [ Pretty.string (denode fld)
+            , Pretty.string "="
+            , prettyExpression (denode val)
+            ]
+                |> Pretty.join (Pretty.string ", ")
+        )
+        (denodeAll setters)
+        |> Pretty.words
+    , Pretty.string "}"
+    ]
+        |> Pretty.words
+
+
 prettyList : List (Node Expression) -> Doc
 prettyList exprs =
     let
@@ -593,6 +598,25 @@ prettyList exprs =
                 |> Pretty.separators ", "
                 |> Pretty.surround open close
                 |> Pretty.group
+
+
+prettyRecordUpdateExpression var setters =
+    [ Pretty.string "["
+    , Pretty.string (denode var)
+    , Pretty.string "|"
+    , List.map
+        (\( fld, val ) ->
+            [ Pretty.string (denode fld)
+            , Pretty.string "="
+            , prettyExpression (denode val)
+            ]
+                |> Pretty.join (Pretty.string ", ")
+        )
+        (denodeAll setters)
+        |> Pretty.words
+    , Pretty.string "]"
+    ]
+        |> Pretty.words
 
 
 prettyLetBlock : LetBlock -> Doc
