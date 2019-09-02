@@ -452,8 +452,7 @@ prettyExpression expression =
             prettyTupledExpression exprs
 
         ParenthesizedExpression expr ->
-            prettyExpression (denode expr)
-                |> Pretty.parens
+            prettyParenthesizedExpression expr
 
         LetExpression letBlock ->
             prettyLetBlock letBlock
@@ -518,9 +517,8 @@ prettyOperatorApplication symbol exprl exprr =
                     []
     in
     innerOpApply symbol exprl exprr
-        |> Pretty.lines
+        |> Pretty.join (Pretty.nest 4 Pretty.line)
         |> Pretty.group
-        |> Pretty.nest 4
 
 
 prettyIfBlock : Node Expression -> Node Expression -> Node Expression -> Doc
@@ -554,6 +552,20 @@ prettyTupledExpression exprs =
             )
         |> Pretty.a Pretty.space
         |> Pretty.parens
+
+
+prettyParenthesizedExpression : Node Expression -> Doc
+prettyParenthesizedExpression expr =
+    let
+        open =
+            Pretty.string "("
+
+        close =
+            Pretty.a (Pretty.string ")") Pretty.tightline
+    in
+    prettyExpression (denode expr)
+        |> Pretty.surround open close
+        |> Pretty.group
 
 
 prettyLetBlock : LetBlock -> Doc
