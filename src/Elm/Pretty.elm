@@ -412,6 +412,7 @@ prettyExpression expression =
             List.map prettyExpression (denodeAll exprs)
                 |> Pretty.lines
                 |> Pretty.group
+                |> Pretty.nest 4
 
         OperatorApplication symbol _ exprl exprr ->
             prettyOperatorApplication symbol exprl exprr
