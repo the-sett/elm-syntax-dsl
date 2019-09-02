@@ -485,32 +485,12 @@ prettyExpression expression =
             Pretty.string "glsl"
 
 
+prettyApplication : List (Node Expression) -> Doc
 prettyApplication exprs =
     List.map prettyExpression (denodeAll exprs)
         |> Pretty.lines
         |> Pretty.group
         |> Pretty.nest 4
-
-
-prettyIfBlock exprBool exprTrue exprFalse =
-    [ [ Pretty.string "if"
-      , prettyExpression (denode exprBool)
-      , Pretty.string "then"
-      ]
-        |> Pretty.words
-    , prettyExpression (denode exprTrue)
-    ]
-        |> Pretty.lines
-        |> Pretty.nest 4
-        |> Pretty.a Pretty.line
-        |> Pretty.a Pretty.line
-        |> Pretty.a
-            ([ Pretty.string "else"
-             , prettyExpression (denode exprFalse)
-             ]
-                |> Pretty.lines
-                |> Pretty.nest 4
-            )
 
 
 prettyOperatorApplication : String -> Node Expression -> Node Expression -> Doc
@@ -543,6 +523,29 @@ prettyOperatorApplication symbol exprl exprr =
         |> Pretty.nest 4
 
 
+prettyIfBlock : Node Expression -> Node Expression -> Node Expression -> Doc
+prettyIfBlock exprBool exprTrue exprFalse =
+    [ [ Pretty.string "if"
+      , prettyExpression (denode exprBool)
+      , Pretty.string "then"
+      ]
+        |> Pretty.words
+    , prettyExpression (denode exprTrue)
+    ]
+        |> Pretty.lines
+        |> Pretty.nest 4
+        |> Pretty.a Pretty.line
+        |> Pretty.a Pretty.line
+        |> Pretty.a
+            ([ Pretty.string "else"
+             , prettyExpression (denode exprFalse)
+             ]
+                |> Pretty.lines
+                |> Pretty.nest 4
+            )
+
+
+prettyTupledExpression : List (Node Expression) -> Doc
 prettyTupledExpression exprs =
     Pretty.space
         |> Pretty.a
@@ -551,72 +554,6 @@ prettyTupledExpression exprs =
             )
         |> Pretty.a Pretty.space
         |> Pretty.parens
-
-
-prettyLambdaExpression lambda =
-    [ Pretty.string "\\"
-        |> Pretty.a (Pretty.string "args")
-        |> Pretty.a Pretty.space
-        |> Pretty.a (Pretty.string "->")
-    , prettyExpression (denode lambda.expression)
-    ]
-        |> Pretty.words
-
-
-prettyRecordExpr setters =
-    [ Pretty.string "{"
-    , List.map
-        (\( fld, val ) ->
-            [ Pretty.string (denode fld)
-            , Pretty.string "="
-            , prettyExpression (denode val)
-            ]
-                |> Pretty.join (Pretty.string ", ")
-        )
-        (denodeAll setters)
-        |> Pretty.words
-    , Pretty.string "}"
-    ]
-        |> Pretty.words
-
-
-prettyList : List (Node Expression) -> Doc
-prettyList exprs =
-    let
-        open =
-            Pretty.a Pretty.space (Pretty.string "[")
-
-        close =
-            Pretty.a (Pretty.string "]") Pretty.line
-    in
-    case exprs of
-        [] ->
-            Pretty.string "[]"
-
-        _ ->
-            List.map prettyExpression (denodeAll exprs)
-                |> Pretty.separators ", "
-                |> Pretty.surround open close
-                |> Pretty.group
-
-
-prettyRecordUpdateExpression var setters =
-    [ Pretty.string "["
-    , Pretty.string (denode var)
-    , Pretty.string "|"
-    , List.map
-        (\( fld, val ) ->
-            [ Pretty.string (denode fld)
-            , Pretty.string "="
-            , prettyExpression (denode val)
-            ]
-                |> Pretty.join (Pretty.string ", ")
-        )
-        (denodeAll setters)
-        |> Pretty.words
-    , Pretty.string "]"
-    ]
-        |> Pretty.words
 
 
 prettyLetBlock : LetBlock -> Doc
@@ -667,6 +604,75 @@ prettyCaseBlock caseBlock =
                 caseBlock.cases
                 |> doubleLines
             )
+
+
+prettyLambdaExpression : Lambda -> Doc
+prettyLambdaExpression lambda =
+    [ Pretty.string "\\"
+        |> Pretty.a (Pretty.string "args")
+        |> Pretty.a Pretty.space
+        |> Pretty.a (Pretty.string "->")
+    , prettyExpression (denode lambda.expression)
+    ]
+        |> Pretty.words
+
+
+prettyRecordExpr : List (Node RecordSetter) -> Doc
+prettyRecordExpr setters =
+    [ Pretty.string "{"
+    , List.map
+        (\( fld, val ) ->
+            [ Pretty.string (denode fld)
+            , Pretty.string "="
+            , prettyExpression (denode val)
+            ]
+                |> Pretty.join (Pretty.string ", ")
+        )
+        (denodeAll setters)
+        |> Pretty.words
+    , Pretty.string "}"
+    ]
+        |> Pretty.words
+
+
+prettyList : List (Node Expression) -> Doc
+prettyList exprs =
+    let
+        open =
+            Pretty.a Pretty.space (Pretty.string "[")
+
+        close =
+            Pretty.a (Pretty.string "]") Pretty.line
+    in
+    case exprs of
+        [] ->
+            Pretty.string "[]"
+
+        _ ->
+            List.map prettyExpression (denodeAll exprs)
+                |> Pretty.separators ", "
+                |> Pretty.surround open close
+                |> Pretty.group
+
+
+prettyRecordUpdateExpression : Node String -> List (Node RecordSetter) -> Doc
+prettyRecordUpdateExpression var setters =
+    [ Pretty.string "["
+    , Pretty.string (denode var)
+    , Pretty.string "|"
+    , List.map
+        (\( fld, val ) ->
+            [ Pretty.string (denode fld)
+            , Pretty.string "="
+            , prettyExpression (denode val)
+            ]
+                |> Pretty.join (Pretty.string ", ")
+        )
+        (denodeAll setters)
+        |> Pretty.words
+    , Pretty.string "]"
+    ]
+        |> Pretty.words
 
 
 prettyTypeAnnotation : TypeAnnotation -> Doc
