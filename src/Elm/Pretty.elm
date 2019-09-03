@@ -798,24 +798,53 @@ prettyRecordAccess expr field =
 
 prettyRecordUpdateExpression : Node String -> List (Node RecordSetter) -> ( Doc, Bool )
 prettyRecordUpdateExpression var setters =
-    ( [ Pretty.string "["
-      , Pretty.string (denode var)
-      , Pretty.string "|"
-      , List.map
-            (\( fld, val ) ->
-                [ Pretty.string (denode fld)
+    let
+        open =
+            Pretty.string "{"
+                |> Pretty.a Pretty.space
+                |> Pretty.a (Pretty.string (denode var))
+                |> Pretty.a (Pretty.string "|")
+                |> Pretty.a Pretty.space
+
+        close =
+            Pretty.a (Pretty.string "}")
+                Pretty.line
+
+        prettySetter : ( Node String, Node Expression ) -> ( Doc, Bool )
+        prettySetter ( fld, val ) =
+            let
+                ( prettyExpr, alwaysBreak ) =
+                    prettyExpressionInner (denode val)
+            in
+            ( [ [ Pretty.string (denode fld)
                 , Pretty.string "="
-                , prettyExpressionInner (denode val) |> Tuple.first
                 ]
-                    |> Pretty.join (Pretty.string ", ")
+                    |> Pretty.words
+              , prettyExpr
+              ]
+                |> Pretty.lines
+                |> optionalGroup alwaysBreak
+                |> Pretty.nest 4
+            , alwaysBreak
             )
-            (denodeAll setters)
-            |> Pretty.words
-      , Pretty.string "]"
-      ]
-        |> Pretty.words
-    , False
-    )
+    in
+    case setters of
+        [] ->
+            ( Pretty.string "{}", False )
+
+        _ ->
+            let
+                ( prettyExpressions, alwaysBreak ) =
+                    List.map prettySetter (denodeAll setters)
+                        |> List.unzip
+                        |> Tuple.mapSecond Bool.Extra.any
+            in
+            ( prettyExpressions
+                |> Pretty.separators ", "
+                |> Pretty.surround open close
+                |> optionalGroup alwaysBreak
+            , alwaysBreak
+            )
 
 
 prettyTypeAnnotation : TypeAnnotation -> Doc
