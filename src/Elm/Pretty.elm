@@ -405,6 +405,11 @@ prettyPattern pattern =
 
 prettyExpression : Expression -> Doc
 prettyExpression expression =
+    prettyExpressionInner expression
+
+
+prettyExpressionInner : Expression -> Doc
+prettyExpressionInner expression =
     case expression of
         UnitExpr ->
             Pretty.string "()"
@@ -439,7 +444,7 @@ prettyExpression expression =
 
         Negation expr ->
             Pretty.string "-"
-                |> Pretty.a (prettyExpression (denode expr))
+                |> Pretty.a (prettyExpressionInner (denode expr))
 
         Literal val ->
             Pretty.string (escape val)
@@ -471,7 +476,7 @@ prettyExpression expression =
             prettyList exprs
 
         RecordAccess expr field ->
-            prettyExpression (denode expr)
+            prettyExpressionInner (denode expr)
                 |> Pretty.a dot
                 |> Pretty.a (Pretty.string (denode field))
 
@@ -487,7 +492,7 @@ prettyExpression expression =
 
 prettyApplication : List (Node Expression) -> Doc
 prettyApplication exprs =
-    List.map prettyExpression (denodeAll exprs)
+    List.map prettyExpressionInner (denodeAll exprs)
         |> Pretty.lines
         |> Pretty.group
         |> Pretty.nest 4
@@ -502,7 +507,7 @@ prettyOperatorApplication symbol exprl exprr =
                     innerOpApply sym left right
 
                 _ ->
-                    [ prettyExpression expr ]
+                    [ prettyExpressionInner expr ]
 
         innerOpApply sym left right =
             let
@@ -525,11 +530,11 @@ prettyOperatorApplication symbol exprl exprr =
 prettyIfBlock : Node Expression -> Node Expression -> Node Expression -> Doc
 prettyIfBlock exprBool exprTrue exprFalse =
     [ [ Pretty.string "if"
-      , prettyExpression (denode exprBool)
+      , prettyExpressionInner (denode exprBool)
       , Pretty.string "then"
       ]
         |> Pretty.words
-    , prettyExpression (denode exprTrue)
+    , prettyExpressionInner (denode exprTrue)
     ]
         |> Pretty.lines
         |> Pretty.nest 4
@@ -537,7 +542,7 @@ prettyIfBlock exprBool exprTrue exprFalse =
         |> Pretty.a Pretty.line
         |> Pretty.a
             ([ Pretty.string "else"
-             , prettyExpression (denode exprFalse)
+             , prettyExpressionInner (denode exprFalse)
              ]
                 |> Pretty.lines
                 |> Pretty.nest 4
@@ -548,7 +553,7 @@ prettyTupledExpression : List (Node Expression) -> Doc
 prettyTupledExpression exprs =
     Pretty.space
         |> Pretty.a
-            (List.map prettyExpression (denodeAll exprs)
+            (List.map prettyExpressionInner (denodeAll exprs)
                 |> Pretty.join (Pretty.string ", ")
             )
         |> Pretty.a Pretty.space
@@ -564,7 +569,7 @@ prettyParenthesizedExpression expr =
         close =
             Pretty.a (Pretty.string ")") Pretty.tightline
     in
-    prettyExpression (denode expr)
+    prettyExpressionInner (denode expr)
         |> Pretty.surround open close
         |> Pretty.group
 
@@ -576,7 +581,7 @@ prettyLetBlock letBlock =
         |> doubleLines
         |> Pretty.indent 4
     , Pretty.string "in"
-    , prettyExpression (denode letBlock.expression)
+    , prettyExpressionInner (denode letBlock.expression)
     ]
         |> Pretty.lines
 
@@ -593,13 +598,13 @@ prettyLetDeclaration letDecl =
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
-                |> Pretty.a (prettyExpression (denode expr) |> Pretty.indent 4)
+                |> Pretty.a (prettyExpressionInner (denode expr) |> Pretty.indent 4)
 
 
 prettyCaseBlock : CaseBlock -> Doc
 prettyCaseBlock caseBlock =
     ([ Pretty.string "case"
-     , prettyExpression (denode caseBlock.expression)
+     , prettyExpressionInner (denode caseBlock.expression)
      , Pretty.string "of"
      ]
         |> Pretty.words
@@ -611,7 +616,7 @@ prettyCaseBlock caseBlock =
                     prettyPattern (denode pattern)
                         |> Pretty.a (Pretty.string " ->")
                         |> Pretty.a Pretty.line
-                        |> Pretty.a (prettyExpression (denode expr) |> Pretty.indent 4)
+                        |> Pretty.a (prettyExpressionInner (denode expr) |> Pretty.indent 4)
                         |> Pretty.indent 4
                 )
                 caseBlock.cases
@@ -626,7 +631,7 @@ prettyLambdaExpression lambda =
       , Pretty.string "->"
       ]
         |> Pretty.words
-    , prettyExpression (denode lambda.expression)
+    , prettyExpressionInner (denode lambda.expression)
     ]
         |> Pretty.lines
         |> Pretty.group
@@ -640,7 +645,7 @@ prettyRecordExpr setters =
         (\( fld, val ) ->
             [ Pretty.string (denode fld)
             , Pretty.string "="
-            , prettyExpression (denode val)
+            , prettyExpressionInner (denode val)
             ]
                 |> Pretty.join (Pretty.string ", ")
         )
@@ -665,7 +670,7 @@ prettyList exprs =
             Pretty.string "[]"
 
         _ ->
-            List.map prettyExpression (denodeAll exprs)
+            List.map prettyExpressionInner (denodeAll exprs)
                 |> Pretty.separators ", "
                 |> Pretty.surround open close
                 |> Pretty.group
@@ -680,7 +685,7 @@ prettyRecordUpdateExpression var setters =
         (\( fld, val ) ->
             [ Pretty.string (denode fld)
             , Pretty.string "="
-            , prettyExpression (denode val)
+            , prettyExpressionInner (denode val)
             ]
                 |> Pretty.join (Pretty.string ", ")
         )
