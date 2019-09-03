@@ -822,6 +822,7 @@ prettyRecordUpdateExpression var setters =
             Pretty.string "{"
                 |> Pretty.a Pretty.space
                 |> Pretty.a (Pretty.string (denode var))
+                |> Pretty.a Pretty.space
                 |> Pretty.a (Pretty.string "|")
                 |> Pretty.a Pretty.space
 
