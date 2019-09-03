@@ -31,15 +31,11 @@ Broken stuff:
 
 Known deviations from `elm-format`:
 
-* Not sorting imports.
 * Not removing brackets that are not necessary.
-* Missing space before | in record update.
-* Missing spaces in record pattern matches.
 * <| At start instead of end of line.
 * If-else statement inside brackets needs an extra space before else.
 * No brackets around expressions being consed.
 * Else-if is split instead of carrying on at the same indent level.
-* Tupled expression not breaking all when one child expression breaks.
 * If-else not always aligned when nested inside something else.
 * Function application args not indended when nested inside operator application.
 * | not breaking when record update expressions break.

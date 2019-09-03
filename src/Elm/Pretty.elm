@@ -619,20 +619,29 @@ prettyIfBlock exprBool exprTrue exprFalse =
 prettyTupledExpression : List (Node Expression) -> ( Doc, Bool )
 prettyTupledExpression exprs =
     let
-        ( prettyExpressions, alwaysBreak ) =
-            List.map prettyExpressionInner (denodeAll exprs)
-                |> List.unzip
-                |> Tuple.mapSecond Bool.Extra.any
+        open =
+            Pretty.a Pretty.space (Pretty.string "(")
+
+        close =
+            Pretty.a (Pretty.string ")") Pretty.line
     in
-    ( Pretty.space
-        |> Pretty.a
-            (prettyExpressions
-                |> Pretty.join (Pretty.string ", ")
+    case exprs of
+        [] ->
+            ( Pretty.string "()", False )
+
+        _ ->
+            let
+                ( prettyExpressions, alwaysBreak ) =
+                    List.map prettyExpressionInner (denodeAll exprs)
+                        |> List.unzip
+                        |> Tuple.mapSecond Bool.Extra.any
+            in
+            ( prettyExpressions
+                |> Pretty.separators ", "
+                |> Pretty.surround open close
+                |> optionalGroup alwaysBreak
+            , alwaysBreak
             )
-        |> Pretty.a Pretty.space
-        |> Pretty.parens
-    , alwaysBreak
-    )
 
 
 prettyParenthesizedExpression : Node Expression -> ( Doc, Bool )
