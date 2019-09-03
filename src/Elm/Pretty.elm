@@ -382,6 +382,7 @@ prettyPattern pattern =
         RecordPattern fields ->
             List.map Pretty.string (denodeAll fields)
                 |> Pretty.join (Pretty.string ", ")
+                |> Pretty.surround Pretty.space Pretty.space
                 |> Pretty.braces
 
         UnConsPattern hdPat tlPat ->
