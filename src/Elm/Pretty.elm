@@ -119,7 +119,12 @@ prettyComments comments =
 
 prettyImports : List Import -> Doc
 prettyImports imports =
-    List.map prettyImport imports
+    let
+        impName imp =
+            denode imp.moduleName
+    in
+    List.sortBy impName imports
+        |> List.map prettyImport
         |> Pretty.lines
 
 
