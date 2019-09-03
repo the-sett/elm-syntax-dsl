@@ -25,7 +25,7 @@ app.ports.codeOutPort.subscribe(request => {
 
   fs.writeFile('pre/' + filename, contents, (err) => {
     if (err) throw err;
-  });
 
-  exec('"elm-format" pre/' + filename + '  --output post/' + filename);
+    exec('"elm-format" pre/' + filename + '  --output post/' + filename);
+  });
 });
