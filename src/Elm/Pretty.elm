@@ -710,22 +710,49 @@ prettyLambdaExpression lambda =
 
 prettyRecordExpr : List (Node RecordSetter) -> ( Doc, Bool )
 prettyRecordExpr setters =
-    ( [ Pretty.string "{"
-      , List.map
-            (\( fld, val ) ->
-                [ Pretty.string (denode fld)
+    let
+        open =
+            Pretty.a Pretty.space (Pretty.string "{")
+
+        close =
+            Pretty.a (Pretty.string "}")
+                Pretty.line
+
+        prettySetter : ( Node String, Node Expression ) -> ( Doc, Bool )
+        prettySetter ( fld, val ) =
+            let
+                ( prettyExpr, alwaysBreak ) =
+                    prettyExpressionInner (denode val)
+            in
+            ( [ [ Pretty.string (denode fld)
                 , Pretty.string "="
-                , prettyExpressionInner (denode val) |> Tuple.first
                 ]
-                    |> Pretty.join (Pretty.string ", ")
+                    |> Pretty.words
+              , prettyExpr
+              ]
+                |> Pretty.lines
+                |> optionalGroup alwaysBreak
+                |> Pretty.nest 4
+            , alwaysBreak
             )
-            (denodeAll setters)
-            |> Pretty.words
-      , Pretty.string "}"
-      ]
-        |> Pretty.words
-    , False
-    )
+    in
+    case setters of
+        [] ->
+            ( Pretty.string "{}", False )
+
+        _ ->
+            let
+                ( prettyExpressions, alwaysBreak ) =
+                    List.map prettySetter (denodeAll setters)
+                        |> List.unzip
+                        |> Tuple.mapSecond Bool.Extra.any
+            in
+            ( prettyExpressions
+                |> Pretty.separators ", "
+                |> Pretty.surround open close
+                |> optionalGroup alwaysBreak
+            , alwaysBreak
+            )
 
 
 prettyList : List (Node Expression) -> ( Doc, Bool )
