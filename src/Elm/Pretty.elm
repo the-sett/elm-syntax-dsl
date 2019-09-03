@@ -1,5 +1,17 @@
 module Elm.Pretty exposing (pretty)
 
+{-| Elm.Pretty is a pretty printer for Elm syntax trees. It makes use of
+`the-sett/elm-pretty-printer` to best fit the code to a given character width.
+
+It aims to output code that is fully stable with respect to `elm-format` in the
+sense that running `elm-format` on the output should have no effect at all. The
+advantage of this is that if generated code moves to being edited by hand, there
+will not be a large white-space only diff created when `elm-format` is applied.
+
+@docs pretty
+
+-}
+
 import Bool.Extra
 import Elm.Syntax.Comments exposing (Comment)
 import Elm.Syntax.Declaration exposing (Declaration(..))
@@ -21,6 +33,8 @@ import Elm.Syntax.TypeAnnotation exposing (RecordDefinition, RecordField, TypeAn
 import Pretty exposing (Doc)
 
 
+{-| Pretty prints a file of Elm code.
+-}
 pretty : File -> Doc
 pretty file =
     prettyModule (denode file.moduleDefinition)
