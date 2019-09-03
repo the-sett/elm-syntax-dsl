@@ -20,3 +20,10 @@ The pretty printer aims to be fully stable with respect to `elm-format` in the s
 running `elm-format` on the output should have no effect at all. The advantage of this is
 that if generated code moves to being edited by hand, there will not be a large white-space
 only diff created when `elm-format` is applied.
+
+Known deviations from `elm-format`:
+
+* Not printing port signatures.
+* Escaping in Strings has some issues (" and \n, others?)
+* Needs brackets in signatures around functions.
+* Needs brackets in signatures around nested type arguments that have arguments - List (Maybe String)
