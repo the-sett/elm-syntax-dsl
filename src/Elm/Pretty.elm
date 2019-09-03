@@ -507,7 +507,7 @@ prettyExpressionInner expression =
             prettyRecordAccess expr field
 
         RecordAccessFunction field ->
-            ( Pretty.a (Pretty.string field) dot
+            ( Pretty.string field
             , False
             )
 
