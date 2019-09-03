@@ -436,7 +436,7 @@ prettyExpressionInner expression =
             )
 
         PrefixOperator symbol ->
-            ( Pretty.string symbol
+            ( Pretty.string symbol |> Pretty.parens
             , False
             )
 
