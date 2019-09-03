@@ -14,7 +14,7 @@ zeroed out source code position information. As the purpose of this package is c
 of Elm from scratch, rather than the analysis or manipulation of existing Elm, it is ok to
 have the source code positional information zeroed out.
 
-## Pretty printed results stable under `elm-format`.
+## Pretty printing stable under `elm-format`.
 
 The pretty printer aims to be fully stable with respect to `elm-format` in the sense that
 running `elm-format` on the output should have no effect at all. The advantage of this is
@@ -27,6 +27,7 @@ Broken stuff:
 * Escaping in Strings has some issues (" and \n, others?)
 * Needs brackets in signatures around functions.
 * Needs brackets in signatures around nested type arguments that have arguments - List (Maybe String)
+* End-line comments are deleted (as not suported well by `elm-syntax`).
 
 Known deviations from `elm-format`:
 
