@@ -68,7 +68,11 @@ update msg model =
             in
             case elmAstResult of
                 Err _ ->
-                    ( Debug.log "error" Error, Cmd.none )
+                    let
+                        _ =
+                            Debug.log "error" name
+                    in
+                    ( Normal, Cmd.none )
 
                 Ok file ->
                     let
