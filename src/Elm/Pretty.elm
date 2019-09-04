@@ -372,6 +372,7 @@ prettyPattern pattern =
 
         StringPattern val ->
             Pretty.string val
+                |> quotes
 
         IntPattern val ->
             Pretty.string (String.fromInt val)
@@ -1054,20 +1055,9 @@ doubleLines =
 
 escape : String -> String
 escape val =
-    let
-        res =
-            val
-                |> String.replace "\\" "\\\\"
-                |> String.replace "\"" "\\\""
-
-        _ =
-            if val /= res then
-                Debug.log "escaped" (val ++ "   -->   " ++ res)
-
-            else
-                ""
-    in
-    res
+    val
+        |> String.replace "\\" "\\\\"
+        |> String.replace "\"" "\\\""
 
 
 escapeChar : Char -> String
