@@ -110,12 +110,45 @@ prettyPortModuleData moduleData =
 
 prettyEffectModuleData : EffectModuleData -> Doc
 prettyEffectModuleData moduleData =
+    let
+        prettyCmdAndSub maybeCmd maybeSub =
+            case ( maybeCmd, maybeSub ) of
+                ( Nothing, Nothing ) ->
+                    Nothing
+
+                ( Just cmdName, Just subName ) ->
+                    [ Pretty.string "where { command ="
+                    , Pretty.string cmdName
+                    , Pretty.string ","
+                    , Pretty.string "subscription ="
+                    , Pretty.string subName
+                    , Pretty.string "}"
+                    ]
+                        |> Pretty.words
+                        |> Just
+
+                ( Just cmdName, Nothing ) ->
+                    [ Pretty.string "where { command ="
+                    , Pretty.string cmdName
+                    , Pretty.string "}"
+                    ]
+                        |> Pretty.words
+                        |> Just
+
+                ( Nothing, Just subName ) ->
+                    [ Pretty.string "where { subscription ="
+                    , Pretty.string subName
+                    , Pretty.string "}"
+                    ]
+                        |> Pretty.words
+                        |> Just
+    in
     Pretty.words
-        [ Pretty.string "module"
+        [ Pretty.string "effect module"
         , prettyModuleName (denode moduleData.moduleName)
+        , prettyCmdAndSub (denodeMaybe moduleData.command) (denodeMaybe moduleData.subscription)
+            |> prettyMaybe identity
         , prettyExposing (denode moduleData.exposingList)
-        , prettyMaybe Pretty.string (denodeMaybe moduleData.command)
-        , prettyMaybe Pretty.string (denodeMaybe moduleData.subscription)
         ]
 
 
