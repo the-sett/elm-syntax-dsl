@@ -663,17 +663,19 @@ prettyIfBlock exprBool exprTrue exprFalse =
 
 prettyLiteral : String -> Doc
 prettyLiteral val =
-    let
-        escaped =
-            escape val
-    in
-    if String.contains "\n" escaped then
-        Pretty.string escaped
-            |> tripleQuotes
-
-    else
-        Pretty.string escaped
-            |> quotes
+    -- let
+    --     escaped =
+    --         escape val
+    -- in
+    -- if String.contains "\n" escaped then
+    --     Pretty.string escaped
+    --         |> tripleQuotes
+    --
+    -- else
+    --     Pretty.string escaped
+    --         |> quotes
+    Pretty.string (escape val)
+        |> quotes
 
 
 prettyTupledExpression : List (Node Expression) -> ( Doc, Bool )
@@ -1091,6 +1093,7 @@ escape val =
     val
         |> String.replace "\\" "\\\\"
         |> String.replace "\"" "\\\""
+        |> String.replace "\n" "\\n"
 
 
 escapeChar : Char -> String
