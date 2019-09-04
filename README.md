@@ -9,6 +9,11 @@ than `stil4m/elm-syntax` on which this DSL is based.
 AST in `Node`s that capture source code lines and rows corresponding to parts of the AST.
 This DSL inlines most of the records as function parameters.
 
+`stil4m/elm-syntax` is spread across around 17 modules for the complete syntax. This makes
+working with it a little awkward because there are a lot of import statements to write. This
+DSL condenses everything into a single exposed module, which helps to get started with
+code generation more easily.
+
 Any parts of the AST needing to be wrapped in nodes are automatically wrapped in nodes with
 zeroed out source code position information. As the purpose of this package is code generation
 of Elm from scratch, rather than the analysis or manipulation of existing Elm, it is ok to
