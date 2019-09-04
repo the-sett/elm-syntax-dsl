@@ -295,7 +295,7 @@ prettyValueConstructors constructors =
 prettyValueConstructor : ValueConstructor -> Doc
 prettyValueConstructor cons =
     [ Pretty.string (denode cons.name)
-    , List.map prettyTypeAnnotation (denodeAll cons.arguments) |> Pretty.words
+    , List.map prettyTypeAnnotationParens (denodeAll cons.arguments) |> Pretty.words
     ]
         |> Pretty.words
 
@@ -919,7 +919,7 @@ prettyTypeAnnotation typeAnn =
                         |> Pretty.a (Pretty.string typeName)
 
                 argsDoc =
-                    List.map prettyTypeAnnotation (denodeAll anns)
+                    List.map prettyTypeAnnotationParens (denodeAll anns)
                         |> Pretty.words
             in
             [ typeDoc
@@ -940,16 +940,64 @@ prettyTypeAnnotation typeAnn =
                 |> Pretty.parens
 
         Record recordDef ->
-            Pretty.string "record"
+            --Debug.todo "record"
+            Pretty.string "todo"
 
         GenericRecord paramName recordDef ->
-            Pretty.string "genrec"
+            --Debug.todo "genrec"
+            Pretty.string "todo"
 
         FunctionTypeAnnotation fromAnn toAnn ->
-            [ prettyTypeAnnotation (denode fromAnn)
+            let
+                fromFnAnn =
+                    denode fromAnn
+
+                prettyFrom =
+                    case fromFnAnn of
+                        FunctionTypeAnnotation _ _ ->
+                            prettyTypeAnnotationParens (denode fromAnn)
+
+                        _ ->
+                            prettyTypeAnnotation (denode fromAnn)
+            in
+            [ prettyFrom
             , prettyTypeAnnotation (denode toAnn)
             ]
                 |> Pretty.join (Pretty.string " -> ")
+
+
+prettyTypeAnnotationParens : TypeAnnotation -> Doc
+prettyTypeAnnotationParens typeAnn =
+    if isNakedCompound typeAnn then
+        prettyTypeAnnotation typeAnn |> Pretty.parens
+
+    else
+        prettyTypeAnnotation typeAnn
+
+
+{-| A type annotation is a naked compound if it is made up of multiple parts that
+are not enclosed in brackets or braces. This means either a type or type alias with
+arguments or a function type; records and tuples are compound but enclosed in brackets
+or braces.
+
+Naked type annotations need to be bracketed in situations type argument bindings are
+ambiguous otherwise.
+
+-}
+isNakedCompound : TypeAnnotation -> Bool
+isNakedCompound typeAnn =
+    case typeAnn of
+        Typed _ [] ->
+            False
+
+        Typed _ args ->
+            True
+
+        FunctionTypeAnnotation _ _ ->
+            True
+
+        _ ->
+            False
 
 
 
@@ -1026,3 +1074,12 @@ optionalGroup flag doc =
 
     else
         Pretty.group doc
+
+
+optionalParens : Bool -> Doc -> Doc
+optionalParens flag doc =
+    if flag then
+        Pretty.parens doc
+
+    else
+        doc

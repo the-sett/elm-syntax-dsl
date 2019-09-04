@@ -29,8 +29,6 @@ only diff created when `elm-format` is applied.
 Broken stuff:
 
 * Escaping in Strings has some issues (" and \n, others?)
-* Needs brackets in signatures around functions.
-* Needs brackets in signatures around nested type arguments that have arguments - List (Maybe String)
 
 * Multi-line strings do something very weird (issue is in elm-syntax).
 * End-line comments are deleted (as not supported well by `elm-syntax`).
