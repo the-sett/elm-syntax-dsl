@@ -1054,7 +1054,20 @@ doubleLines =
 
 escape : String -> String
 escape val =
-    String.replace "\\" "\\\\" val
+    let
+        res =
+            val
+                |> String.replace "\\" "\\\\"
+                |> String.replace "\"" "\\\""
+
+        _ =
+            if val /= res then
+                Debug.log "escaped" (val ++ "   -->   " ++ res)
+
+            else
+                ""
+    in
+    res
 
 
 escapeChar : Char -> String
