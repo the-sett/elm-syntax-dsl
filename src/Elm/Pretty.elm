@@ -55,7 +55,7 @@ prettyModule mod =
             prettyDefaultModuleData defaultModuleData
 
         PortModule defaultModuleData ->
-            prettyDefaultModuleData defaultModuleData
+            prettyPortModuleData defaultModuleData
 
         EffectModule effectModuleData ->
             prettyEffectModuleData effectModuleData
@@ -94,6 +94,15 @@ prettyDefaultModuleData : DefaultModuleData -> Doc
 prettyDefaultModuleData moduleData =
     Pretty.words
         [ Pretty.string "module"
+        , prettyModuleName (denode moduleData.moduleName)
+        , prettyExposing (denode moduleData.exposingList)
+        ]
+
+
+prettyPortModuleData : DefaultModuleData -> Doc
+prettyPortModuleData moduleData =
+    Pretty.words
+        [ Pretty.string "port module"
         , prettyModuleName (denode moduleData.moduleName)
         , prettyExposing (denode moduleData.exposingList)
         ]
@@ -224,7 +233,10 @@ prettyDeclaration decl =
             prettyCustomType type_
 
         PortDeclaration sig ->
-            Pretty.string "sig"
+            [ Pretty.string "port"
+            , prettySignature sig
+            ]
+                |> Pretty.words
 
         InfixDeclaration infix_ ->
             prettyInfix infix_

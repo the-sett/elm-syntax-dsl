@@ -23,7 +23,6 @@ only diff created when `elm-format` is applied.
 
 Broken stuff:
 
-* Not printing port signatures.
 * Escaping in Strings has some issues (" and \n, others?)
 * Needs brackets in signatures around functions.
 * Needs brackets in signatures around nested type arguments that have arguments - List (Maybe String)
