@@ -503,8 +503,7 @@ prettyExpressionInner expression =
             )
 
         Literal val ->
-            ( Pretty.string (escape val)
-                |> quotes
+            ( prettyLiteral val
             , False
             )
 
@@ -626,6 +625,21 @@ prettyIfBlock exprBool exprTrue exprFalse =
                 |> Pretty.lines
                 |> Pretty.nest 4
             )
+
+
+prettyLiteral : String -> Doc
+prettyLiteral val =
+    let
+        escaped =
+            escape val
+    in
+    if String.contains "\n" escaped then
+        Pretty.string escaped
+            |> tripleQuotes
+
+    else
+        Pretty.string escaped
+            |> quotes
 
 
 prettyTupledExpression : List (Node Expression) -> ( Doc, Bool )
@@ -968,6 +982,11 @@ dot =
 quotes : Doc -> Doc
 quotes doc =
     Pretty.surround (Pretty.char '"') (Pretty.char '"') doc
+
+
+tripleQuotes : Doc -> Doc
+tripleQuotes doc =
+    Pretty.surround (Pretty.string "\"\"\"") (Pretty.string "\"\"\"") doc
 
 
 singleQuotes : Doc -> Doc

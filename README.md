@@ -31,7 +31,9 @@ Broken stuff:
 * Escaping in Strings has some issues (" and \n, others?)
 * Needs brackets in signatures around functions.
 * Needs brackets in signatures around nested type arguments that have arguments - List (Maybe String)
-* End-line comments are deleted (as not suported well by `elm-syntax`).
+
+* Multi-line strings do something very weird (issue is in elm-syntax).
+* End-line comments are deleted (as not supported well by `elm-syntax`).
 
 Known deviations from `elm-format`:
 
