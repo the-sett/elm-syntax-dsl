@@ -37,14 +37,23 @@ import Pretty exposing (Doc)
 -}
 pretty : File -> Doc
 pretty file =
+    let
+        importsPretty =
+            case file.imports of
+                [] ->
+                    Pretty.line
+
+                _ ->
+                    prettyImports (denodeAll file.imports)
+                        |> Pretty.a Pretty.line
+                        |> Pretty.a Pretty.line
+                        |> Pretty.a Pretty.line
+    in
     prettyModule (denode file.moduleDefinition)
         |> Pretty.a Pretty.line
         |> Pretty.a Pretty.line
         |> Pretty.a (prettyComments (denodeAll file.comments))
-        |> Pretty.a (prettyImports (denodeAll file.imports))
-        |> Pretty.a Pretty.line
-        |> Pretty.a Pretty.line
-        |> Pretty.a Pretty.line
+        |> Pretty.a importsPretty
         |> Pretty.a (prettyDeclarations (denodeAll file.declarations))
 
 
