@@ -610,6 +610,16 @@ prettyApplication exprs =
     )
 
 
+isEndLineOperator : String -> Bool
+isEndLineOperator op =
+    case op of
+        "<|" ->
+            True
+
+        _ ->
+            False
+
+
 prettyOperatorApplication : String -> Node Expression -> Node Expression -> ( Doc, Bool )
 prettyOperatorApplication symbol exprl exprr =
     let
@@ -631,7 +641,7 @@ prettyOperatorApplication symbol exprl exprr =
             case rightSide of
                 ( hdExpr, hdBreak ) :: tl ->
                     List.append (denode left |> expandExpr)
-                        (( Pretty.string symbol |> Pretty.a Pretty.space |> Pretty.a hdExpr, hdBreak ) :: tl)
+                        (( Pretty.string sym |> Pretty.a Pretty.space |> Pretty.a hdExpr, hdBreak ) :: tl)
 
                 [] ->
                     []
