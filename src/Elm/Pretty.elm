@@ -481,12 +481,12 @@ prettyPattern pattern =
 
 prettyExpression : Expression -> Doc
 prettyExpression expression =
-    prettyExpressionInner expression
+    prettyExpressionInner 4 expression
         |> Tuple.first
 
 
-prettyExpressionInner : Expression -> ( Doc, Bool )
-prettyExpressionInner expression =
+prettyExpressionInner : Int -> Expression -> ( Doc, Bool )
+prettyExpressionInner indent expression =
     case expression of
         UnitExpr ->
             ( Pretty.string "()"
@@ -506,7 +506,7 @@ prettyExpressionInner expression =
             )
 
         IfBlock exprBool exprTrue exprFalse ->
-            ( prettyIfBlock exprBool exprTrue exprFalse
+            ( prettyIfBlock indent exprBool exprTrue exprFalse
             , True
             )
 
@@ -538,7 +538,7 @@ prettyExpressionInner expression =
         Negation expr ->
             let
                 ( prettyExpr, alwaysBreak ) =
-                    prettyExpressionInner (denode expr)
+                    prettyExpressionInner 4 (denode expr)
             in
             ( Pretty.string "-"
                 |> Pretty.a prettyExpr
@@ -598,7 +598,7 @@ prettyApplication : List (Node Expression) -> ( Doc, Bool )
 prettyApplication exprs =
     let
         ( prettyExpressions, alwaysBreak ) =
-            List.map prettyExpressionInner (denodeAll exprs)
+            List.map (prettyExpressionInner 4) (denodeAll exprs)
                 |> List.unzip
                 |> Tuple.mapSecond Bool.Extra.any
     in
@@ -630,7 +630,7 @@ prettyOperatorApplication symbol exprl exprr =
                     innerOpApply sym left right
 
                 _ ->
-                    [ prettyExpressionInner expr ]
+                    [ prettyExpressionInner 4 expr ]
 
         innerOpApply : String -> Node Expression -> Node Expression -> List ( Doc, Bool )
         innerOpApply sym left right =
@@ -658,25 +658,25 @@ prettyOperatorApplication symbol exprl exprr =
     )
 
 
-prettyIfBlock : Node Expression -> Node Expression -> Node Expression -> Doc
-prettyIfBlock exprBool exprTrue exprFalse =
+prettyIfBlock : Int -> Node Expression -> Node Expression -> Node Expression -> Doc
+prettyIfBlock indent exprBool exprTrue exprFalse =
     [ [ Pretty.string "if"
-      , prettyExpressionInner (denode exprBool) |> Tuple.first
+      , prettyExpressionInner 4 (denode exprBool) |> Tuple.first
       , Pretty.string "then"
       ]
         |> Pretty.words
-    , prettyExpressionInner (denode exprTrue) |> Tuple.first
+    , prettyExpressionInner 4 (denode exprTrue) |> Tuple.first
     ]
         |> Pretty.lines
-        |> Pretty.nest 4
+        |> Pretty.nest indent
         |> Pretty.a Pretty.line
         |> Pretty.a Pretty.line
         |> Pretty.a
             ([ Pretty.string "else"
-             , prettyExpressionInner (denode exprFalse) |> Tuple.first
+             , prettyExpressionInner 4 (denode exprFalse) |> Tuple.first
              ]
                 |> Pretty.lines
-                |> Pretty.nest 4
+                |> Pretty.nest indent
             )
 
 
@@ -713,7 +713,7 @@ prettyTupledExpression exprs =
         _ ->
             let
                 ( prettyExpressions, alwaysBreak ) =
-                    List.map prettyExpressionInner (denodeAll exprs)
+                    List.map (prettyExpressionInner 4) (denodeAll exprs)
                         |> List.unzip
                         |> Tuple.mapSecond Bool.Extra.any
             in
@@ -735,9 +735,10 @@ prettyParenthesizedExpression expr =
             Pretty.a (Pretty.string ")") Pretty.tightline
 
         ( prettyExpr, alwaysBreak ) =
-            prettyExpressionInner (denode expr)
+            prettyExpressionInner 3 (denode expr)
     in
     ( prettyExpr
+        |> Pretty.nest 1
         |> Pretty.surround open close
         |> optionalGroup alwaysBreak
     , alwaysBreak
@@ -751,7 +752,7 @@ prettyLetBlock letBlock =
             |> doubleLines
             |> Pretty.indent 4
       , Pretty.string "in"
-      , prettyExpressionInner (denode letBlock.expression) |> Tuple.first
+      , prettyExpressionInner 4 (denode letBlock.expression) |> Tuple.first
       ]
         |> Pretty.lines
     , True
@@ -770,13 +771,13 @@ prettyLetDeclaration letDecl =
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
-                |> Pretty.a (prettyExpressionInner (denode expr) |> Tuple.first |> Pretty.indent 4)
+                |> Pretty.a (prettyExpressionInner 4 (denode expr) |> Tuple.first |> Pretty.indent 4)
 
 
 prettyCaseBlock : CaseBlock -> ( Doc, Bool )
 prettyCaseBlock caseBlock =
     ( ([ Pretty.string "case"
-       , prettyExpressionInner (denode caseBlock.expression) |> Tuple.first
+       , prettyExpressionInner 4 (denode caseBlock.expression) |> Tuple.first
        , Pretty.string "of"
        ]
         |> Pretty.words
@@ -788,7 +789,7 @@ prettyCaseBlock caseBlock =
                     prettyPattern (denode pattern)
                         |> Pretty.a (Pretty.string " ->")
                         |> Pretty.a Pretty.line
-                        |> Pretty.a (prettyExpressionInner (denode expr) |> Tuple.first |> Pretty.indent 4)
+                        |> Pretty.a (prettyExpressionInner 4 (denode expr) |> Tuple.first |> Pretty.indent 4)
                         |> Pretty.indent 4
                 )
                 caseBlock.cases
@@ -802,7 +803,7 @@ prettyLambdaExpression : Lambda -> ( Doc, Bool )
 prettyLambdaExpression lambda =
     let
         ( prettyExpr, alwaysBreak ) =
-            prettyExpressionInner (denode lambda.expression)
+            prettyExpressionInner 4 (denode lambda.expression)
     in
     ( [ [ Pretty.string "\\"
             |> Pretty.a (Pretty.string "args")
@@ -832,7 +833,7 @@ prettyRecordExpr setters =
         prettySetter ( fld, val ) =
             let
                 ( prettyExpr, alwaysBreak ) =
-                    prettyExpressionInner (denode val)
+                    prettyExpressionInner 4 (denode val)
             in
             ( [ [ Pretty.string (denode fld)
                 , Pretty.string "="
@@ -881,7 +882,7 @@ prettyList exprs =
         _ ->
             let
                 ( prettyExpressions, alwaysBreak ) =
-                    List.map prettyExpressionInner (denodeAll exprs)
+                    List.map (prettyExpressionInner 4) (denodeAll exprs)
                         |> List.unzip
                         |> Tuple.mapSecond Bool.Extra.any
             in
@@ -897,7 +898,7 @@ prettyRecordAccess : Node Expression -> Node String -> ( Doc, Bool )
 prettyRecordAccess expr field =
     let
         ( prettyExpr, alwaysBreak ) =
-            prettyExpressionInner (denode expr)
+            prettyExpressionInner 4 (denode expr)
     in
     ( prettyExpr
         |> Pretty.a dot
@@ -925,7 +926,7 @@ prettyRecordUpdateExpression var setters =
         prettySetter ( fld, val ) =
             let
                 ( prettyExpr, alwaysBreak ) =
-                    prettyExpressionInner (denode val)
+                    prettyExpressionInner 4 (denode val)
             in
             ( [ [ Pretty.string (denode fld)
                 , Pretty.string "="
