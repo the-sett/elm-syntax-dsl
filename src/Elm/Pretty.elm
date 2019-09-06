@@ -795,11 +795,9 @@ prettyLambdaExpression lambda =
         ( prettyExpr, alwaysBreak ) =
             prettyExpressionInner 4 (denode lambda.expression)
     in
-    ( [ [ Pretty.string "\\"
-        , List.map prettyPattern (denodeAll lambda.args) |> Pretty.words
-        , Pretty.string "->"
-        ]
-            |> Pretty.words
+    ( [ Pretty.string "\\"
+            |> Pretty.a (List.map prettyPattern (denodeAll lambda.args) |> Pretty.words)
+            |> Pretty.a (Pretty.string " ->")
       , prettyExpr
       ]
         |> Pretty.lines
