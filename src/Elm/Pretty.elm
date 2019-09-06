@@ -682,17 +682,6 @@ prettyIfBlock indent exprBool exprTrue exprFalse =
 
 prettyLiteral : String -> Doc
 prettyLiteral val =
-    -- let
-    --     escaped =
-    --         escape val
-    -- in
-    -- if String.contains "\n" escaped then
-    --     Pretty.string escaped
-    --         |> tripleQuotes
-    --
-    -- else
-    --     Pretty.string escaped
-    --         |> quotes
     Pretty.string (escape val)
         |> quotes
 
