@@ -28,17 +28,27 @@ only diff created when `elm-format` is applied.
 
 Broken stuff:
 
-* Multi-line strings do something very weird (issue is in elm-syntax).
-* End-line comments are deleted (as not supported well by `elm-syntax`).
+* Hex pattern.
+* Hex literal.
+* Lambda arguments.
+* Record type annotation.
+* Extensible record type annotation.
+
+Broken stuff in elm-syntax:
+
+* Not all Elm files I tried seem to parse.
+* Multi-line strings do something very weird and get jumbled up in order.
+* End-line comments are deleted.
 
 Known deviations from `elm-format`:
 
 * Not removing brackets that are not necessary.
 * <| At start instead of end of line.
-* If-else statement inside brackets needs an extra space before else.
-* No brackets around expressions being consed.
+* Brackets not inserted around complex expressions that are nested - such as
+when being consed, or a lambda passed as an argument. Operator precedence should
+make it clear when brackets are needed - expression
 * Else-if is split instead of carrying on at the same indent level.
 * If-else not always aligned when nested inside something else.
-* Function application args not indended when nested inside operator application.
+* Function application args not indented when nested inside operator application.
 * | not breaking when record update expressions break.
 * List inside brackets not aligning.

@@ -354,7 +354,7 @@ prettyInfix infix_ =
                     "right"
 
                 Non ->
-                    "non"
+                    Debug.todo "Non-directional operator encountered."
     in
     [ Pretty.string "infix"
     , Pretty.string (dirToString (denode infix_.direction))
@@ -420,7 +420,7 @@ prettyPattern pattern =
             Pretty.string (String.fromInt val)
 
         HexPattern val ->
-            Pretty.string "hexPattern"
+            Debug.todo "hex pattern"
 
         FloatPattern val ->
             Pretty.string (String.fromFloat val)
@@ -526,7 +526,7 @@ prettyExpressionInner indent expression =
             )
 
         Hex val ->
-            ( Pretty.string "hex"
+            ( Debug.todo "hex literal"
             , False
             )
 
@@ -589,7 +589,7 @@ prettyExpressionInner indent expression =
             prettyRecordUpdateExpression var setters
 
         GLSLExpression val ->
-            ( Pretty.string "glsl"
+            ( Debug.todo "glsl"
             , True
             )
 
@@ -795,7 +795,7 @@ prettyLambdaExpression lambda =
             prettyExpressionInner 4 (denode lambda.expression)
     in
     ( [ [ Pretty.string "\\"
-            |> Pretty.a (Pretty.string "args")
+            |> Pretty.a (Debug.todo "lambda args")
         , Pretty.string "->"
         ]
             |> Pretty.words
@@ -985,12 +985,10 @@ prettyTypeAnnotation typeAnn =
                 |> Pretty.parens
 
         Record recordDef ->
-            --Debug.todo "record"
-            Pretty.string "todo"
+            Debug.todo "record"
 
         GenericRecord paramName recordDef ->
-            --Debug.todo "genrec"
-            Pretty.string "todo"
+            Debug.todo "generic record"
 
         FunctionTypeAnnotation fromAnn toAnn ->
             let
