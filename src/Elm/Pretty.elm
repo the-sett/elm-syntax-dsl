@@ -30,6 +30,7 @@ import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.Type exposing (Type, ValueConstructor)
 import Elm.Syntax.TypeAlias exposing (TypeAlias)
 import Elm.Syntax.TypeAnnotation exposing (RecordDefinition, RecordField, TypeAnnotation(..))
+import Hex
 import Pretty exposing (Doc)
 
 
@@ -354,7 +355,7 @@ prettyInfix infix_ =
                     "right"
 
                 Non ->
-                    Debug.todo "Non-directional operator encountered."
+                    "non"
     in
     [ Pretty.string "infix"
     , Pretty.string (dirToString (denode infix_.direction))
@@ -420,7 +421,7 @@ prettyPattern pattern =
             Pretty.string (String.fromInt val)
 
         HexPattern val ->
-            Debug.todo "hex pattern"
+            Pretty.string (Hex.toString val)
 
         FloatPattern val ->
             Pretty.string (String.fromFloat val)
@@ -526,7 +527,7 @@ prettyExpressionInner indent expression =
             )
 
         Hex val ->
-            ( Debug.todo "hex literal"
+            ( Pretty.string (Hex.toString val)
             , False
             )
 
@@ -795,7 +796,7 @@ prettyLambdaExpression lambda =
             prettyExpressionInner 4 (denode lambda.expression)
     in
     ( [ [ Pretty.string "\\"
-            |> Pretty.a (Debug.todo "lambda args")
+        , List.map prettyPattern (denodeAll lambda.args) |> Pretty.words
         , Pretty.string "->"
         ]
             |> Pretty.words
@@ -985,10 +986,10 @@ prettyTypeAnnotation typeAnn =
                 |> Pretty.parens
 
         Record recordDef ->
-            Debug.todo "record"
+            prettyRecord (denodeAll recordDef)
 
         GenericRecord paramName recordDef ->
-            Debug.todo "generic record"
+            prettyGenericRecord (denode paramName) (denodeAll (denode recordDef))
 
         FunctionTypeAnnotation fromAnn toAnn ->
             let
@@ -1016,6 +1017,63 @@ prettyTypeAnnotationParens typeAnn =
 
     else
         prettyTypeAnnotation typeAnn
+
+
+prettyRecord : List RecordField -> Doc
+prettyRecord fields =
+    let
+        open =
+            Pretty.a Pretty.space (Pretty.string "{")
+
+        close =
+            Pretty.a (Pretty.string "}") Pretty.line
+    in
+    case fields of
+        [] ->
+            Pretty.string "{}"
+
+        _ ->
+            fields
+                |> List.map (Tuple.mapBoth denode denode)
+                |> List.map prettyFieldTypeAnn
+                |> Pretty.separators ", "
+                |> Pretty.surround open close
+                |> Pretty.group
+
+
+prettyGenericRecord : String -> List RecordField -> Doc
+prettyGenericRecord paramName fields =
+    let
+        open =
+            [ Pretty.string "{"
+            , Pretty.string paramName
+            , Pretty.string "|"
+            ]
+                |> Pretty.words
+
+        close =
+            Pretty.a (Pretty.string "}") Pretty.line
+    in
+    case fields of
+        [] ->
+            Pretty.string "{}"
+
+        _ ->
+            fields
+                |> List.map (Tuple.mapBoth denode denode)
+                |> List.map prettyFieldTypeAnn
+                |> Pretty.separators ", "
+                |> Pretty.surround open close
+                |> Pretty.group
+
+
+prettyFieldTypeAnn : ( String, TypeAnnotation ) -> Doc
+prettyFieldTypeAnn ( name, ann ) =
+    [ Pretty.string name
+    , Pretty.string ":"
+    , prettyTypeAnnotation ann
+    ]
+        |> Pretty.lines
 
 
 {-| A type annotation is a naked compound if it is made up of multiple parts that
