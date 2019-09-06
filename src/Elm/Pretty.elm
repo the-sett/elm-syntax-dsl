@@ -1185,3 +1185,157 @@ optionalParens flag doc =
 
     else
         doc
+
+
+{-| Calculate a precedence for any expression to be able to know when
+parenthesis are needed or not.
+
+When a lower precedence expression appears beneath a higher one, its needs
+parenthesis.
+
+When a higher precedence expression appears beneath a lower one, if should
+not have parenthesis.
+
+-}
+precedence : Expression -> Int
+precedence expression =
+    case expression of
+        UnitExpr ->
+            10
+
+        Application exprs ->
+            10
+
+        OperatorApplication symbol _ _ _ ->
+            case symbol of
+                ">>" ->
+                    9
+
+                "<<" ->
+                    9
+
+                "^" ->
+                    8
+
+                "*" ->
+                    7
+
+                "/" ->
+                    7
+
+                "//" ->
+                    7
+
+                "%" ->
+                    7
+
+                "rem" ->
+                    7
+
+                "+" ->
+                    6
+
+                "-" ->
+                    6
+
+                "++" ->
+                    5
+
+                "::" ->
+                    5
+
+                "==" ->
+                    4
+
+                "/=" ->
+                    4
+
+                "<" ->
+                    4
+
+                ">" ->
+                    4
+
+                "<=" ->
+                    4
+
+                ">=" ->
+                    4
+
+                "&&" ->
+                    3
+
+                "||" ->
+                    2
+
+                "|>" ->
+                    0
+
+                "<|" ->
+                    0
+
+                _ ->
+                    0
+
+        FunctionOrValue modl val ->
+            10
+
+        IfBlock exprBool exprTrue exprFalse ->
+            -1
+
+        PrefixOperator symbol ->
+            10
+
+        Operator symbol ->
+            10
+
+        Integer val ->
+            10
+
+        Hex val ->
+            10
+
+        Floatable val ->
+            10
+
+        Negation expr ->
+            6
+
+        Literal val ->
+            10
+
+        CharLiteral val ->
+            10
+
+        TupledExpression exprs ->
+            10
+
+        ParenthesizedExpression expr ->
+            10
+
+        LetExpression letBlock ->
+            -1
+
+        CaseExpression caseBlock ->
+            -1
+
+        LambdaExpression lambda ->
+            -1
+
+        RecordExpr setters ->
+            10
+
+        ListExpr exprs ->
+            10
+
+        RecordAccess expr field ->
+            10
+
+        RecordAccessFunction field ->
+            10
+
+        RecordUpdateExpression var setters ->
+            10
+
+        GLSLExpression val ->
+            10
