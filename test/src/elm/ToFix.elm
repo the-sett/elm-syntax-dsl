@@ -5,16 +5,16 @@ import Blah
 import Blah as B
 import Blah exposing (blong)
 import Blah as B exposing (bling)
+import Blah as H exposing (blang)
 
-_ =
+x =
     Blah.blong
 
-_ =
+y =
     B.bling
 
 hex =
     0xAFFF
-
 
 bracketsNeeded =
     let
@@ -25,9 +25,9 @@ bracketsNeeded =
 
 
 bracketsNotNeeded =
-    toFloat intensity / 255
+    (toFloat intensity) / 255
 
 
 rightPipeEol =
-   (funcion with lots and lots and lots and lots and lots of parameters to make it nice and long)
-   <| (funcion with lots and lots and lots and lots and lots of parameters to make it nice and long)
+   (funcion with lots and lots and lots and lots and lots parameters to make it nice and long)
+   <| (funcion with lots and lots and lots and lots and lots parameters to make it nice and long)
