@@ -1148,11 +1148,15 @@ prettyGenericRecord paramName fields =
 
 prettyFieldTypeAnn : ( String, TypeAnnotation ) -> Doc
 prettyFieldTypeAnn ( name, ann ) =
-    [ Pretty.string name
-    , Pretty.string ":"
+    [ [ Pretty.string name
+      , Pretty.string ":"
+      ]
+        |> Pretty.words
     , prettyTypeAnnotation ann
     ]
         |> Pretty.lines
+        |> Pretty.nest 4
+        |> Pretty.group
 
 
 {-| A type annotation is a naked compound if it is made up of multiple parts that
