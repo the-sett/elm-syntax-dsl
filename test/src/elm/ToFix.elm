@@ -24,7 +24,10 @@ bracketsNeeded =
         ()
 
 
-bracketsNotNeeded =
+noBrackets1 =
+    (6 + 7)
+
+noBrackets2 =
     (toFloat intensity) / 255
 
 
