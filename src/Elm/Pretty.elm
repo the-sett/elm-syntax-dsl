@@ -293,11 +293,14 @@ prettyDeclaration decl =
             prettyInfix infix_
 
         Destructuring pattern expr ->
-            [ prettyPattern (denode pattern)
-            , Pretty.string "="
+            [ [ prettyPattern (denode pattern)
+              , Pretty.string "="
+              ]
+                |> Pretty.words
             , prettyExpression (denode expr)
             ]
-                |> Pretty.words
+                |> Pretty.lines
+                |> Pretty.nest 4
 
 
 prettyFun : Function -> Doc
