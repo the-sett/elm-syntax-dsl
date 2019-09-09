@@ -383,11 +383,15 @@ prettyDocumentation docs =
 
 prettySignature : Signature -> Doc
 prettySignature sig =
-    [ Pretty.string (denode sig.name)
-    , Pretty.string ":"
+    [ [ Pretty.string (denode sig.name)
+      , Pretty.string ":"
+      ]
+        |> Pretty.words
     , prettyTypeAnnotation (denode sig.typeAnnotation)
     ]
-        |> Pretty.words
+        |> Pretty.lines
+        |> Pretty.nest 4
+        |> Pretty.group
 
 
 prettyFunctionImplementation : FunctionImplementation -> Doc
@@ -1123,9 +1127,13 @@ prettyTypeAnnotation typeAnn =
                             prettyTypeAnnotation (denode fromAnn)
             in
             [ prettyFrom
-            , prettyTypeAnnotation (denode toAnn)
+            , [ Pretty.string "->"
+              , prettyTypeAnnotation (denode toAnn)
+              ]
+                |> Pretty.words
             ]
-                |> Pretty.join (Pretty.string " -> ")
+                |> Pretty.lines
+                |> Pretty.group
 
 
 prettyTypeAnnotationParens : TypeAnnotation -> Doc
