@@ -940,24 +940,6 @@ prettyRecordExpr setters =
         close =
             Pretty.a (Pretty.string "}")
                 Pretty.line
-
-        prettySetter : ( Node String, Node Expression ) -> ( Doc, Bool )
-        prettySetter ( fld, val ) =
-            let
-                ( prettyExpr, alwaysBreak ) =
-                    prettyExpressionInner topContext 4 (denode val)
-            in
-            ( [ [ Pretty.string (denode fld)
-                , Pretty.string "="
-                ]
-                    |> Pretty.words
-              , prettyExpr
-              ]
-                |> Pretty.lines
-                |> optionalGroup alwaysBreak
-                |> Pretty.nest 4
-            , alwaysBreak
-            )
     in
     case setters of
         [] ->
@@ -976,6 +958,25 @@ prettyRecordExpr setters =
                 |> optionalGroup alwaysBreak
             , alwaysBreak
             )
+
+
+prettySetter : ( Node String, Node Expression ) -> ( Doc, Bool )
+prettySetter ( fld, val ) =
+    let
+        ( prettyExpr, alwaysBreak ) =
+            prettyExpressionInner topContext 4 (denode val)
+    in
+    ( [ [ Pretty.string (denode fld)
+        , Pretty.string "="
+        ]
+            |> Pretty.words
+      , prettyExpr
+      ]
+        |> Pretty.lines
+        |> optionalGroup alwaysBreak
+        |> Pretty.nest 4
+    , alwaysBreak
+    )
 
 
 prettyList : List (Node Expression) -> ( Doc, Bool )
@@ -1033,24 +1034,6 @@ prettyRecordUpdateExpression var setters =
         close =
             Pretty.a (Pretty.string "}")
                 Pretty.line
-
-        prettySetter : ( Node String, Node Expression ) -> ( Doc, Bool )
-        prettySetter ( fld, val ) =
-            let
-                ( prettyExpr, alwaysBreak ) =
-                    prettyExpressionInner topContext 4 (denode val)
-            in
-            ( [ [ Pretty.string (denode fld)
-                , Pretty.string "="
-                ]
-                    |> Pretty.words
-              , prettyExpr
-              ]
-                |> Pretty.lines
-                |> optionalGroup alwaysBreak
-                |> Pretty.nest 4
-            , alwaysBreak
-            )
     in
     case setters of
         [] ->
