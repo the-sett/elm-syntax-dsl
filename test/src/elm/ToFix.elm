@@ -16,7 +16,7 @@ y =
 hex =
     0xAFFF
 
-bracketsNeeded =
+addBrackets1 =
     let
         ( r, g, b ) =
             cl |> toRgb |> \a -> ( f a.red, f a.green, f a.blue )
@@ -27,8 +27,19 @@ bracketsNeeded =
 noBrackets1 =
     (6 + 7)
 
+
 noBrackets2 =
+    ((6 + 7))
+
+
+noBrackets3 =
     (toFloat intensity) / 255
+
+noBrackets4 =
+    f ((g h))
+
+needsBrackets1 =
+    f (g h)
 
 
 rightPipeEol =

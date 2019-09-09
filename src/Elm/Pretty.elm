@@ -503,23 +503,57 @@ type alias Context =
 
 
 topContext =
-    { precedence = -1
+    { precedence = 11
     , isTop = True
     }
 
 
 adjustParentheses : Context -> Expression -> Expression
-adjustParentheses context expr =
-    case expr of
-        ParenthesizedExpression innerExpr ->
-            if context.isTop then
-                denode innerExpr
+adjustParentheses context expression =
+    let
+        addParens expr =
+            case ( context.isTop, expr ) of
+                -- ( False, Application _ ) ->
+                --     if context.precedence >= 11 then
+                --         nodify expr |> ParenthesizedExpression
+                --
+                --     else
+                --         expr
+                ( False, LetExpression _ ) ->
+                    nodify expr |> ParenthesizedExpression
 
-            else
-                expr
+                ( False, CaseExpression _ ) ->
+                    nodify expr |> ParenthesizedExpression
 
-        _ ->
-            expr
+                ( False, LambdaExpression _ ) ->
+                    nodify expr |> ParenthesizedExpression
+
+                ( _, _ ) ->
+                    expr
+
+        removeParens expr =
+            case ( context.isTop, expr ) of
+                ( True, ParenthesizedExpression innerExpr ) ->
+                    denode innerExpr
+                        |> adjustParentheses context
+
+                ( False, ParenthesizedExpression innerExpr ) ->
+                    case denode innerExpr of
+                        Application _ ->
+                            if context.precedence < 11 then
+                                denode innerExpr
+
+                            else
+                                ParenthesizedExpression innerExpr
+
+                        _ ->
+                            ParenthesizedExpression innerExpr
+
+                ( _, _ ) ->
+                    expr
+    in
+    removeParens expression
+        |> addParens
 
 
 prettyExpression : Expression -> Doc
@@ -641,7 +675,7 @@ prettyApplication : List (Node Expression) -> ( Doc, Bool )
 prettyApplication exprs =
     let
         ( prettyExpressions, alwaysBreak ) =
-            List.map (prettyExpressionInner topContext 4) (denodeAll exprs)
+            List.map (prettyExpressionInner { precedence = 11, isTop = False } 4) (denodeAll exprs)
                 |> List.unzip
                 |> Tuple.mapSecond Bool.Extra.any
     in
