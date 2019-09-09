@@ -1024,16 +1024,23 @@ prettyRecordUpdateExpression : Node String -> List (Node RecordSetter) -> ( Doc,
 prettyRecordUpdateExpression var setters =
     let
         open =
-            Pretty.string "{"
-                |> Pretty.a Pretty.space
-                |> Pretty.a (Pretty.string (denode var))
-                |> Pretty.a Pretty.space
-                |> Pretty.a (Pretty.string "|")
-                |> Pretty.a Pretty.space
+            [ Pretty.string "{"
+            , Pretty.string (denode var)
+            ]
+                |> Pretty.words
+                |> Pretty.a Pretty.line
 
         close =
             Pretty.a (Pretty.string "}")
                 Pretty.line
+
+        addBarToFirst exprs =
+            case exprs of
+                [] ->
+                    []
+
+                hd :: tl ->
+                    Pretty.a hd (Pretty.string "| ") :: tl
     in
     case setters of
         [] ->
@@ -1046,12 +1053,21 @@ prettyRecordUpdateExpression var setters =
                         |> List.unzip
                         |> Tuple.mapSecond Bool.Extra.any
             in
-            ( prettyExpressions
-                |> Pretty.separators ", "
-                |> Pretty.surround open close
+            ( open
+                |> Pretty.a
+                    (prettyExpressions
+                        |> addBarToFirst
+                        |> Pretty.separators ", "
+                    )
+                |> Pretty.nest 4
+                |> Pretty.surround Pretty.empty close
                 |> optionalGroup alwaysBreak
             , alwaysBreak
             )
+
+
+
+--== Type Annotations
 
 
 prettyTypeAnnotation : TypeAnnotation -> Doc
