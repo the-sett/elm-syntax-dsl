@@ -513,12 +513,6 @@ adjustParentheses context expression =
     let
         addParens expr =
             case ( context.isTop, expr ) of
-                -- ( False, Application _ ) ->
-                --     if context.precedence >= 11 then
-                --         nodify expr |> ParenthesizedExpression
-                --
-                --     else
-                --         expr
                 ( False, LetExpression _ ) ->
                     nodify expr |> ParenthesizedExpression
 
@@ -532,25 +526,70 @@ adjustParentheses context expression =
                     expr
 
         removeParens expr =
+            case expr of
+                ParenthesizedExpression innerExpr ->
+                    if shouldRemove (denode innerExpr) then
+                        denode innerExpr
+
+                    else
+                        expr
+
+                _ ->
+                    expr
+
+        shouldRemove expr =
             case ( context.isTop, expr ) of
-                ( True, ParenthesizedExpression innerExpr ) ->
-                    denode innerExpr
-                        |> adjustParentheses context
+                ( True, _ ) ->
+                    True
 
-                ( False, ParenthesizedExpression innerExpr ) ->
-                    case denode innerExpr of
-                        Application _ ->
-                            if context.precedence < 11 then
-                                denode innerExpr
+                ( False, Application _ ) ->
+                    if context.precedence < 11 then
+                        True
 
-                            else
-                                ParenthesizedExpression innerExpr
+                    else
+                        False
 
-                        _ ->
-                            ParenthesizedExpression innerExpr
+                ( False, FunctionOrValue _ _ ) ->
+                    True
+
+                ( False, Integer _ ) ->
+                    True
+
+                ( False, Hex _ ) ->
+                    True
+
+                ( False, Floatable _ ) ->
+                    True
+
+                ( False, Negation _ ) ->
+                    True
+
+                ( False, Literal _ ) ->
+                    True
+
+                ( False, CharLiteral _ ) ->
+                    True
+
+                ( False, TupledExpression _ ) ->
+                    True
+
+                ( False, RecordExpr _ ) ->
+                    True
+
+                ( False, ListExpr _ ) ->
+                    True
+
+                ( False, RecordAccess _ _ ) ->
+                    True
+
+                ( False, RecordAccessFunction _ ) ->
+                    True
+
+                ( False, RecordUpdateExpression _ _ ) ->
+                    True
 
                 ( _, _ ) ->
-                    expr
+                    False
     in
     removeParens expression
         |> addParens
