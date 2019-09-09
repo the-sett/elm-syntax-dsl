@@ -34,6 +34,10 @@ import Hex
 import Pretty exposing (Doc)
 
 
+
+--== File Headers
+
+
 {-| Pretty prints a file of Elm code.
 -}
 pretty : File -> Doc
@@ -252,6 +256,10 @@ prettyTopLevelExpose tlExpose =
                         |> Pretty.a (Pretty.string "(..)")
 
 
+
+--== Declarations
+
+
 prettyDeclarations : List Declaration -> Doc
 prettyDeclarations decls =
     List.map
@@ -400,6 +408,10 @@ prettyArgs args =
         |> Pretty.words
 
 
+
+--== Patterns
+
+
 prettyPattern : Pattern -> Doc
 prettyPattern pattern =
     case pattern of
@@ -480,14 +492,26 @@ prettyPattern pattern =
                 |> Pretty.parens
 
 
+
+--== Expressions
+
+
+type alias Context =
+    {}
+
+
+topContext =
+    {}
+
+
 prettyExpression : Expression -> Doc
 prettyExpression expression =
-    prettyExpressionInner 4 expression
+    prettyExpressionInner topContext 4 expression
         |> Tuple.first
 
 
-prettyExpressionInner : Int -> Expression -> ( Doc, Bool )
-prettyExpressionInner indent expression =
+prettyExpressionInner : Context -> Int -> Expression -> ( Doc, Bool )
+prettyExpressionInner context indent expression =
     case expression of
         UnitExpr ->
             ( Pretty.string "()"
@@ -539,7 +563,7 @@ prettyExpressionInner indent expression =
         Negation expr ->
             let
                 ( prettyExpr, alwaysBreak ) =
-                    prettyExpressionInner 4 (denode expr)
+                    prettyExpressionInner {} 4 (denode expr)
             in
             ( Pretty.string "-"
                 |> Pretty.a prettyExpr
@@ -599,7 +623,7 @@ prettyApplication : List (Node Expression) -> ( Doc, Bool )
 prettyApplication exprs =
     let
         ( prettyExpressions, alwaysBreak ) =
-            List.map (prettyExpressionInner 4) (denodeAll exprs)
+            List.map (prettyExpressionInner {} 4) (denodeAll exprs)
                 |> List.unzip
                 |> Tuple.mapSecond Bool.Extra.any
     in
@@ -631,7 +655,7 @@ prettyOperatorApplication symbol exprl exprr =
                     innerOpApply sym left right
 
                 _ ->
-                    [ prettyExpressionInner 4 expr ]
+                    [ prettyExpressionInner {} 4 expr ]
 
         innerOpApply : String -> Node Expression -> Node Expression -> List ( Doc, Bool )
         innerOpApply sym left right =
@@ -662,11 +686,11 @@ prettyOperatorApplication symbol exprl exprr =
 prettyIfBlock : Int -> Node Expression -> Node Expression -> Node Expression -> Doc
 prettyIfBlock indent exprBool exprTrue exprFalse =
     [ [ Pretty.string "if"
-      , prettyExpressionInner 4 (denode exprBool) |> Tuple.first
+      , prettyExpressionInner {} 4 (denode exprBool) |> Tuple.first
       , Pretty.string "then"
       ]
         |> Pretty.words
-    , prettyExpressionInner 4 (denode exprTrue) |> Tuple.first
+    , prettyExpressionInner {} 4 (denode exprTrue) |> Tuple.first
     ]
         |> Pretty.lines
         |> Pretty.nest indent
@@ -674,7 +698,7 @@ prettyIfBlock indent exprBool exprTrue exprFalse =
         |> Pretty.a Pretty.line
         |> Pretty.a
             ([ Pretty.string "else"
-             , prettyExpressionInner 4 (denode exprFalse) |> Tuple.first
+             , prettyExpressionInner {} 4 (denode exprFalse) |> Tuple.first
              ]
                 |> Pretty.lines
                 |> Pretty.nest indent
@@ -703,7 +727,7 @@ prettyTupledExpression exprs =
         _ ->
             let
                 ( prettyExpressions, alwaysBreak ) =
-                    List.map (prettyExpressionInner 4) (denodeAll exprs)
+                    List.map (prettyExpressionInner {} 4) (denodeAll exprs)
                         |> List.unzip
                         |> Tuple.mapSecond Bool.Extra.any
             in
@@ -725,7 +749,7 @@ prettyParenthesizedExpression expr =
             Pretty.a (Pretty.string ")") Pretty.tightline
 
         ( prettyExpr, alwaysBreak ) =
-            prettyExpressionInner 3 (denode expr)
+            prettyExpressionInner {} 3 (denode expr)
     in
     ( prettyExpr
         |> Pretty.nest 1
@@ -742,7 +766,7 @@ prettyLetBlock letBlock =
             |> doubleLines
             |> Pretty.indent 4
       , Pretty.string "in"
-      , prettyExpressionInner 4 (denode letBlock.expression) |> Tuple.first
+      , prettyExpressionInner {} 4 (denode letBlock.expression) |> Tuple.first
       ]
         |> Pretty.lines
     , True
@@ -761,13 +785,13 @@ prettyLetDeclaration letDecl =
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
-                |> Pretty.a (prettyExpressionInner 4 (denode expr) |> Tuple.first |> Pretty.indent 4)
+                |> Pretty.a (prettyExpressionInner {} 4 (denode expr) |> Tuple.first |> Pretty.indent 4)
 
 
 prettyCaseBlock : CaseBlock -> ( Doc, Bool )
 prettyCaseBlock caseBlock =
     ( ([ Pretty.string "case"
-       , prettyExpressionInner 4 (denode caseBlock.expression) |> Tuple.first
+       , prettyExpressionInner {} 4 (denode caseBlock.expression) |> Tuple.first
        , Pretty.string "of"
        ]
         |> Pretty.words
@@ -779,7 +803,7 @@ prettyCaseBlock caseBlock =
                     prettyPattern (denode pattern)
                         |> Pretty.a (Pretty.string " ->")
                         |> Pretty.a Pretty.line
-                        |> Pretty.a (prettyExpressionInner 4 (denode expr) |> Tuple.first |> Pretty.indent 4)
+                        |> Pretty.a (prettyExpressionInner {} 4 (denode expr) |> Tuple.first |> Pretty.indent 4)
                         |> Pretty.indent 4
                 )
                 caseBlock.cases
@@ -793,7 +817,7 @@ prettyLambdaExpression : Lambda -> ( Doc, Bool )
 prettyLambdaExpression lambda =
     let
         ( prettyExpr, alwaysBreak ) =
-            prettyExpressionInner 4 (denode lambda.expression)
+            prettyExpressionInner {} 4 (denode lambda.expression)
     in
     ( [ Pretty.string "\\"
             |> Pretty.a (List.map prettyPattern (denodeAll lambda.args) |> Pretty.words)
@@ -821,7 +845,7 @@ prettyRecordExpr setters =
         prettySetter ( fld, val ) =
             let
                 ( prettyExpr, alwaysBreak ) =
-                    prettyExpressionInner 4 (denode val)
+                    prettyExpressionInner {} 4 (denode val)
             in
             ( [ [ Pretty.string (denode fld)
                 , Pretty.string "="
@@ -870,7 +894,7 @@ prettyList exprs =
         _ ->
             let
                 ( prettyExpressions, alwaysBreak ) =
-                    List.map (prettyExpressionInner 4) (denodeAll exprs)
+                    List.map (prettyExpressionInner {} 4) (denodeAll exprs)
                         |> List.unzip
                         |> Tuple.mapSecond Bool.Extra.any
             in
@@ -886,7 +910,7 @@ prettyRecordAccess : Node Expression -> Node String -> ( Doc, Bool )
 prettyRecordAccess expr field =
     let
         ( prettyExpr, alwaysBreak ) =
-            prettyExpressionInner 4 (denode expr)
+            prettyExpressionInner {} 4 (denode expr)
     in
     ( prettyExpr
         |> Pretty.a dot
@@ -914,7 +938,7 @@ prettyRecordUpdateExpression var setters =
         prettySetter ( fld, val ) =
             let
                 ( prettyExpr, alwaysBreak ) =
-                    prettyExpressionInner 4 (denode val)
+                    prettyExpressionInner {} 4 (denode val)
             in
             ( [ [ Pretty.string (denode fld)
                 , Pretty.string "="
@@ -1115,6 +1139,11 @@ denodeMaybe =
     Maybe.map denode
 
 
+nodify : a -> Node a
+nodify exp =
+    Node emptyRange exp
+
+
 prettyMaybe : (a -> Doc) -> Maybe a -> Doc
 prettyMaybe prettyFn maybeVal =
     Maybe.map prettyFn maybeVal
@@ -1187,7 +1216,7 @@ optionalParens flag doc =
         doc
 
 
-{-| Calculate a precedence for any expression to be able to know when
+{-| Calculate a precedence for any operator to be able to know when
 parenthesis are needed or not.
 
 When a lower precedence expression appears beneath a higher one, its needs
@@ -1197,145 +1226,162 @@ When a higher precedence expression appears beneath a lower one, if should
 not have parenthesis.
 
 -}
-precedence : Expression -> Int
-precedence expression =
-    case expression of
-        UnitExpr ->
-            10
+precedence : String -> Int
+precedence symbol =
+    case symbol of
+        ">>" ->
+            9
 
-        Application exprs ->
-            10
+        "<<" ->
+            9
 
-        OperatorApplication symbol _ _ _ ->
-            case symbol of
-                ">>" ->
-                    9
+        "^" ->
+            8
 
-                "<<" ->
-                    9
+        "*" ->
+            7
 
-                "^" ->
-                    8
+        "/" ->
+            7
 
-                "*" ->
-                    7
+        "//" ->
+            7
 
-                "/" ->
-                    7
+        "%" ->
+            7
 
-                "//" ->
-                    7
+        "rem" ->
+            7
 
-                "%" ->
-                    7
-
-                "rem" ->
-                    7
-
-                "+" ->
-                    6
-
-                "-" ->
-                    6
-
-                "++" ->
-                    5
-
-                "::" ->
-                    5
-
-                "==" ->
-                    4
-
-                "/=" ->
-                    4
-
-                "<" ->
-                    4
-
-                ">" ->
-                    4
-
-                "<=" ->
-                    4
-
-                ">=" ->
-                    4
-
-                "&&" ->
-                    3
-
-                "||" ->
-                    2
-
-                "|>" ->
-                    0
-
-                "<|" ->
-                    0
-
-                _ ->
-                    0
-
-        FunctionOrValue modl val ->
-            10
-
-        IfBlock exprBool exprTrue exprFalse ->
-            -1
-
-        PrefixOperator symbol ->
-            10
-
-        Operator symbol ->
-            10
-
-        Integer val ->
-            10
-
-        Hex val ->
-            10
-
-        Floatable val ->
-            10
-
-        Negation expr ->
+        "+" ->
             6
 
-        Literal val ->
-            10
+        "-" ->
+            6
 
-        CharLiteral val ->
-            10
+        "++" ->
+            5
 
-        TupledExpression exprs ->
-            10
+        "::" ->
+            5
 
-        ParenthesizedExpression expr ->
-            10
+        "==" ->
+            4
 
-        LetExpression letBlock ->
-            -1
+        "/=" ->
+            4
 
-        CaseExpression caseBlock ->
-            -1
+        "<" ->
+            4
 
-        LambdaExpression lambda ->
-            -1
+        ">" ->
+            4
 
-        RecordExpr setters ->
-            10
+        "<=" ->
+            4
 
-        ListExpr exprs ->
-            10
+        ">=" ->
+            4
 
-        RecordAccess expr field ->
-            10
+        "&&" ->
+            3
 
-        RecordAccessFunction field ->
-            10
+        "||" ->
+            2
 
-        RecordUpdateExpression var setters ->
-            10
+        "|>" ->
+            0
 
-        GLSLExpression val ->
-            10
+        "<|" ->
+            0
+
+        _ ->
+            0
+
+
+unitPrecedence =
+    10
+
+
+applicationPrecedence =
+    10
+
+
+functionOrValuePrecedence =
+    10
+
+
+ifBlockPrecedence =
+    -1
+
+
+prefixOperatorPrecedence =
+    10
+
+
+operatorPrecedence =
+    10
+
+
+integerPrecedence =
+    10
+
+
+hexPrecedence =
+    10
+
+
+floatablePrecedence =
+    10
+
+
+negationPrecedence =
+    6
+
+
+literalPrecedence =
+    10
+
+
+charLiteralPrecedence =
+    10
+
+
+tupledExpressionPrecedence =
+    10
+
+
+parenthesizedExpressionPrecedence =
+    10
+
+
+letExpressionPrecedence =
+    -1
+
+
+caseExpressionPrecedence =
+    -1
+
+
+lambdaExpressionPrecedence =
+    -1
+
+
+recordExprPrecedence =
+    10
+
+
+listExprPrecedence =
+    10
+
+
+recordAccessPrecedence =
+    10
+
+
+recordAccessFunctionPrecedence =
+    10
+
+
+recordUpdateExpressionPrecedence =
+    10
