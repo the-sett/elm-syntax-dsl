@@ -1,9 +1,15 @@
 module ImportsAndExposing exposing (sortAndDedupImports)
 
+import Elm.Syntax.Exposing exposing (ExposedType, Exposing(..), TopLevelExpose(..))
 import Elm.Syntax.Import exposing (Import)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (emptyRange)
 import Maybe.Extra
+
+
+
+-- Sorting and deduplicating exposings.
+-- Sorting and deduplicating imports.
 
 
 sortAndDedupImports : List Import -> List Import
@@ -14,9 +20,10 @@ sortAndDedupImports imports =
     in
     List.sortBy impName imports
         |> groupByModuleName
-        |> List.map combineDups
+        |> List.map combineImports
 
 
+groupByModuleName : List Import -> List (List Import)
 groupByModuleName innerImports =
     let
         ( _, hdGroup, remGroups ) =
@@ -43,23 +50,8 @@ groupByModuleName innerImports =
     hdGroup :: remGroups
 
 
-combineExposings maybeLeft maybeRight =
-    case ( maybeLeft, maybeRight ) of
-        ( Nothing, Nothing ) ->
-            Nothing
-
-        ( Just left, Nothing ) ->
-            Just left
-
-        ( Nothing, Just right ) ->
-            Just right
-
-        ( Just left, Just right ) ->
-            Just left
-
-
-combineDups : List Import -> Import
-combineDups innerImports =
+combineImports : List Import -> Import
+combineImports innerImports =
     case innerImports of
         [] ->
             { moduleName = nodify []
@@ -79,6 +71,27 @@ combineDups innerImports =
                 tl
 
 
+combineExposings : Maybe (Node Exposing) -> Maybe (Node Exposing) -> Maybe (Node Exposing)
+combineExposings maybeLeft maybeRight =
+    case ( maybeLeft, maybeRight ) of
+        ( Nothing, Nothing ) ->
+            Nothing
+
+        ( Just left, Nothing ) ->
+            Just left
+
+        ( Nothing, Just right ) ->
+            Just right
+
+        ( Just left, Just right ) ->
+            Just left
+
+
+
+-- Helper functions
+
+
+denode : Node a -> a
 denode =
     Node.value
 
