@@ -1116,26 +1116,7 @@ prettyTypeAnnotation typeAnn =
             prettyGenericRecord (denode paramName) (denodeAll (denode recordDef))
 
         FunctionTypeAnnotation fromAnn toAnn ->
-            let
-                fromFnAnn =
-                    denode fromAnn
-
-                prettyFrom =
-                    case fromFnAnn of
-                        FunctionTypeAnnotation _ _ ->
-                            prettyTypeAnnotationParens (denode fromAnn)
-
-                        _ ->
-                            prettyTypeAnnotation (denode fromAnn)
-            in
-            [ prettyFrom
-            , [ Pretty.string "->"
-              , prettyTypeAnnotation (denode toAnn)
-              ]
-                |> Pretty.words
-            ]
-                |> Pretty.lines
-                |> Pretty.group
+            prettyFunctionTypeAnnotation fromAnn toAnn
 
 
 prettyTypeAnnotationParens : TypeAnnotation -> Doc
@@ -1219,6 +1200,47 @@ prettyFieldTypeAnn ( name, ann ) =
     ]
         |> Pretty.lines
         |> Pretty.nest 4
+        |> Pretty.group
+
+
+prettyFunctionTypeAnnotation : Node TypeAnnotation -> Node TypeAnnotation -> Doc
+prettyFunctionTypeAnnotation left right =
+    let
+        expandLeft : TypeAnnotation -> Doc
+        expandLeft ann =
+            case ann of
+                FunctionTypeAnnotation _ _ ->
+                    prettyTypeAnnotationParens ann
+
+                _ ->
+                    prettyTypeAnnotation ann
+
+        expandRight : TypeAnnotation -> List Doc
+        expandRight ann =
+            case ann of
+                FunctionTypeAnnotation innerLeft innerRight ->
+                    innerFnTypeAnn innerLeft innerRight
+
+                _ ->
+                    [ prettyTypeAnnotation ann ]
+
+        innerFnTypeAnn : Node TypeAnnotation -> Node TypeAnnotation -> List Doc
+        innerFnTypeAnn innerLeft innerRight =
+            let
+                rightSide =
+                    denode innerRight |> expandRight
+            in
+            case rightSide of
+                hd :: tl ->
+                    (denode innerLeft |> expandLeft)
+                        :: ([ Pretty.string "->", hd ] |> Pretty.words)
+                        :: tl
+
+                [] ->
+                    []
+    in
+    innerFnTypeAnn left right
+        |> Pretty.lines
         |> Pretty.group
 
 
