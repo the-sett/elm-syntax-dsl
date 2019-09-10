@@ -7,14 +7,20 @@ import Blah exposing (blong)
 import Blah as B exposing (bling)
 import Blah as H exposing (blang)
 
-x =
-    Blah.blong
-
-y =
-    B.bling
 
 hex =
     0xAFFF
+
+stackIfs =
+    if blah then
+        val1
+
+    else if blah then
+        val2
+
+    else
+        val3
+
 
 addBrackets1 =
     let
@@ -35,13 +41,79 @@ noBrackets2 =
 noBrackets3 =
     (toFloat intensity) / 255
 
+
 noBrackets4 =
     f ((g h))
+
+
+noBrackets5 =
+    case blah of
+        (Constructor c) -> blah
+
+
+noBrackets6 =
+    Just
+        <| if blah then
+              val1
+
+           else
+              val2
+
+noBrackets7 =
+     blah <| (\a -> b)
+
 
 needsBrackets1 =
     f (g h)
 
 
+needsBrackets2 =
+    case blah of
+        Constructor c :: tl -> blah
+
+
+needsBrackets3 =
+    Just
+        << if blah then
+              fn1
+
+           else
+              fn2
+
+
+needsBrackets4 =
+    60
+        * if cMax == r then
+              6
+
+          else
+              12
+
+
+needsBrackets5 =
+     blah <| (a |> b)
+
+        
 rightPipeEol =
    (funcion with lots and lots and lots and lots and lots parameters to make it nice and long)
    <| (funcion with lots and lots and lots and lots and lots parameters to make it nice and long)
+
+
+type alias Keyframes compatible =
+    { compatible | keyframes : Compatible, none : Compatible, value : String }
+
+
+render : (Parts.Msg (Container c) m -> m) -> Parts.Index (List Int) -> Container c -> List (Property m) -> List (Html m) -> Html m
+
+
+title styling block =
+    Title
+        (List.append
+            styling
+            [ css "justify-content" "flex-end", css "flex-direction" "column", css "align-items" "flex-start" ]
+        )
+        block
+
+
+type alias HashData =
+    { shift : Int, seed : Int, hash : Int, charsProcessed : Int }

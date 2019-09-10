@@ -1175,23 +1175,37 @@ prettyGenericRecord paramName fields =
         open =
             [ Pretty.string "{"
             , Pretty.string paramName
-            , Pretty.string "|"
             ]
                 |> Pretty.words
+                |> Pretty.a Pretty.line
 
         close =
-            Pretty.a (Pretty.string "}") Pretty.line
+            Pretty.a (Pretty.string "}")
+                Pretty.line
+
+        addBarToFirst exprs =
+            case exprs of
+                [] ->
+                    []
+
+                hd :: tl ->
+                    Pretty.a hd (Pretty.string "| ") :: tl
     in
     case fields of
         [] ->
             Pretty.string "{}"
 
         _ ->
-            fields
-                |> List.map (Tuple.mapBoth denode denode)
-                |> List.map prettyFieldTypeAnn
-                |> Pretty.separators ", "
-                |> Pretty.surround open close
+            open
+                |> Pretty.a
+                    (fields
+                        |> List.map (Tuple.mapBoth denode denode)
+                        |> List.map prettyFieldTypeAnn
+                        |> addBarToFirst
+                        |> Pretty.separators ", "
+                    )
+                |> Pretty.nest 4
+                |> Pretty.surround Pretty.empty close
                 |> Pretty.group
 
 
