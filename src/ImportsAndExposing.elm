@@ -47,7 +47,7 @@ groupByModuleName innerImports =
                         ( denode hd.moduleName, [], [] )
                         innerImports
     in
-    hdGroup :: remGroups
+    (hdGroup :: remGroups) |> List.reverse
 
 
 combineImports : List Import -> Import
