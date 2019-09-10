@@ -31,6 +31,7 @@ import Elm.Syntax.Type exposing (Type, ValueConstructor)
 import Elm.Syntax.TypeAlias exposing (TypeAlias)
 import Elm.Syntax.TypeAnnotation exposing (RecordDefinition, RecordField, TypeAnnotation(..))
 import Hex
+import ImportsAndExposing
 import Maybe.Extra
 import Pretty exposing (Doc)
 
@@ -176,79 +177,9 @@ prettyComments comments =
 
 prettyImports : List Import -> Doc
 prettyImports imports =
-    sortAndDedupImports imports
+    ImportsAndExposing.sortAndDedupImports imports
         |> List.map prettyImport
         |> Pretty.lines
-
-
-sortAndDedupImports : List Import -> List Import
-sortAndDedupImports imports =
-    let
-        impName imp =
-            denode imp.moduleName
-
-        groupByModuleName innerImports =
-            let
-                ( _, hdGroup, remGroups ) =
-                    case innerImports of
-                        [] ->
-                            ( [], [], [ [] ] )
-
-                        hd :: _ ->
-                            List.foldl
-                                (\imp ( currName, currAccum, accum ) ->
-                                    let
-                                        nextName =
-                                            denode imp.moduleName
-                                    in
-                                    if nextName == currName then
-                                        ( currName, imp :: currAccum, accum )
-
-                                    else
-                                        ( nextName, [ imp ], currAccum :: accum )
-                                )
-                                ( denode hd.moduleName, [], [] )
-                                innerImports
-            in
-            hdGroup :: remGroups
-
-        combineExposings maybeLeft maybeRight =
-            case ( maybeLeft, maybeRight ) of
-                ( Nothing, Nothing ) ->
-                    Nothing
-
-                ( Just left, Nothing ) ->
-                    Just left
-
-                ( Nothing, Just right ) ->
-                    Just right
-
-                ( Just left, Just right ) ->
-                    Just left
-
-        combineDups : List Import -> Import
-        combineDups innerImports =
-            case innerImports of
-                [] ->
-                    { moduleName = nodify []
-                    , moduleAlias = Nothing
-                    , exposingList = Nothing
-                    }
-
-                hd :: tl ->
-                    List.foldl
-                        (\imp result ->
-                            { moduleName = imp.moduleName
-                            , moduleAlias = Maybe.Extra.or imp.moduleAlias result.moduleAlias
-                            , exposingList = combineExposings imp.exposingList result.exposingList
-                            }
-                        )
-                        hd
-                        tl
-    in
-    List.sortBy impName imports
-        |> groupByModuleName
-        |> List.map combineDups
 
 
 prettyImport : Import -> Doc
