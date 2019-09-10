@@ -537,6 +537,7 @@ adjustParentheses context expression =
                 ParenthesizedExpression innerExpr ->
                     if shouldRemove (denode innerExpr) then
                         denode innerExpr
+                            |> removeParens
 
                     else
                         expr
