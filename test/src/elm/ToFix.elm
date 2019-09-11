@@ -105,6 +105,8 @@ type alias Keyframes compatible =
 
 
 render : (Parts.Msg (Container c) m -> m) -> Parts.Index (List Int) -> Container c -> List (Property m) -> List (Html m) -> Html m
+render =
+    ()
 
 
 title styling block =
