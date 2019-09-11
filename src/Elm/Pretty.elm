@@ -1088,34 +1088,13 @@ prettyTypeAnnotation typeAnn =
             Pretty.string val
 
         Typed fqName anns ->
-            let
-                ( moduleName, typeName ) =
-                    denode fqName
-
-                typeDoc =
-                    prettyModuleNameDot moduleName
-                        |> Pretty.a (Pretty.string typeName)
-
-                argsDoc =
-                    List.map prettyTypeAnnotationParens (denodeAll anns)
-                        |> Pretty.words
-            in
-            [ typeDoc
-            , argsDoc
-            ]
-                |> Pretty.words
+            prettyTyped fqName anns
 
         Unit ->
             Pretty.string "()"
 
         Tupled anns ->
-            Pretty.space
-                |> Pretty.a
-                    (List.map prettyTypeAnnotation (denodeAll anns)
-                        |> Pretty.join (Pretty.string ", ")
-                    )
-                |> Pretty.a Pretty.space
-                |> Pretty.parens
+            prettyTupled anns
 
         Record recordDef ->
             prettyRecord (denodeAll recordDef)
@@ -1125,6 +1104,37 @@ prettyTypeAnnotation typeAnn =
 
         FunctionTypeAnnotation fromAnn toAnn ->
             prettyFunctionTypeAnnotation fromAnn toAnn
+
+
+prettyTyped : Node ( ModuleName, String ) -> List (Node TypeAnnotation) -> Doc
+prettyTyped fqName anns =
+    let
+        ( moduleName, typeName ) =
+            denode fqName
+
+        typeDoc =
+            prettyModuleNameDot moduleName
+                |> Pretty.a (Pretty.string typeName)
+
+        argsDoc =
+            List.map prettyTypeAnnotationParens (denodeAll anns)
+                |> Pretty.words
+    in
+    [ typeDoc
+    , argsDoc
+    ]
+        |> Pretty.words
+
+
+prettyTupled : List (Node TypeAnnotation) -> Doc
+prettyTupled anns =
+    Pretty.space
+        |> Pretty.a
+            (List.map prettyTypeAnnotation (denodeAll anns)
+                |> Pretty.join (Pretty.string ", ")
+            )
+        |> Pretty.a Pretty.space
+        |> Pretty.parens
 
 
 prettyTypeAnnotationParens : TypeAnnotation -> Doc
