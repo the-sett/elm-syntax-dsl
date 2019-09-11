@@ -527,6 +527,9 @@ adjustParentheses context expression =
                 ( False, LambdaExpression _ ) ->
                     nodify expr |> ParenthesizedExpression
 
+                ( False, IfBlock _ _ _ ) ->
+                    nodify expr |> ParenthesizedExpression
+
                 ( _, _ ) ->
                     expr
 
