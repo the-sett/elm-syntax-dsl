@@ -60,8 +60,14 @@ noBrackets6 =
            else
               val2
 
+
 noBrackets7 =
      blah <| (\a -> b)
+
+
+noBrackets8 =
+    case blah of
+        Constructor :: tl -> blah
 
 
 needsBrackets1 =

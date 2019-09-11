@@ -422,9 +422,40 @@ prettyPattern pattern =
     prettyPatternInner True pattern
 
 
+adjustPatternParentheses : Bool -> Pattern -> Pattern
+adjustPatternParentheses isTop pattern =
+    let
+        addParens pat =
+            case ( isTop, pat ) of
+                ( False, NamedPattern qnRef (_ :: _) ) ->
+                    nodify pat |> ParenthesizedPattern
+
+                ( _, _ ) ->
+                    pat
+
+        removeParens pat =
+            case pat of
+                ParenthesizedPattern innerPat ->
+                    if shouldRemove (denode innerPat) then
+                        denode innerPat
+                            |> removeParens
+
+                    else
+                        pat
+
+                _ ->
+                    pat
+
+        shouldRemove pat =
+            isTop
+    in
+    removeParens pattern
+        |> addParens
+
+
 prettyPatternInner : Bool -> Pattern -> Doc
 prettyPatternInner isTop pattern =
-    case pattern of
+    case adjustPatternParentheses isTop pattern of
         AllPattern ->
             Pretty.string "_"
 
