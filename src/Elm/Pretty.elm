@@ -515,8 +515,8 @@ topContext =
     }
 
 
-adjustParentheses : Context -> Expression -> Expression
-adjustParentheses context expression =
+adjustExpressionParentheses : Context -> Expression -> Expression
+adjustExpressionParentheses context expression =
     let
         addParens expr =
             case ( context.isTop, context.isLeftPipe, expr ) of
@@ -617,7 +617,7 @@ prettyExpression expression =
 
 prettyExpressionInner : Context -> Int -> Expression -> ( Doc, Bool )
 prettyExpressionInner context indent expression =
-    case adjustParentheses context expression of
+    case adjustExpressionParentheses context expression of
         UnitExpr ->
             ( Pretty.string "()"
             , False
