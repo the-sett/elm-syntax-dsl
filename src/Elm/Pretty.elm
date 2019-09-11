@@ -504,12 +504,14 @@ prettyPattern pattern =
 type alias Context =
     { precedence : Int
     , isTop : Bool
+    , isLeftPipe : Bool
     }
 
 
 topContext =
     { precedence = 11
     , isTop = True
+    , isLeftPipe = False
     }
 
 
@@ -517,20 +519,20 @@ adjustParentheses : Context -> Expression -> Expression
 adjustParentheses context expression =
     let
         addParens expr =
-            case ( context.isTop, expr ) of
-                ( False, LetExpression _ ) ->
+            case ( context.isTop, context.isLeftPipe, expr ) of
+                ( False, False, LetExpression _ ) ->
                     nodify expr |> ParenthesizedExpression
 
-                ( False, CaseExpression _ ) ->
+                ( False, False, CaseExpression _ ) ->
                     nodify expr |> ParenthesizedExpression
 
-                ( False, LambdaExpression _ ) ->
+                ( False, False, LambdaExpression _ ) ->
                     nodify expr |> ParenthesizedExpression
 
-                ( False, IfBlock _ _ _ ) ->
+                ( False, False, IfBlock _ _ _ ) ->
                     nodify expr |> ParenthesizedExpression
 
-                ( _, _ ) ->
+                ( _, _, _ ) ->
                     expr
 
         removeParens expr =
@@ -547,57 +549,60 @@ adjustParentheses context expression =
                     expr
 
         shouldRemove expr =
-            case ( context.isTop, expr ) of
-                ( True, _ ) ->
+            case ( context.isTop, context.isLeftPipe, expr ) of
+                ( True, _, _ ) ->
                     True
 
-                ( False, Application _ ) ->
+                ( _, True, _ ) ->
+                    True
+
+                ( False, _, Application _ ) ->
                     if context.precedence < 11 then
                         True
 
                     else
                         False
 
-                ( False, FunctionOrValue _ _ ) ->
+                ( False, _, FunctionOrValue _ _ ) ->
                     True
 
-                ( False, Integer _ ) ->
+                ( False, _, Integer _ ) ->
                     True
 
-                ( False, Hex _ ) ->
+                ( False, _, Hex _ ) ->
                     True
 
-                ( False, Floatable _ ) ->
+                ( False, _, Floatable _ ) ->
                     True
 
-                ( False, Negation _ ) ->
+                ( False, _, Negation _ ) ->
                     True
 
-                ( False, Literal _ ) ->
+                ( False, _, Literal _ ) ->
                     True
 
-                ( False, CharLiteral _ ) ->
+                ( False, _, CharLiteral _ ) ->
                     True
 
-                ( False, TupledExpression _ ) ->
+                ( False, _, TupledExpression _ ) ->
                     True
 
-                ( False, RecordExpr _ ) ->
+                ( False, _, RecordExpr _ ) ->
                     True
 
-                ( False, ListExpr _ ) ->
+                ( False, _, ListExpr _ ) ->
                     True
 
-                ( False, RecordAccess _ _ ) ->
+                ( False, _, RecordAccess _ _ ) ->
                     True
 
-                ( False, RecordAccessFunction _ ) ->
+                ( False, _, RecordAccessFunction _ ) ->
                     True
 
-                ( False, RecordUpdateExpression _ _ ) ->
+                ( False, _, RecordUpdateExpression _ _ ) ->
                     True
 
-                ( _, _ ) ->
+                ( _, _, _ ) ->
                     False
     in
     removeParens expression
@@ -723,7 +728,7 @@ prettyApplication : List (Node Expression) -> ( Doc, Bool )
 prettyApplication exprs =
     let
         ( prettyExpressions, alwaysBreak ) =
-            List.map (prettyExpressionInner { precedence = 11, isTop = False } 4) (denodeAll exprs)
+            List.map (prettyExpressionInner { precedence = 11, isTop = False, isLeftPipe = False } 4) (denodeAll exprs)
                 |> List.unzip
                 |> Tuple.mapSecond Bool.Extra.any
     in
@@ -763,6 +768,7 @@ prettyOperatorApplication symbol _ exprl exprr =
                 context =
                     { precedence = precedence sym
                     , isTop = False
+                    , isLeftPipe = "<|" == sym
                     }
 
                 rightSide =
