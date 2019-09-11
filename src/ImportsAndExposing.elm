@@ -1,4 +1,4 @@
-module ImportsAndExposing exposing (sortAndDedupImports)
+module ImportsAndExposing exposing (sortAndDedupExposings, sortAndDedupImports)
 
 import Elm.Syntax.Exposing exposing (ExposedType, Exposing(..), TopLevelExpose(..))
 import Elm.Syntax.Import exposing (Import)
@@ -9,6 +9,124 @@ import Maybe.Extra
 
 
 -- Sorting and deduplicating exposings.
+
+
+sortAndDedupExposings : List TopLevelExpose -> List TopLevelExpose
+sortAndDedupExposings tlExposings =
+    List.sortBy topLevelExposeName tlExposings
+        |> groupByExposingName
+        |> List.map combineTopLevelExposes
+
+
+topLevelExposeName : TopLevelExpose -> String
+topLevelExposeName tle =
+    case tle of
+        InfixExpose val ->
+            val
+
+        FunctionExpose val ->
+            val
+
+        TypeOrAliasExpose val ->
+            val
+
+        TypeExpose exposedType ->
+            exposedType.name
+
+
+groupByExposingName : List TopLevelExpose -> List (List TopLevelExpose)
+groupByExposingName innerImports =
+    let
+        ( _, hdGroup, remGroups ) =
+            case innerImports of
+                [] ->
+                    ( "", [], [ [] ] )
+
+                hd :: _ ->
+                    List.foldl
+                        (\exp ( currName, currAccum, accum ) ->
+                            let
+                                nextName =
+                                    topLevelExposeName exp
+                            in
+                            if nextName == currName then
+                                ( currName, exp :: currAccum, accum )
+
+                            else
+                                ( nextName, [ exp ], currAccum :: accum )
+                        )
+                        ( topLevelExposeName hd, [], [] )
+                        innerImports
+    in
+    (hdGroup :: remGroups) |> List.reverse
+
+
+combineTopLevelExposes : List TopLevelExpose -> TopLevelExpose
+combineTopLevelExposes exposes =
+    case exposes of
+        [] ->
+            InfixExpose ""
+
+        hd :: tl ->
+            List.foldl
+                (\exp result ->
+                    case ( exp, result ) of
+                        ( TypeExpose typeExpose, _ ) ->
+                            case typeExpose.open of
+                                Just _ ->
+                                    exp
+
+                                _ ->
+                                    result
+
+                        ( _, TypeExpose typeExpose ) ->
+                            case typeExpose.open of
+                                Just _ ->
+                                    result
+
+                                _ ->
+                                    exp
+
+                        ( _, _ ) ->
+                            result
+                )
+                hd
+                tl
+
+
+joinMaybeExposings : Maybe Exposing -> Maybe Exposing -> Maybe Exposing
+joinMaybeExposings maybeLeft maybeRight =
+    case ( maybeLeft, maybeRight ) of
+        ( Nothing, Nothing ) ->
+            Nothing
+
+        ( Just left, Nothing ) ->
+            Just left
+
+        ( Nothing, Just right ) ->
+            Just right
+
+        ( Just left, Just right ) ->
+            joinExposings left right |> Just
+
+
+joinExposings : Exposing -> Exposing -> Exposing
+joinExposings left right =
+    case ( left, right ) of
+        ( All range, _ ) ->
+            All range
+
+        ( _, All range ) ->
+            All range
+
+        ( Explicit leftNodes, Explicit rightNodes ) ->
+            List.append (denodeAll leftNodes) (denodeAll rightNodes)
+                |> sortAndDedupExposings
+                |> nodifyAll
+                |> Explicit
+
+
+
 -- Sorting and deduplicating imports.
 
 
@@ -64,27 +182,13 @@ combineImports innerImports =
                 (\imp result ->
                     { moduleName = imp.moduleName
                     , moduleAlias = Maybe.Extra.or imp.moduleAlias result.moduleAlias
-                    , exposingList = combineExposings imp.exposingList result.exposingList
+                    , exposingList =
+                        joinMaybeExposings (denodeMaybe imp.exposingList) (denodeMaybe result.exposingList)
+                            |> nodifyMaybe
                     }
                 )
                 hd
                 tl
-
-
-combineExposings : Maybe (Node Exposing) -> Maybe (Node Exposing) -> Maybe (Node Exposing)
-combineExposings maybeLeft maybeRight =
-    case ( maybeLeft, maybeRight ) of
-        ( Nothing, Nothing ) ->
-            Nothing
-
-        ( Just left, Nothing ) ->
-            Just left
-
-        ( Nothing, Just right ) ->
-            Just right
-
-        ( Just left, Just right ) ->
-            Just left
 
 
 
@@ -96,6 +200,26 @@ denode =
     Node.value
 
 
+denodeAll : List (Node a) -> List a
+denodeAll =
+    List.map denode
+
+
+denodeMaybe : Maybe (Node a) -> Maybe a
+denodeMaybe =
+    Maybe.map denode
+
+
 nodify : a -> Node a
 nodify exp =
     Node emptyRange exp
+
+
+nodifyAll : List a -> List (Node a)
+nodifyAll =
+    List.map nodify
+
+
+nodifyMaybe : Maybe a -> Maybe (Node a)
+nodifyMaybe =
+    Maybe.map nodify

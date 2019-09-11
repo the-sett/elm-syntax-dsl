@@ -1272,14 +1272,17 @@ isNakedCompound typeAnn =
 --== Helpers
 
 
+denode : Node a -> a
 denode =
     Node.value
 
 
+denodeAll : List (Node a) -> List a
 denodeAll =
     List.map denode
 
 
+denodeMaybe : Maybe (Node a) -> Maybe a
 denodeMaybe =
     Maybe.map denode
 

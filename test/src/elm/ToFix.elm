@@ -6,7 +6,8 @@ import Blah as B
 import Blah exposing (blong)
 import Blah as B exposing (bling)
 import Blah as H exposing (blang)
-
+import Blah exposing (SomeType(..))
+import Blah exposing (SomeType)
 
 hex =
     0xAFFF
