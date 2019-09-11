@@ -419,6 +419,11 @@ prettyArgs args =
 
 prettyPattern : Pattern -> Doc
 prettyPattern pattern =
+    prettyPatternInner True pattern
+
+
+prettyPatternInner : Bool -> Pattern -> Doc
+prettyPatternInner isTop pattern =
     case pattern of
         AllPattern ->
             Pretty.string "_"
@@ -446,7 +451,7 @@ prettyPattern pattern =
         TuplePattern vals ->
             Pretty.space
                 |> Pretty.a
-                    (List.map prettyPattern (denodeAll vals)
+                    (List.map (prettyPatternInner False) (denodeAll vals)
                         |> Pretty.join (Pretty.string ", ")
                     )
                 |> Pretty.a Pretty.space
@@ -459,9 +464,9 @@ prettyPattern pattern =
                 |> Pretty.braces
 
         UnConsPattern hdPat tlPat ->
-            [ prettyPattern (denode hdPat)
+            [ prettyPatternInner False (denode hdPat)
             , Pretty.string "::"
-            , prettyPattern (denode tlPat)
+            , prettyPatternInner False (denode tlPat)
             ]
                 |> Pretty.words
 
@@ -471,7 +476,7 @@ prettyPattern pattern =
                     Pretty.string "[]"
 
                 _ ->
-                    List.map prettyPattern (denodeAll listPats)
+                    List.map (prettyPatternInner False) (denodeAll listPats)
                         |> Pretty.join (Pretty.string ", ")
                         |> sqParens
 
@@ -482,18 +487,18 @@ prettyPattern pattern =
             (prettyModuleNameDot qnRef.moduleName
                 |> Pretty.a (Pretty.string qnRef.name)
             )
-                :: List.map prettyPattern (denodeAll listPats)
+                :: List.map (prettyPatternInner False) (denodeAll listPats)
                 |> Pretty.words
 
         AsPattern pat name ->
-            [ prettyPattern (denode pat)
+            [ prettyPatternInner False (denode pat)
             , Pretty.string "as"
             , Pretty.string (denode name)
             ]
                 |> Pretty.words
 
         ParenthesizedPattern pat ->
-            prettyPattern (denode pat)
+            prettyPatternInner True (denode pat)
                 |> Pretty.parens
 
 
