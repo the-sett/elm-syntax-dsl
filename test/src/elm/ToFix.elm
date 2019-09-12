@@ -9,8 +9,10 @@ import Blah as H exposing (blang)
 import Blah exposing (SomeType(..))
 import Blah exposing (SomeType)
 
+
 hex =
     0xAFFF
+
 
 stackIfs =
     if blah then
@@ -100,7 +102,28 @@ needsBrackets4 =
 needsBrackets5 =
      blah <| (a |> b)
 
-        
+
+needsBrackets6 : RTree a -> a
+needsBrackets6 (Node a list) =
+    a
+
+
+needsBrackets7 : (a -> Bool) -> a -> RTree a -> RTree a
+needsBrackets7 f new tree =
+    let
+        Node a list =
+            tree
+
+        Node a_ list_ =
+            if f a then
+                addChild new tree
+
+            else
+                tree
+    in
+    Node a_ (List.map (addChildAt f new) list_)
+
+    
 rightPipeEol =
    (funcion with lots and lots and lots and lots and lots parameters to make it nice and long)
    <| (funcion with lots and lots and lots and lots and lots parameters to make it nice and long)
