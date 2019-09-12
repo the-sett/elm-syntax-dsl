@@ -731,10 +731,10 @@ prettyExpressionInner context indent expression =
             prettyTupledExpression exprs
 
         ParenthesizedExpression expr ->
-            prettyParenthesizedExpression expr
+            prettyParenthesizedExpression indent expr
 
         LetExpression letBlock ->
-            prettyLetBlock letBlock
+            prettyLetBlock indent letBlock
 
         CaseExpression caseBlock ->
             prettyCaseBlock caseBlock
@@ -794,14 +794,14 @@ isEndLineOperator op =
 prettyOperatorApplication : String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
 prettyOperatorApplication symbol _ exprl exprr =
     let
-        expandExpr : Context -> Expression -> List ( Doc, Bool )
-        expandExpr context expr =
+        expandExpr : Int -> Context -> Expression -> List ( Doc, Bool )
+        expandExpr indent context expr =
             case expr of
                 OperatorApplication sym _ left right ->
                     innerOpApply sym left right
 
                 _ ->
-                    [ prettyExpressionInner context 4 expr ]
+                    [ prettyExpressionInner context indent expr ]
 
         innerOpApply : String -> Node Expression -> Node Expression -> List ( Doc, Bool )
         innerOpApply sym left right =
@@ -812,12 +812,15 @@ prettyOperatorApplication symbol _ exprl exprr =
                     , isLeftPipe = "<|" == sym
                     }
 
+                indent =
+                    4 - (String.length symbol + 1)
+
                 rightSide =
-                    denode right |> expandExpr context
+                    denode right |> expandExpr indent context
             in
             case rightSide of
                 ( hdExpr, hdBreak ) :: tl ->
-                    List.append (denode left |> expandExpr context)
+                    List.append (denode left |> expandExpr 4 context)
                         (( Pretty.string sym |> Pretty.a Pretty.space |> Pretty.a hdExpr, hdBreak ) :: tl)
 
                 [] ->
@@ -891,8 +894,8 @@ prettyTupledExpression exprs =
             )
 
 
-prettyParenthesizedExpression : Node Expression -> ( Doc, Bool )
-prettyParenthesizedExpression expr =
+prettyParenthesizedExpression : Int -> Node Expression -> ( Doc, Bool )
+prettyParenthesizedExpression indent expr =
     let
         open =
             Pretty.string "("
@@ -901,32 +904,34 @@ prettyParenthesizedExpression expr =
             Pretty.a (Pretty.string ")") Pretty.tightline
 
         ( prettyExpr, alwaysBreak ) =
-            prettyExpressionInner topContext 3 (denode expr)
+            prettyExpressionInner topContext (indent - 1) (denode expr)
     in
     ( prettyExpr
         |> Pretty.nest 1
         |> Pretty.surround open close
+        |> Pretty.align
         |> optionalGroup alwaysBreak
     , alwaysBreak
     )
 
 
-prettyLetBlock : LetBlock -> ( Doc, Bool )
-prettyLetBlock letBlock =
+prettyLetBlock : Int -> LetBlock -> ( Doc, Bool )
+prettyLetBlock indent letBlock =
     ( [ Pretty.string "let"
-      , List.map prettyLetDeclaration (denodeAll letBlock.declarations)
+      , List.map (prettyLetDeclaration indent) (denodeAll letBlock.declarations)
             |> doubleLines
-            |> Pretty.indent 4
+            |> Pretty.indent indent
       , Pretty.string "in"
       , prettyExpressionInner topContext 4 (denode letBlock.expression) |> Tuple.first
       ]
         |> Pretty.lines
+      --|> Pretty.align
     , True
     )
 
 
-prettyLetDeclaration : LetDeclaration -> Doc
-prettyLetDeclaration letDecl =
+prettyLetDeclaration : Int -> LetDeclaration -> Doc
+prettyLetDeclaration indent letDecl =
     case letDecl of
         LetFunction fn ->
             prettyFun fn
@@ -937,7 +942,11 @@ prettyLetDeclaration letDecl =
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
-                |> Pretty.a (prettyExpressionInner topContext 4 (denode expr) |> Tuple.first |> Pretty.indent 4)
+                |> Pretty.a
+                    (prettyExpressionInner topContext 4 (denode expr)
+                        |> Tuple.first
+                        |> Pretty.indent indent
+                    )
 
 
 prettyCaseBlock : CaseBlock -> ( Doc, Bool )
