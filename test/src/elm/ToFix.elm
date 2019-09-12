@@ -123,7 +123,15 @@ needsBrackets7 f new tree =
     in
     Node a_ (List.map (addChildAt f new) list_)
 
-    
+
+
+indentation1 =
+    60
+        * (let
+              x = 2
+          in
+              x)
+
 rightPipeEol =
    (funcion with lots and lots and lots and lots and lots parameters to make it nice and long)
    <| (funcion with lots and lots and lots and lots and lots parameters to make it nice and long)
