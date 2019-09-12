@@ -111,10 +111,10 @@ needsBrackets6 (Node a list) =
 needsBrackets7 : (a -> Bool) -> a -> RTree a -> RTree a
 needsBrackets7 f new tree =
     let
-        Node a list =
+        (Node a list) =
             tree
 
-        Node a_ list_ =
+        (Node a_ list_) =
             if f a then
                 addChild new tree
 

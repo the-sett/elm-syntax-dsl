@@ -447,7 +447,12 @@ adjustPatternParentheses isTop pattern =
                     pat
 
         shouldRemove pat =
-            isTop
+            case ( isTop, pat ) of
+                ( _, NamedPattern _ _ ) ->
+                    False
+
+                ( _, _ ) ->
+                    isTop
     in
     removeParens pattern
         |> addParens
