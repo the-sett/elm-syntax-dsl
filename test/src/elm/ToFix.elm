@@ -7,13 +7,30 @@ import Blah exposing (blong)
 import Blah as B exposing (bling)
 import Blah as H exposing (blang)
 import Blah exposing (SomeType(..))
-import Blah exposing (SomeType)
-
+import Blah exposing (SomeType,(&&),(<=),(>=),Bool,Int,(||))
 
 hex =
     0xAFFF
 
 
+tabs = "	"
+
+
+unicode = " "
+
+
+epsilon:Float
+epsilon =
+    1e-12
+        
+type ArcLengthParameterized
+    = ArcLengthParameterized
+        { underlyingSpline: QuadraticSpline2d
+        , parameterization: ArcLengthParameterization
+        , nondegenerateSpline: MaybeNondegenerate
+        }
+
+    
 stackIfs =
     if blah then
         val1
@@ -24,6 +41,13 @@ stackIfs =
     else
         val3
 
+
+longIf =
+    if leftOflineSegments point && (Point2d.signedDistanceFromleftAxis point <= 0) && (Point2d.signedDistanceFromrightAxis point >= 0) then
+        blah
+
+    else
+        blah
 
 addBrackets1 =
     let
