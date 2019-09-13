@@ -518,9 +518,16 @@ prettyPatternInner isTop pattern =
                     Pretty.string "[]"
 
                 _ ->
+                    let
+                        open =
+                            Pretty.a Pretty.space (Pretty.string "[")
+
+                        close =
+                            Pretty.a (Pretty.string "]") Pretty.space
+                    in
                     List.map (prettyPatternInner False) (denodeAll listPats)
                         |> Pretty.join (Pretty.string ", ")
-                        |> sqParens
+                        |> Pretty.surround open close
 
         VarPattern var ->
             Pretty.string var
