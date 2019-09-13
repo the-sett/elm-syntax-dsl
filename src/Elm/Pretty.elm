@@ -967,6 +967,7 @@ prettyLetBlock letBlock =
       , prettyExpressionInner topContext 4 (denode letBlock.expression) |> Tuple.first
       ]
         |> Pretty.lines
+        |> Pretty.align
     , True
     )
 

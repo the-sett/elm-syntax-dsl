@@ -122,26 +122,32 @@ needsBrackets3 =
               fn2
 
 
+
 needsBrackets4 =
     60
-        * if cMax == r then
-              6
-
-          else
-              12
+        * (let
+             cMax = r
+          in
+              6)
 
 
 needsBrackets5 =
+    60
+        * (case cMax == r of
+            _ -> 6)
+
+
+needsBrackets6 =
      blah <| (a |> b)
 
 
-needsBrackets6 : RTree a -> a
-needsBrackets6 (Node a list) =
+needsBrackets7 : RTree a -> a
+needsBrackets7 (Node a list) =
     a
 
 
-needsBrackets7 : (a -> Bool) -> a -> RTree a -> RTree a
-needsBrackets7 f new tree =
+needsBrackets8 : (a -> Bool) -> a -> RTree a -> RTree a
+needsBrackets8 f new tree =
     let
         (Node a list) =
             tree
