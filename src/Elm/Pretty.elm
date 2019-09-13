@@ -427,7 +427,10 @@ adjustPatternParentheses isTop pattern =
     let
         addParens pat =
             case ( isTop, pat ) of
-                ( False, NamedPattern qnRef (_ :: _) ) ->
+                ( False, NamedPattern _ (_ :: _) ) ->
+                    nodify pat |> ParenthesizedPattern
+
+                ( False, AsPattern _ _ ) ->
                     nodify pat |> ParenthesizedPattern
 
                 ( _, _ ) ->
@@ -449,6 +452,9 @@ adjustPatternParentheses isTop pattern =
         shouldRemove pat =
             case ( isTop, pat ) of
                 ( _, NamedPattern _ _ ) ->
+                    False
+
+                ( _, AsPattern _ _ ) ->
                     False
 
                 ( _, _ ) ->
