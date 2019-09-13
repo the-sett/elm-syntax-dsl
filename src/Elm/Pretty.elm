@@ -860,11 +860,16 @@ prettyIfBlock indent exprBool exprTrue exprFalse =
                     topContext
 
                 ifPart =
-                    [ Pretty.string "if"
-                    , prettyExpressionInner topContext 4 (denode innerExprBool) |> Tuple.first
+                    [ [ Pretty.string "if"
+                      , prettyExpressionInner topContext 4 (denode innerExprBool) |> Tuple.first
+                      ]
+                        |> Pretty.lines
+                        |> Pretty.group
+                        |> Pretty.nest 4
                     , Pretty.string "then"
                     ]
-                        |> Pretty.words
+                        |> Pretty.lines
+                        |> Pretty.group
 
                 truePart =
                     prettyExpressionInner topContext 4 (denode innerExprTrue)
