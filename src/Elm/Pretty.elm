@@ -347,9 +347,11 @@ prettyValueConstructors constructors =
 prettyValueConstructor : ValueConstructor -> Doc
 prettyValueConstructor cons =
     [ Pretty.string (denode cons.name)
-    , List.map prettyTypeAnnotationParens (denodeAll cons.arguments) |> Pretty.words
+    , List.map prettyTypeAnnotationParens (denodeAll cons.arguments) |> Pretty.lines
     ]
-        |> Pretty.words
+        |> Pretty.lines
+        |> Pretty.group
+        |> Pretty.nest 4
 
 
 prettyInfix : Infix -> Doc
