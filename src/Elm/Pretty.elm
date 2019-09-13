@@ -409,7 +409,7 @@ prettyFunctionImplementation impl =
 
 prettyArgs : List Pattern -> Doc
 prettyArgs args =
-    List.map prettyPattern args
+    List.map (prettyPatternInner False) args
         |> Pretty.words
 
 
@@ -451,7 +451,7 @@ adjustPatternParentheses isTop pattern =
 
         shouldRemove pat =
             case ( isTop, pat ) of
-                ( _, NamedPattern _ _ ) ->
+                ( False, NamedPattern _ _ ) ->
                     False
 
                 ( _, AsPattern _ _ ) ->
@@ -493,7 +493,7 @@ prettyPatternInner isTop pattern =
         TuplePattern vals ->
             Pretty.space
                 |> Pretty.a
-                    (List.map (prettyPatternInner False) (denodeAll vals)
+                    (List.map (prettyPatternInner True) (denodeAll vals)
                         |> Pretty.join (Pretty.string ", ")
                     )
                 |> Pretty.a Pretty.space
@@ -979,7 +979,7 @@ prettyLetDeclaration letDecl =
             prettyFun fn
 
         LetDestructuring pattern expr ->
-            [ prettyPattern (denode pattern)
+            [ prettyPatternInner False (denode pattern)
             , Pretty.string "="
             ]
                 |> Pretty.words

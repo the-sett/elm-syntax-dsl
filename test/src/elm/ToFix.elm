@@ -72,6 +72,11 @@ noBrackets8 =
         Constructor :: tl -> blah
 
 
+noBrackets9 =
+    case blah of
+        ( (Just pid), [] ) -> blah
+
+
 needsBrackets1 =
     f (g h)
 
