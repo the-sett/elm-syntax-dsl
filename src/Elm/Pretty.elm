@@ -843,24 +843,65 @@ prettyOperatorApplication symbol _ exprl exprr =
 
 prettyIfBlock : Int -> Node Expression -> Node Expression -> Node Expression -> Doc
 prettyIfBlock indent exprBool exprTrue exprFalse =
-    [ [ Pretty.string "if"
-      , prettyExpressionInner topContext 4 (denode exprBool) |> Tuple.first
-      , Pretty.string "then"
-      ]
-        |> Pretty.words
-    , prettyExpressionInner topContext 4 (denode exprTrue) |> Tuple.first
-    ]
+    let
+        innerIfBlock : Node Expression -> Node Expression -> Node Expression -> List Doc
+        innerIfBlock innerExprBool innerExprTrue innerExprFalse =
+            let
+                context =
+                    topContext
+
+                ifPart =
+                    [ Pretty.string "if"
+                    , prettyExpressionInner topContext 4 (denode innerExprBool) |> Tuple.first
+                    , Pretty.string "then"
+                    ]
+                        |> Pretty.words
+
+                truePart =
+                    prettyExpressionInner topContext 4 (denode innerExprTrue)
+                        |> Tuple.first
+                        |> Pretty.indent 4
+
+                elsePart =
+                    Pretty.line
+                        |> Pretty.a (Pretty.string "else")
+
+                falsePart =
+                    case denode innerExprFalse of
+                        IfBlock nestedExprBool nestedExprTrue nestedExprFalse ->
+                            innerIfBlock nestedExprBool nestedExprTrue nestedExprFalse
+
+                        _ ->
+                            [ prettyExpressionInner topContext 4 (denode innerExprFalse)
+                                |> Tuple.first
+                                |> Pretty.indent 4
+                            ]
+            in
+            case falsePart of
+                [] ->
+                    []
+
+                [ falseExpr ] ->
+                    [ ifPart
+                    , truePart
+                    , elsePart
+                    , falseExpr
+                    ]
+
+                hd :: tl ->
+                    List.append
+                        [ ifPart
+                        , truePart
+                        , [ elsePart, hd ] |> Pretty.words
+                        ]
+                        tl
+
+        prettyExpressions =
+            innerIfBlock exprBool exprTrue exprFalse
+    in
+    prettyExpressions
         |> Pretty.lines
-        |> Pretty.nest indent
-        |> Pretty.a Pretty.line
-        |> Pretty.a Pretty.line
-        |> Pretty.a
-            ([ Pretty.string "else"
-             , prettyExpressionInner topContext 4 (denode exprFalse) |> Tuple.first
-             ]
-                |> Pretty.lines
-                |> Pretty.nest indent
-            )
+        |> Pretty.align
 
 
 prettyLiteral : String -> Doc
