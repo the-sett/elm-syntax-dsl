@@ -988,25 +988,37 @@ prettyLetDeclaration letDecl =
 
 prettyCaseBlock : CaseBlock -> ( Doc, Bool )
 prettyCaseBlock caseBlock =
-    ( ([ Pretty.string "case"
-       , prettyExpressionInner topContext 4 (denode caseBlock.expression) |> Tuple.first
-       , Pretty.string "of"
-       ]
-        |> Pretty.words
-      )
-        |> Pretty.a Pretty.line
-        |> Pretty.a
-            (List.map
-                (\( pattern, expr ) ->
-                    prettyPattern (denode pattern)
-                        |> Pretty.a (Pretty.string " ->")
-                        |> Pretty.a Pretty.line
-                        |> Pretty.a (prettyExpressionInner topContext 4 (denode expr) |> Tuple.first |> Pretty.indent 4)
-                        |> Pretty.indent 4
-                )
-                caseBlock.cases
+    let
+        casePart =
+            let
+                ( caseExpression, alwaysBreak ) =
+                    prettyExpressionInner topContext 4 (denode caseBlock.expression)
+            in
+            [ [ Pretty.string "case"
+              , caseExpression
+              ]
+                |> Pretty.lines
+                |> optionalGroup alwaysBreak
+                |> Pretty.nest 4
+            , Pretty.string "of"
+            ]
+                |> Pretty.lines
+                |> optionalGroup alwaysBreak
+
+        prettyCase ( pattern, expr ) =
+            prettyPattern (denode pattern)
+                |> Pretty.a (Pretty.string " ->")
+                |> Pretty.a Pretty.line
+                |> Pretty.a (prettyExpressionInner topContext 4 (denode expr) |> Tuple.first |> Pretty.indent 4)
+                |> Pretty.indent 4
+
+        patternsPart =
+            List.map prettyCase caseBlock.cases
                 |> doubleLines
-            )
+    in
+    ( [ casePart, patternsPart ]
+        |> Pretty.lines
+        |> Pretty.align
     , True
     )
 

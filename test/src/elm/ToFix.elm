@@ -181,3 +181,46 @@ title styling block =
 
 type alias HashData =
     { shift : Int, seed : Int, hash : Int, charsProcessed : Int }
+
+
+fromEndpoints : { startPoint : Point2d, startDerivative : Vector2d, endPoint : Point2d, endDerivative : Vector2d } -> CubicSpline2d
+fromEndpoints arguments =
+    ()
+
+parensBroken =
+    Process.spawn (Task.andThen (Platform.sendToSelf router) rAF)
+        |> Task.andThen
+        (\pid -> Task.sequence (List.map send subs) |> Task.andThen (\_ -> Task.succeed (State subs (Just pid) newTime))
+        )
+
+ 
+longcase =
+                 case strings
+                 |> List.map
+                 (\w ->
+                      case w |> String.toLower of
+                          "get" ->
+                              Just GET
+
+                          "post" ->
+                              Just POST
+
+                          "put" ->
+                              Just PUT
+
+                          "delete" ->
+                              Just DELETE
+
+                          "options" ->
+                              Just OPTIONS
+
+                          _ ->
+                              Nothing
+                 )
+                 |> maybeList of
+                 Just methods ->
+                     succeed methods
+
+longcase2 =
+    case leftOflineSegments point && (Point2d.signedDistanceFromleftAxis point <= 0) && (Point2d.signedDistanceFromrightAxis point >= 0) of
+        True -> ()
