@@ -703,7 +703,7 @@ prettyExpressionInner context indent expression =
             )
 
         Hex val ->
-            ( Pretty.string (Hex.toString val)
+            ( Pretty.string (toHexString val)
             , False
             )
 
@@ -1469,6 +1469,29 @@ optionalParens flag doc =
 
     else
         doc
+
+
+toHexString : Int -> String
+toHexString val =
+    let
+        padWithZeros str =
+            let
+                length =
+                    String.length str
+            in
+            if length < 2 then
+                String.padLeft 2 '0' str
+
+            else if length > 2 && length < 4 then
+                String.padLeft 4 '0' str
+
+            else if length > 4 && length < 8 then
+                String.padLeft 8 '0' str
+
+            else
+                str
+    in
+    "0x" ++ (Hex.toString val |> String.toUpper |> padWithZeros)
 
 
 {-| Calculate a precedence for any operator to be able to know when
