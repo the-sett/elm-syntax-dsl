@@ -18,7 +18,10 @@ tabs = "	"
 
 unicode = " "
 
+        
+unicode2 = "✓ a-ok"
 
+        
 epsilon:Float
 epsilon =
     1e-12
