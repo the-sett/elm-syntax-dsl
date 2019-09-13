@@ -13,9 +13,25 @@ import Maybe.Extra
 
 sortAndDedupExposings : List TopLevelExpose -> List TopLevelExpose
 sortAndDedupExposings tlExposings =
-    List.sortBy topLevelExposeName tlExposings
+    List.sortWith topLevelExposeOrder tlExposings
         |> groupByExposingName
         |> List.map combineTopLevelExposes
+
+
+topLevelExposeOrder : TopLevelExpose -> TopLevelExpose -> Order
+topLevelExposeOrder tlel tler =
+    case ( tlel, tler ) of
+        ( InfixExpose _, InfixExpose _ ) ->
+            compare (topLevelExposeName tlel) (topLevelExposeName tler)
+
+        ( InfixExpose _, _ ) ->
+            LT
+
+        ( _, InfixExpose _ ) ->
+            GT
+
+        ( _, _ ) ->
+            compare (topLevelExposeName tlel) (topLevelExposeName tler)
 
 
 topLevelExposeName : TopLevelExpose -> String
@@ -121,6 +137,19 @@ joinExposings left right =
 
         ( Explicit leftNodes, Explicit rightNodes ) ->
             List.append (denodeAll leftNodes) (denodeAll rightNodes)
+                --|> sortAndDedupExposings
+                |> nodifyAll
+                |> Explicit
+
+
+sortAndDedupExposing : Exposing -> Exposing
+sortAndDedupExposing exp =
+    case exp of
+        All range ->
+            All range
+
+        Explicit nodes ->
+            denodeAll nodes
                 |> sortAndDedupExposings
                 |> nodifyAll
                 |> Explicit
@@ -178,17 +207,25 @@ combineImports innerImports =
             }
 
         hd :: tl ->
-            List.foldl
-                (\imp result ->
-                    { moduleName = imp.moduleName
-                    , moduleAlias = Maybe.Extra.or imp.moduleAlias result.moduleAlias
-                    , exposingList =
-                        joinMaybeExposings (denodeMaybe imp.exposingList) (denodeMaybe result.exposingList)
-                            |> nodifyMaybe
-                    }
-                )
-                hd
-                tl
+            let
+                combinedImports =
+                    List.foldl
+                        (\imp result ->
+                            { moduleName = imp.moduleName
+                            , moduleAlias = Maybe.Extra.or imp.moduleAlias result.moduleAlias
+                            , exposingList =
+                                joinMaybeExposings (denodeMaybe imp.exposingList) (denodeMaybe result.exposingList)
+                                    |> nodifyMaybe
+                            }
+                        )
+                        hd
+                        tl
+            in
+            { combinedImports
+                | exposingList =
+                    Maybe.map (denode >> sortAndDedupExposing >> nodify)
+                        combinedImports.exposingList
+            }
 
 
 

@@ -201,7 +201,8 @@ prettyExposing exposing_ =
                     Pretty.string ".." |> Pretty.parens
 
                 Explicit tll ->
-                    prettyTopLevelExposes (denodeAll tll)
+                    ImportsAndExposing.sortAndDedupExposings (denodeAll tll)
+                        |> prettyTopLevelExposes
                         |> Pretty.parens
     in
     Pretty.string "exposing"
@@ -211,23 +212,7 @@ prettyExposing exposing_ =
 
 prettyTopLevelExposes : List TopLevelExpose -> Doc
 prettyTopLevelExposes exposes =
-    let
-        tleName tle =
-            case tle of
-                InfixExpose val ->
-                    val
-
-                FunctionExpose val ->
-                    val
-
-                TypeOrAliasExpose val ->
-                    val
-
-                TypeExpose exposedType ->
-                    exposedType.name
-    in
-    List.sortBy tleName exposes
-        |> List.map prettyTopLevelExpose
+    List.map prettyTopLevelExpose exposes
         |> Pretty.join (Pretty.string ", ")
 
 

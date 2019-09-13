@@ -1,11 +1,11 @@
-module ToFix exposing (..)
+module ToFix exposing ((&&), (<=), (>=), Bool, Int, SomeType(..), blang, bling, blong, (||))
 
 import Blah
 import Blah
 import Blah as B
 import Blah exposing (blong)
+import Blah as H exposing (blang)        
 import Blah as B exposing (bling)
-import Blah as H exposing (blang)
 import Blah exposing (SomeType(..))
 import Blah exposing (SomeType,(&&),(<=),(>=),Bool,Int,(||))
 
