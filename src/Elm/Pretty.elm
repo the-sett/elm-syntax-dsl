@@ -953,6 +953,7 @@ prettyParenthesizedExpression expr =
         |> Pretty.nest 1
         |> Pretty.surround open close
         |> optionalGroup alwaysBreak
+        |> Pretty.align
     , alwaysBreak
     )
 
