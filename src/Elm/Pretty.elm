@@ -890,7 +890,7 @@ prettyIfBlock indent exprBool exprTrue exprFalse =
                       ]
                         |> Pretty.lines
                         |> Pretty.group
-                        |> Pretty.nest 4
+                        |> Pretty.nest indent
                     , Pretty.string "then"
                     ]
                         |> Pretty.lines
@@ -899,7 +899,7 @@ prettyIfBlock indent exprBool exprTrue exprFalse =
                 truePart =
                     prettyExpressionInner topContext 4 (denode innerExprTrue)
                         |> Tuple.first
-                        |> Pretty.indent 4
+                        |> Pretty.indent indent
 
                 elsePart =
                     Pretty.line
@@ -913,7 +913,7 @@ prettyIfBlock indent exprBool exprTrue exprFalse =
                         _ ->
                             [ prettyExpressionInner topContext 4 (denode innerExprFalse)
                                 |> Tuple.first
-                                |> Pretty.indent 4
+                                |> Pretty.indent indent
                             ]
             in
             case falsePart of
