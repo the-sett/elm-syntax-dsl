@@ -740,7 +740,7 @@ prettyExpressionInner context indent expression =
             prettyCaseBlock indent caseBlock
 
         LambdaExpression lambda ->
-            prettyLambdaExpression lambda
+            prettyLambdaExpression indent lambda
 
         RecordExpr setters ->
             prettyRecordExpr setters
@@ -1069,8 +1069,8 @@ prettyCaseBlock indent caseBlock =
     )
 
 
-prettyLambdaExpression : Lambda -> ( Doc, Bool )
-prettyLambdaExpression lambda =
+prettyLambdaExpression : Int -> Lambda -> ( Doc, Bool )
+prettyLambdaExpression indent lambda =
     let
         ( prettyExpr, alwaysBreak ) =
             prettyExpressionInner topContext 4 (denode lambda.expression)
@@ -1082,7 +1082,7 @@ prettyLambdaExpression lambda =
       ]
         |> Pretty.lines
         |> optionalGroup alwaysBreak
-        |> Pretty.nest 4
+        |> Pretty.nest indent
     , alwaysBreak
     )
 
