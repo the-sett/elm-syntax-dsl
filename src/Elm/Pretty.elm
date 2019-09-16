@@ -792,7 +792,44 @@ isEndLineOperator op =
 
 
 prettyOperatorApplication : String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
-prettyOperatorApplication symbol _ exprl exprr =
+prettyOperatorApplication symbol dir exprl exprr =
+    if symbol == "<|" then
+        prettyOperatorApplicationLeft symbol dir exprl exprr
+
+    else
+        prettyOperatorApplicationRight symbol dir exprl exprr
+
+
+prettyOperatorApplicationLeft : String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
+prettyOperatorApplicationLeft symbol _ exprl exprr =
+    let
+        context =
+            { precedence = precedence symbol
+            , isTop = False
+            , isLeftPipe = True
+            }
+
+        ( prettyExpressionLeft, alwaysBreakLeft ) =
+            prettyExpressionInner context 4 (denode exprl)
+
+        ( prettyExpressionRight, alwaysBreakRight ) =
+            prettyExpressionInner context 4 (denode exprr)
+
+        alwaysBreak =
+            alwaysBreakLeft || alwaysBreakRight
+    in
+    ( [ [ prettyExpressionLeft, Pretty.string symbol ] |> Pretty.words
+      , prettyExpressionRight
+      ]
+        |> Pretty.lines
+        |> optionalGroup alwaysBreak
+        |> Pretty.nest 4
+    , alwaysBreak
+    )
+
+
+prettyOperatorApplicationRight : String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
+prettyOperatorApplicationRight symbol _ exprl exprr =
     let
         expandExpr : Context -> Expression -> List ( Doc, Bool )
         expandExpr context expr =
