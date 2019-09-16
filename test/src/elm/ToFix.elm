@@ -238,3 +238,34 @@ longcase =
 longcase2 =
     case leftOflineSegments point && (Point2d.signedDistanceFromleftAxis point <= 0) && (Point2d.signedDistanceFromrightAxis point >= 0) of
         True -> ()
+
+
+definitionsDecoder : Decoder Definitions
+definitionsDecoder =
+    field
+        "definitions"
+        (keyValuePairs preSchemaDecoder |> map (List.map (Tuple.mapFirst ((++) "#/definitions/")) >> Dict.fromList))
+        |> maybe
+        |> map (Maybe.withDefault Dict.empty)
+
+asdasd =
+   [ text "Log messages"
+            , Toggles.checkbox
+                Mdl
+                [ 0 ]
+                model.mdl
+                [ Toggles.ripple, Toggles.value model.logMessages, css "width" "32px" ]
+                []
+            , if model.logMessages then
+                Options.div
+                    [ Typography.caption, css "width" "100%" ]
+                    [ text "Open your Javascript console to observe MDL messages" ]
+
+              else
+                text ""
+            , let
+            x =
+                2
+           in
+           x
+            ]
