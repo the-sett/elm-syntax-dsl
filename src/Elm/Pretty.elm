@@ -773,8 +773,9 @@ prettyApplication indent exprs =
     in
     ( prettyExpressions
         |> Pretty.lines
-        |> optionalGroup alwaysBreak
         |> Pretty.nest indent
+        |> Pretty.align
+        |> optionalGroup alwaysBreak
     , alwaysBreak
     )
 
@@ -868,6 +869,7 @@ prettyOperatorApplicationRight symbol _ exprl exprr =
     in
     ( prettyExpressions
         |> Pretty.join (Pretty.nest 4 Pretty.line)
+        |> Pretty.align
         |> optionalGroup alwaysBreak
     , alwaysBreak
     )
@@ -1085,8 +1087,9 @@ prettyLambdaExpression indent lambda =
       , prettyExpr
       ]
         |> Pretty.lines
-        |> optionalGroup alwaysBreak
         |> Pretty.nest indent
+        |> Pretty.align
+        |> optionalGroup alwaysBreak
     , alwaysBreak
     )
 
