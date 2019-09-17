@@ -1111,6 +1111,7 @@ prettyRecordExpr setters =
             ( prettyExpressions
                 |> Pretty.separators ", "
                 |> Pretty.surround open close
+                |> Pretty.align
                 |> optionalGroup alwaysBreak
             , alwaysBreak
             )
@@ -1158,6 +1159,7 @@ prettyList exprs =
             ( prettyExpressions
                 |> Pretty.separators ", "
                 |> Pretty.surround open close
+                |> Pretty.align
                 |> optionalGroup alwaysBreak
             , alwaysBreak
             )
@@ -1217,6 +1219,7 @@ prettyRecordUpdateExpression var setters =
                     )
                 |> Pretty.nest 4
                 |> Pretty.surround Pretty.empty close
+                |> Pretty.align
                 |> optionalGroup alwaysBreak
             , alwaysBreak
             )
