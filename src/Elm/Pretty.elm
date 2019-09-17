@@ -856,7 +856,7 @@ prettyOperatorApplicationRight indent symbol _ exprl exprr =
             in
             case rightSide of
                 ( hdExpr, hdBreak ) :: tl ->
-                    List.append (denode left |> expandExpr 4 context)
+                    List.append (denode left |> expandExpr innerIndent context)
                         (( Pretty.string sym |> Pretty.a Pretty.space |> Pretty.a hdExpr, hdBreak ) :: tl)
 
                 [] ->
@@ -1062,7 +1062,7 @@ prettyCaseBlock indent caseBlock =
                 |> Pretty.a (Pretty.string " ->")
                 |> Pretty.a Pretty.line
                 |> Pretty.a (prettyExpressionInner topContext 4 (denode expr) |> Tuple.first |> Pretty.indent 4)
-                |> Pretty.indent indent
+                |> Pretty.indent (Debug.log "indent" indent)
 
         patternsPart =
             List.map prettyCase caseBlock.cases
@@ -1474,15 +1474,17 @@ prettyMaybe prettyFn maybeVal =
 
 decrementIndent : Int -> Int -> Int
 decrementIndent currentIndent spaces =
-    let
+    (let
         modded =
-            modBy 4 (currentIndent - spaces)
-    in
-    if modded == 0 then
+            modBy 4 (Debug.log "cur" currentIndent - spaces)
+     in
+     if modded == 0 then
         4
 
-    else
+     else
         modded
+    )
+        |> Debug.log "res"
 
 
 dot : Doc
