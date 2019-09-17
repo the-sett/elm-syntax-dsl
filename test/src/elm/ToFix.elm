@@ -9,23 +9,106 @@ import Blah as B exposing (bling)
 import Blah exposing (SomeType(..))
 import Blah exposing (SomeType,(&&),(<=),(>=),Bool,Int,(||))
 
-hex =
-    0xAFFF
+
+-- Indentation
 
 
-tabs = "	"
+indentation1 =
+    60
+        * (if x == 2 then
+            7
+           else
+            9)
 
 
-unicode = " "
 
-        
-unicode2 = "✓ a-ok"
+indentation2 =
+    60
+        * (case x of
+              [] -> 8
+              
+              _ -> 12
+           )
 
-        
-epsilon:Float
-epsilon =
-    1e-12
-        
+
+indentation3 =
+    60
+        * (let
+              x = 2
+           in
+              x)
+
+
+indentation4 =
+    fn (if x == 2 then 6 else 7)
+       arg
+            
+
+
+indentation5 =
+    [ if x == 2 then
+            7
+      else
+            9
+    , if x == 2 then
+            7
+      else
+            9            
+    , case x of
+         [] -> 8
+              
+         _ -> 12
+    , let
+        x = 2
+      in
+        x
+    , fn (if x == 2 then 6 else 7)
+       arg
+    , \w ->
+        case w |> String.toLower of
+            "get" ->
+                Just GET
+    ]
+
+
+indentation6 =
+   fn
+       (if x == 2 then 6 else 7)
+   |> blah
+
+
+indentation7 =
+   blah
+   |> fn
+       if x == 2 then 6 else 7
+
+
+
+
+indentation8 =
+    fn
+        |> List.map
+            (\w ->
+                case w |> String.toLower of
+                    "get" ->
+                        Just GET
+            )
+
+
+--
+
+definitionsDecoder : Decoder Definitions
+definitionsDecoder =
+    field
+        "definitions"
+        (keyValuePairs preSchemaDecoder |> map (List.map (Tuple.mapFirst ((++) "#/definitions/")) >> Dict.fromList))
+        |> maybe
+        |> map (Maybe.withDefault Dict.empty)
+
+
+
+
+
 type ArcLengthParameterized
     = ArcLengthParameterized
         { underlyingSpline: QuadraticSpline2d
@@ -33,7 +116,7 @@ type ArcLengthParameterized
         , nondegenerateSpline: MaybeNondegenerate
         }
 
-    
+
 stackIfs =
     if blah then
         val1
@@ -163,12 +246,11 @@ needsBrackets8 f new tree =
 
 
 
-indentation1 =
-    60
-        * (let
-              x = 2
-          in
-              x)
+
+longcase2 =
+    case leftOflineSegments point && (Point2d.signedDistanceFromleftAxis point <= 0) && (Point2d.signedDistanceFromrightAxis point >= 0) of
+        True -> ()
+
 
 rightPipeEol =
    (funcion with lots and lots and lots and lots and lots parameters to make it nice and long)
@@ -207,65 +289,23 @@ parensBroken =
         (\pid -> Task.sequence (List.map send subs) |> Task.andThen (\_ -> Task.succeed (State subs (Just pid) newTime))
         )
 
- 
-longcase =
-                 case strings
-                 |> List.map
-                 (\w ->
-                      case w |> String.toLower of
-                          "get" ->
-                              Just GET
 
-                          "post" ->
-                              Just POST
-
-                          "put" ->
-                              Just PUT
-
-                          "delete" ->
-                              Just DELETE
-
-                          "options" ->
-                              Just OPTIONS
-
-                          _ ->
-                              Nothing
-                 )
-                 |> maybeList of
-                 Just methods ->
-                     succeed methods
-
-longcase2 =
-    case leftOflineSegments point && (Point2d.signedDistanceFromleftAxis point <= 0) && (Point2d.signedDistanceFromrightAxis point >= 0) of
-        True -> ()
+-- Literals
 
 
-definitionsDecoder : Decoder Definitions
-definitionsDecoder =
-    field
-        "definitions"
-        (keyValuePairs preSchemaDecoder |> map (List.map (Tuple.mapFirst ((++) "#/definitions/")) >> Dict.fromList))
-        |> maybe
-        |> map (Maybe.withDefault Dict.empty)
+hex =
+    0xAFFF
 
-asdasd =
-   [ text "Log messages"
-            , Toggles.checkbox
-                Mdl
-                [ 0 ]
-                model.mdl
-                [ Toggles.ripple, Toggles.value model.logMessages, css "width" "32px" ]
-                []
-            , if model.logMessages then
-                Options.div
-                    [ Typography.caption, css "width" "100%" ]
-                    [ text "Open your Javascript console to observe MDL messages" ]
 
-              else
-                text ""
-            , let
-                x =
-                    2
-              in
-                x
-            ]
+tabs = "	"
+
+
+unicode = " "
+
+        
+unicode2 = "✓ a-ok"
+
+        
+epsilon:Float
+epsilon =
+    1e-12
