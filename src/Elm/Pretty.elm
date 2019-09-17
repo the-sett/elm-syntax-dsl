@@ -668,7 +668,7 @@ prettyExpressionInner context indent expression =
             prettyApplication indent exprs
 
         OperatorApplication symbol dir exprl exprr ->
-            prettyOperatorApplication symbol dir exprl exprr
+            prettyOperatorApplication indent symbol dir exprl exprr
 
         FunctionOrValue modl val ->
             ( prettyModuleNameDot modl
@@ -790,17 +790,17 @@ isEndLineOperator op =
             False
 
 
-prettyOperatorApplication : String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
-prettyOperatorApplication symbol dir exprl exprr =
+prettyOperatorApplication : Int -> String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
+prettyOperatorApplication indent symbol dir exprl exprr =
     if symbol == "<|" then
-        prettyOperatorApplicationLeft symbol dir exprl exprr
+        prettyOperatorApplicationLeft indent symbol dir exprl exprr
 
     else
-        prettyOperatorApplicationRight symbol dir exprl exprr
+        prettyOperatorApplicationRight indent symbol dir exprl exprr
 
 
-prettyOperatorApplicationLeft : String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
-prettyOperatorApplicationLeft symbol _ exprl exprr =
+prettyOperatorApplicationLeft : Int -> String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
+prettyOperatorApplicationLeft indent symbol _ exprl exprr =
     let
         context =
             { precedence = precedence symbol
@@ -827,17 +827,17 @@ prettyOperatorApplicationLeft symbol _ exprl exprr =
     )
 
 
-prettyOperatorApplicationRight : String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
-prettyOperatorApplicationRight symbol _ exprl exprr =
+prettyOperatorApplicationRight : Int -> String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
+prettyOperatorApplicationRight indent symbol _ exprl exprr =
     let
         expandExpr : Int -> Context -> Expression -> List ( Doc, Bool )
-        expandExpr indent context expr =
+        expandExpr innerIndent context expr =
             case expr of
                 OperatorApplication sym _ left right ->
                     innerOpApply sym left right
 
                 _ ->
-                    [ prettyExpressionInner context indent expr ]
+                    [ prettyExpressionInner context innerIndent expr ]
 
         innerOpApply : String -> Node Expression -> Node Expression -> List ( Doc, Bool )
         innerOpApply sym left right =
@@ -848,11 +848,11 @@ prettyOperatorApplicationRight symbol _ exprl exprr =
                     , isLeftPipe = "<|" == sym
                     }
 
-                indent =
+                innerIndent =
                     decrementIndent 4 (String.length symbol + 1)
 
                 rightSide =
-                    denode right |> expandExpr indent context
+                    denode right |> expandExpr innerIndent context
             in
             case rightSide of
                 ( hdExpr, hdBreak ) :: tl ->
@@ -868,7 +868,7 @@ prettyOperatorApplicationRight symbol _ exprl exprr =
                 |> Tuple.mapSecond Bool.Extra.any
     in
     ( prettyExpressions
-        |> Pretty.join (Pretty.nest 4 Pretty.line)
+        |> Pretty.join (Pretty.nest indent Pretty.line)
         |> Pretty.align
         |> optionalGroup alwaysBreak
     , alwaysBreak
