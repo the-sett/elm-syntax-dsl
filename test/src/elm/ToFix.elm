@@ -264,8 +264,8 @@ asdasd =
               else
                 text ""
             , let
-            x =
-                2
-           in
-           x
+                x =
+                    2
+              in
+                x
             ]
