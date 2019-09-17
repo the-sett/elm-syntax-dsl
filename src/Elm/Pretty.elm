@@ -744,7 +744,7 @@ prettyExpressionInner context indent expression =
             prettyRecordExpr setters
 
         ListExpr exprs ->
-            prettyList exprs
+            prettyList indent exprs
 
         RecordAccess expr field ->
             prettyRecordAccess expr field
@@ -1140,8 +1140,8 @@ prettySetter ( fld, val ) =
     )
 
 
-prettyList : List (Node Expression) -> ( Doc, Bool )
-prettyList exprs =
+prettyList : Int -> List (Node Expression) -> ( Doc, Bool )
+prettyList indent exprs =
     let
         open =
             Pretty.a Pretty.space (Pretty.string "[")
@@ -1156,7 +1156,7 @@ prettyList exprs =
         _ ->
             let
                 ( prettyExpressions, alwaysBreak ) =
-                    List.map (prettyExpressionInner topContext 4) (denodeAll exprs)
+                    List.map (prettyExpressionInner topContext (decrementIndent indent 2)) (denodeAll exprs)
                         |> List.unzip
                         |> Tuple.mapSecond Bool.Extra.any
             in
