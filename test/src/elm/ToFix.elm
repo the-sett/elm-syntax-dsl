@@ -83,8 +83,6 @@ indentation7 =
        if x == 2 then 6 else 7
 
 
-
-
 indentation8 =
     fn
         |> List.map
@@ -93,6 +91,39 @@ indentation8 =
                     "get" ->
                         Just GET
             )
+
+
+indentation9 =
+    fn
+        |> (case model.type_ of
+                Ordered startInt ->
+                    if startInt == 1 then
+                        ol []
+
+                    else
+                        ol [ start startInt ]
+
+                Unordered ->
+                    ul []
+           )
+    |> blah
+
+
+indentation10 =
+    blah
+      |> List
+          { model
+              | indentLength = listBlock.indentLength
+              , isLoose = model.isLoose || isBlankLineLast items
+          }
+
+
+indentation11 =
+    JDP.required
+        (JD.succeed Response
+            |> resultWrapperDecoder resultDecoder
+            |> JDP.required "ResponseMetadata" (JD.succeed Metadata |> JDP.required "RequestId" JD.string)
+        )
 
 
 --
