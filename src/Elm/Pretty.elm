@@ -677,9 +677,7 @@ prettyExpressionInner context indent expression =
             )
 
         IfBlock exprBool exprTrue exprFalse ->
-            ( prettyIfBlock indent exprBool exprTrue exprFalse
-            , True
-            )
+            prettyIfBlock indent exprBool exprTrue exprFalse
 
         PrefixOperator symbol ->
             ( Pretty.string symbol |> Pretty.parens
@@ -875,7 +873,7 @@ prettyOperatorApplicationRight symbol _ exprl exprr =
     )
 
 
-prettyIfBlock : Int -> Node Expression -> Node Expression -> Node Expression -> Doc
+prettyIfBlock : Int -> Node Expression -> Node Expression -> Node Expression -> ( Doc, Bool )
 prettyIfBlock indent exprBool exprTrue exprFalse =
     let
         innerIfBlock : Node Expression -> Node Expression -> Node Expression -> List Doc
@@ -938,9 +936,11 @@ prettyIfBlock indent exprBool exprTrue exprFalse =
         prettyExpressions =
             innerIfBlock exprBool exprTrue exprFalse
     in
-    prettyExpressions
+    ( prettyExpressions
         |> Pretty.lines
         |> Pretty.align
+    , True
+    )
 
 
 prettyLiteral : String -> Doc
