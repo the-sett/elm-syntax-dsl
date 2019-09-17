@@ -883,16 +883,20 @@ prettyIfBlock indent exprBool exprTrue exprFalse =
                     topContext
 
                 ifPart =
+                    let
+                        ( prettyBoolExpr, alwaysBreak ) =
+                            prettyExpressionInner topContext 4 (denode innerExprBool)
+                    in
                     [ [ Pretty.string "if"
                       , prettyExpressionInner topContext 4 (denode innerExprBool) |> Tuple.first
                       ]
                         |> Pretty.lines
-                        |> Pretty.group
+                        |> optionalGroup alwaysBreak
                         |> Pretty.nest indent
                     , Pretty.string "then"
                     ]
                         |> Pretty.lines
-                        |> Pretty.group
+                        |> optionalGroup alwaysBreak
 
                 truePart =
                     prettyExpressionInner topContext 4 (denode innerExprTrue)
