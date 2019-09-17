@@ -857,6 +857,7 @@ prettyOperatorApplicationRight indent symbol _ exprl exprr =
             case rightSide of
                 ( hdExpr, hdBreak ) :: tl ->
                     List.append (denode left |> expandExpr innerIndent context)
+                        -- Inner indent above needs to be 4 on the first one.
                         (( Pretty.string sym |> Pretty.a Pretty.space |> Pretty.a hdExpr, hdBreak ) :: tl)
 
                 [] ->
