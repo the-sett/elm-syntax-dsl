@@ -834,13 +834,13 @@ prettyOperatorApplicationRight indent symbol _ exprl exprr =
         expandExpr innerIndent context expr =
             case expr of
                 OperatorApplication sym _ left right ->
-                    innerOpApply sym left right
+                    innerOpApply False sym left right
 
                 _ ->
                     [ prettyExpressionInner context innerIndent expr ]
 
-        innerOpApply : String -> Node Expression -> Node Expression -> List ( Doc, Bool )
-        innerOpApply sym left right =
+        innerOpApply : Bool -> String -> Node Expression -> Node Expression -> List ( Doc, Bool )
+        innerOpApply isTop sym left right =
             let
                 context =
                     { precedence = precedence sym
@@ -851,20 +851,26 @@ prettyOperatorApplicationRight indent symbol _ exprl exprr =
                 innerIndent =
                     decrementIndent 4 (String.length symbol + 1)
 
+                leftIndent =
+                    if isTop then
+                        4
+
+                    else
+                        innerIndent
+
                 rightSide =
                     denode right |> expandExpr innerIndent context
             in
             case rightSide of
                 ( hdExpr, hdBreak ) :: tl ->
-                    List.append (denode left |> expandExpr innerIndent context)
-                        -- Inner indent above needs to be 4 on the first one.
+                    List.append (denode left |> expandExpr leftIndent context)
                         (( Pretty.string sym |> Pretty.a Pretty.space |> Pretty.a hdExpr, hdBreak ) :: tl)
 
                 [] ->
                     []
 
         ( prettyExpressions, alwaysBreak ) =
-            innerOpApply symbol exprl exprr
+            innerOpApply True symbol exprl exprr
                 |> List.unzip
                 |> Tuple.mapSecond Bool.Extra.any
     in
@@ -1063,7 +1069,7 @@ prettyCaseBlock indent caseBlock =
                 |> Pretty.a (Pretty.string " ->")
                 |> Pretty.a Pretty.line
                 |> Pretty.a (prettyExpressionInner topContext 4 (denode expr) |> Tuple.first |> Pretty.indent 4)
-                |> Pretty.indent (Debug.log "indent" indent)
+                |> Pretty.indent indent
 
         patternsPart =
             List.map prettyCase caseBlock.cases
@@ -1475,17 +1481,15 @@ prettyMaybe prettyFn maybeVal =
 
 decrementIndent : Int -> Int -> Int
 decrementIndent currentIndent spaces =
-    (let
+    let
         modded =
-            modBy 4 (Debug.log "cur" currentIndent - spaces)
-     in
-     if modded == 0 then
+            modBy 4 (currentIndent - spaces)
+    in
+    if modded == 0 then
         4
 
-     else
+    else
         modded
-    )
-        |> Debug.log "res"
 
 
 dot : Doc
