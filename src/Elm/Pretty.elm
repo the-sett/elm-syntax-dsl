@@ -1,4 +1,9 @@
-module Elm.Pretty exposing (pretty)
+module Elm.Pretty exposing
+    ( pretty
+    , prettyImports, prettyExposing
+    , prettyDeclaration, prettyFun, prettyTypeAlias, prettyCustomType, prettyPortDeclaration, prettyDestructuring
+    , prettySignature, prettyPattern, prettyExpression, prettyTypeAnnotation
+    )
 
 {-| Elm.Pretty is a pretty printer for Elm syntax trees. It makes use of
 `the-sett/elm-pretty-printer` to best fit the code to a given character width.
@@ -8,7 +13,17 @@ sense that running `elm-format` on the output should have no effect at all. The
 advantage of this is that if generated code moves to being edited by hand, there
 will not be a large white-space only diff created when `elm-format` is applied.
 
+
+# Pretty prints an entire Elm file.
+
 @docs pretty
+
+
+# Pretty printing snippets of Elm.
+
+@docs prettyImports, prettyExposing
+@docs prettyDeclaration, prettyFun, prettyTypeAlias, prettyCustomType, prettyPortDeclaration, prettyDestructuring
+@docs prettySignature, prettyPattern, prettyExpression, prettyTypeAnnotation
 
 -}
 
@@ -273,23 +288,13 @@ prettyDeclaration decl =
             prettyCustomType type_
 
         PortDeclaration sig ->
-            [ Pretty.string "port"
-            , prettySignature sig
-            ]
-                |> Pretty.words
+            prettyPortDeclaration sig
 
         InfixDeclaration infix_ ->
             prettyInfix infix_
 
         Destructuring pattern expr ->
-            [ [ prettyPattern (denode pattern)
-              , Pretty.string "="
-              ]
-                |> Pretty.words
-            , prettyExpression (denode expr)
-            ]
-                |> Pretty.lines
-                |> Pretty.nest 4
+            prettyDestructuring (denode pattern) (denode expr)
 
 
 prettyFun : Function -> Doc
@@ -357,6 +362,14 @@ prettyValueConstructor cons =
         |> Pretty.nest 4
 
 
+prettyPortDeclaration : Signature -> Doc
+prettyPortDeclaration sig =
+    [ Pretty.string "port"
+    , prettySignature sig
+    ]
+        |> Pretty.words
+
+
 prettyInfix : Infix -> Doc
 prettyInfix infix_ =
     let
@@ -379,6 +392,18 @@ prettyInfix infix_ =
     , Pretty.string (denode infix_.function)
     ]
         |> Pretty.words
+
+
+prettyDestructuring : Pattern -> Expression -> Doc
+prettyDestructuring pattern expr =
+    [ [ prettyPattern pattern
+      , Pretty.string "="
+      ]
+        |> Pretty.words
+    , prettyExpression expr
+    ]
+        |> Pretty.lines
+        |> Pretty.nest 4
 
 
 prettyDocumentation : Documentation -> Doc
