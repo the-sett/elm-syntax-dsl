@@ -668,7 +668,7 @@ prettyExpressionInner context indent expression =
             prettyApplication indent exprs
 
         OperatorApplication symbol dir exprl exprr ->
-            prettyOperatorApplication symbol dir exprl exprr
+            prettyOperatorApplication indent symbol dir exprl exprr
 
         FunctionOrValue modl val ->
             ( prettyModuleNameDot modl
@@ -744,7 +744,7 @@ prettyExpressionInner context indent expression =
             prettyRecordExpr setters
 
         ListExpr exprs ->
-            prettyList exprs
+            prettyList indent exprs
 
         RecordAccess expr field ->
             prettyRecordAccess expr field
@@ -755,7 +755,7 @@ prettyExpressionInner context indent expression =
             )
 
         RecordUpdateExpression var setters ->
-            prettyRecordUpdateExpression var setters
+            prettyRecordUpdateExpression indent var setters
 
         GLSLExpression val ->
             ( Debug.todo "glsl"
@@ -773,8 +773,9 @@ prettyApplication indent exprs =
     in
     ( prettyExpressions
         |> Pretty.lines
-        |> optionalGroup alwaysBreak
         |> Pretty.nest indent
+        |> Pretty.align
+        |> optionalGroup alwaysBreak
     , alwaysBreak
     )
 
@@ -789,17 +790,17 @@ isEndLineOperator op =
             False
 
 
-prettyOperatorApplication : String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
-prettyOperatorApplication symbol dir exprl exprr =
+prettyOperatorApplication : Int -> String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
+prettyOperatorApplication indent symbol dir exprl exprr =
     if symbol == "<|" then
-        prettyOperatorApplicationLeft symbol dir exprl exprr
+        prettyOperatorApplicationLeft indent symbol dir exprl exprr
 
     else
-        prettyOperatorApplicationRight symbol dir exprl exprr
+        prettyOperatorApplicationRight indent symbol dir exprl exprr
 
 
-prettyOperatorApplicationLeft : String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
-prettyOperatorApplicationLeft symbol _ exprl exprr =
+prettyOperatorApplicationLeft : Int -> String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
+prettyOperatorApplicationLeft indent symbol _ exprl exprr =
     let
         context =
             { precedence = precedence symbol
@@ -826,20 +827,20 @@ prettyOperatorApplicationLeft symbol _ exprl exprr =
     )
 
 
-prettyOperatorApplicationRight : String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
-prettyOperatorApplicationRight symbol _ exprl exprr =
+prettyOperatorApplicationRight : Int -> String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
+prettyOperatorApplicationRight indent symbol _ exprl exprr =
     let
         expandExpr : Int -> Context -> Expression -> List ( Doc, Bool )
-        expandExpr indent context expr =
+        expandExpr innerIndent context expr =
             case expr of
                 OperatorApplication sym _ left right ->
-                    innerOpApply sym left right
+                    innerOpApply False sym left right
 
                 _ ->
-                    [ prettyExpressionInner context indent expr ]
+                    [ prettyExpressionInner context innerIndent expr ]
 
-        innerOpApply : String -> Node Expression -> Node Expression -> List ( Doc, Bool )
-        innerOpApply sym left right =
+        innerOpApply : Bool -> String -> Node Expression -> Node Expression -> List ( Doc, Bool )
+        innerOpApply isTop sym left right =
             let
                 context =
                     { precedence = precedence sym
@@ -847,27 +848,35 @@ prettyOperatorApplicationRight symbol _ exprl exprr =
                     , isLeftPipe = "<|" == sym
                     }
 
-                indent =
+                innerIndent =
                     decrementIndent 4 (String.length symbol + 1)
 
+                leftIndent =
+                    if isTop then
+                        indent
+
+                    else
+                        innerIndent
+
                 rightSide =
-                    denode right |> expandExpr indent context
+                    denode right |> expandExpr innerIndent context
             in
             case rightSide of
                 ( hdExpr, hdBreak ) :: tl ->
-                    List.append (denode left |> expandExpr 4 context)
+                    List.append (denode left |> expandExpr leftIndent context)
                         (( Pretty.string sym |> Pretty.a Pretty.space |> Pretty.a hdExpr, hdBreak ) :: tl)
 
                 [] ->
                     []
 
         ( prettyExpressions, alwaysBreak ) =
-            innerOpApply symbol exprl exprr
+            innerOpApply True symbol exprl exprr
                 |> List.unzip
                 |> Tuple.mapSecond Bool.Extra.any
     in
     ( prettyExpressions
-        |> Pretty.join (Pretty.nest 4 Pretty.line)
+        |> Pretty.join (Pretty.nest indent Pretty.line)
+        |> Pretty.align
         |> optionalGroup alwaysBreak
     , alwaysBreak
     )
@@ -969,13 +978,14 @@ prettyTupledExpression indent exprs =
         _ ->
             let
                 ( prettyExpressions, alwaysBreak ) =
-                    List.map (prettyExpressionInner topContext (decrementIndent indent 1)) (denodeAll exprs)
+                    List.map (prettyExpressionInner topContext (decrementIndent indent 2)) (denodeAll exprs)
                         |> List.unzip
                         |> Tuple.mapSecond Bool.Extra.any
             in
             ( prettyExpressions
                 |> Pretty.separators ", "
                 |> Pretty.surround open close
+                |> Pretty.align
                 |> optionalGroup alwaysBreak
             , alwaysBreak
             )
@@ -1085,8 +1095,9 @@ prettyLambdaExpression indent lambda =
       , prettyExpr
       ]
         |> Pretty.lines
-        |> optionalGroup alwaysBreak
         |> Pretty.nest indent
+        |> Pretty.align
+        |> optionalGroup alwaysBreak
     , alwaysBreak
     )
 
@@ -1140,8 +1151,8 @@ prettySetter ( fld, val ) =
     )
 
 
-prettyList : List (Node Expression) -> ( Doc, Bool )
-prettyList exprs =
+prettyList : Int -> List (Node Expression) -> ( Doc, Bool )
+prettyList indent exprs =
     let
         open =
             Pretty.a Pretty.space (Pretty.string "[")
@@ -1156,7 +1167,7 @@ prettyList exprs =
         _ ->
             let
                 ( prettyExpressions, alwaysBreak ) =
-                    List.map (prettyExpressionInner topContext 4) (denodeAll exprs)
+                    List.map (prettyExpressionInner topContext (decrementIndent indent 2)) (denodeAll exprs)
                         |> List.unzip
                         |> Tuple.mapSecond Bool.Extra.any
             in
@@ -1182,8 +1193,8 @@ prettyRecordAccess expr field =
     )
 
 
-prettyRecordUpdateExpression : Node String -> List (Node RecordSetter) -> ( Doc, Bool )
-prettyRecordUpdateExpression var setters =
+prettyRecordUpdateExpression : Int -> Node String -> List (Node RecordSetter) -> ( Doc, Bool )
+prettyRecordUpdateExpression indent var setters =
     let
         open =
             [ Pretty.string "{"
@@ -1221,7 +1232,7 @@ prettyRecordUpdateExpression var setters =
                         |> addBarToFirst
                         |> Pretty.separators ", "
                     )
-                |> Pretty.nest 4
+                |> Pretty.nest indent
                 |> Pretty.surround Pretty.empty close
                 |> Pretty.align
                 |> optionalGroup alwaysBreak

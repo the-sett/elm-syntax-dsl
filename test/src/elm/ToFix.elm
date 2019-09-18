@@ -83,8 +83,6 @@ indentation7 =
        if x == 2 then 6 else 7
 
 
-
-
 indentation8 =
     fn
         |> List.map
@@ -93,6 +91,127 @@ indentation8 =
                     "get" ->
                         Just GET
             )
+
+
+indentation9 =
+    fn
+        |> (case model.type_ of
+                Ordered startInt ->
+                    if startInt == 1 then
+                        ol []
+
+                    else
+                        ol [ start startInt ]
+
+                Unordered ->
+                    ul []
+           )
+    |> blah
+
+
+indentation10 =
+    blah
+      |> List
+          { model
+              | indentLength = listBlock.indentLength
+              , isLoose = model.isLoose || isBlankLineLast items
+          }
+
+
+indentation11 =
+    JDP.required
+        (JD.succeed Response
+            |> resultWrapperDecoder resultDecoder
+            |> JDP.required "ResponseMetadata" (JD.succeed Metadata |> JDP.required "RequestId" JD.string)
+        )
+
+
+indentation12 =        
+    div
+        ([ classList
+             [ ( "popover fade", True )
+             , ( "in", isShown )
+             , ( "top", direction == Top )
+             , ( "right", direction == Right )
+             , ( "bottom", direction == Bottom )
+             , ( "left", direction == Left )
+             ]
+         ]
+            ++ styles (styleList ++ [ ( "display", "block" ) ])
+        )        
+
+
+indentation13 =
+    ( String.toLower key
+    , val
+         |> Regex.replace (Regex.fromString "\\s*?\n\\s*" |> Maybe.withDefault Regex.never) (\_ -> ",")
+         |> Regex.replace (Regex.fromString "(^\\s*|\\s*$)" |> Maybe.withDefault Regex.never) (\_ -> "")
+         |> Regex.replace (Regex.fromString "\\s{2,}" |> Maybe.withDefault Regex.never) (\_ -> " ")
+    )
+
+
+indentation14 =
+    JD.lazy
+        (\() ->
+            decodeTyped
+                [ ( "function", Expression.functionDecoder |> JD.map FunctionDeclaration )
+                , ( "typeAlias", TypeAlias.decoder |> JD.map AliasDeclaration )
+                , ( "typedecl", Type.decoder |> JD.map CustomTypeDeclaration )
+                , ( "port", Signature.decoder |> JD.map PortDeclaration )
+                , ( "infix", Infix.decoder |> JD.map InfixDeclaration )
+                , ( "destructuring"
+                , JD.map2
+                   Destructuring
+                   (JD.field "pattern" (Node.decoder Pattern.decoder))
+                   (JD.field "expression" (Node.decoder Expression.decoder))
+                )
+                ]
+        )
+
+
+indentation15 =
+  LowLevel.decodeFlags
+                ( if abs deltaTheta > pi then
+                     1
+
+                  else
+                     0
+                , if deltaTheta > 0 then
+                     1
+
+                  else
+                     0
+                )
+                |> Maybe.withDefault ( SmallestArc, CounterClockwise )
+
+
+indentation16 =
+    case msg of
+        Frame time ->
+            ( { model
+                  | offset =
+                      let
+                          new =
+                              model.offset + time / 20
+
+                          size =
+                              segmentLength model.count
+                      in
+                      floatModulo new size
+                  , more = more
+              }
+            , Cmd.none
+            )
+
+
+
+indentation17 =
+    buildSchema
+        |> withDefinitions
+            [ ( "schemaArray"
+            , buildSchema |> withType "array" |> withItem (buildSchema |> withRef "#") |> withMinItems 1
+            )
+            ]
 
 
 --
