@@ -758,7 +758,7 @@ prettyExpressionInner context indent expression =
             prettyRecordUpdateExpression indent var setters
 
         GLSLExpression val ->
-            ( Debug.todo "glsl"
+            ( Pretty.string "glsl"
             , True
             )
 
