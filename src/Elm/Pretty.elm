@@ -170,9 +170,15 @@ prettyEffectModuleData moduleData =
 
 prettyComments : List Comment -> Doc
 prettyComments comments =
-    -- List.map Pretty.string comments
-    --     |> Pretty.lines
-    Pretty.empty
+    case comments of
+        [] ->
+            Pretty.empty
+
+        _ ->
+            List.map Pretty.string comments
+                |> Pretty.lines
+                |> Pretty.a Pretty.line
+                |> Pretty.a Pretty.line
 
 
 prettyImports : List Import -> Doc
@@ -288,39 +294,51 @@ prettyDeclaration decl =
 
 prettyFun : Function -> Doc
 prettyFun fn =
-    Pretty.lines
-        [ prettyMaybe prettyDocumentation (denodeMaybe fn.documentation)
-        , prettyMaybe prettySignature (denodeMaybe fn.signature)
-        , prettyFunctionImplementation (denode fn.declaration)
-        ]
+    [ prettyMaybe prettyDocumentation (denodeMaybe fn.documentation)
+    , prettyMaybe prettySignature (denodeMaybe fn.signature)
+    , prettyFunctionImplementation (denode fn.declaration)
+    ]
+        |> Pretty.lines
 
 
 prettyTypeAlias : TypeAlias -> Doc
 prettyTypeAlias tAlias =
+    let
+        typeAliasPretty =
+            [ Pretty.string "type alias"
+            , Pretty.string (denode tAlias.name)
+            , List.map Pretty.string (denodeAll tAlias.generics) |> Pretty.words
+            , Pretty.string "="
+            ]
+                |> Pretty.words
+                |> Pretty.a Pretty.line
+                |> Pretty.a (prettyTypeAnnotation (denode tAlias.typeAnnotation))
+                |> Pretty.nest 4
+    in
     [ prettyMaybe prettyDocumentation (denodeMaybe tAlias.documentation)
-    , Pretty.string "type alias"
-    , Pretty.string (denode tAlias.name)
-    , List.map Pretty.string (denodeAll tAlias.generics) |> Pretty.words
-    , Pretty.string "="
+    , typeAliasPretty
     ]
-        |> Pretty.words
-        |> Pretty.a Pretty.line
-        |> Pretty.a (prettyTypeAnnotation (denode tAlias.typeAnnotation))
-        |> Pretty.nest 4
+        |> Pretty.lines
 
 
 prettyCustomType : Type -> Doc
 prettyCustomType type_ =
+    let
+        customTypePretty =
+            [ Pretty.string "type"
+            , Pretty.string (denode type_.name)
+            , List.map Pretty.string (denodeAll type_.generics) |> Pretty.words
+            ]
+                |> Pretty.words
+                |> Pretty.a Pretty.line
+                |> Pretty.a (Pretty.string "= ")
+                |> Pretty.a (prettyValueConstructors (denodeAll type_.constructors))
+                |> Pretty.nest 4
+    in
     [ prettyMaybe prettyDocumentation (denodeMaybe type_.documentation)
-    , Pretty.string "type"
-    , Pretty.string (denode type_.name)
-    , List.map Pretty.string (denodeAll type_.generics) |> Pretty.words
+    , customTypePretty
     ]
-        |> Pretty.words
-        |> Pretty.a Pretty.line
-        |> Pretty.a (Pretty.string "= ")
-        |> Pretty.a (prettyValueConstructors (denodeAll type_.constructors))
-        |> Pretty.nest 4
+        |> Pretty.lines
 
 
 prettyValueConstructors : List ValueConstructor -> Doc
@@ -365,8 +383,7 @@ prettyInfix infix_ =
 
 prettyDocumentation : Documentation -> Doc
 prettyDocumentation docs =
-    --Pretty.string docs
-    Pretty.empty
+    Pretty.string docs
 
 
 prettySignature : Signature -> Doc
