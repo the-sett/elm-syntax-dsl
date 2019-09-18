@@ -853,7 +853,7 @@ prettyOperatorApplicationRight indent symbol _ exprl exprr =
 
                 leftIndent =
                     if isTop then
-                        4
+                        indent
 
                     else
                         innerIndent
