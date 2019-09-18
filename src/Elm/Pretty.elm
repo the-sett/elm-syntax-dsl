@@ -978,13 +978,14 @@ prettyTupledExpression indent exprs =
         _ ->
             let
                 ( prettyExpressions, alwaysBreak ) =
-                    List.map (prettyExpressionInner topContext (decrementIndent indent 1)) (denodeAll exprs)
+                    List.map (prettyExpressionInner topContext (decrementIndent indent 2)) (denodeAll exprs)
                         |> List.unzip
                         |> Tuple.mapSecond Bool.Extra.any
             in
             ( prettyExpressions
                 |> Pretty.separators ", "
                 |> Pretty.surround open close
+                |> Pretty.align
                 |> optionalGroup alwaysBreak
             , alwaysBreak
             )
