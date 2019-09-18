@@ -196,6 +196,11 @@ prettyComments comments =
                 |> Pretty.a Pretty.line
 
 
+{-| Pretty prints a list of import statements.
+
+The list will be de-duplicated and sorted.
+
+-}
 prettyImports : List Import -> Doc
 prettyImports imports =
     ImportsAndExposing.sortAndDedupImports imports
@@ -213,6 +218,12 @@ prettyImport import_ =
         ]
 
 
+{-| Pretty prints the contents of an exposing statement, as found on a module or import
+statement.
+
+The exposed values will be de-duplicated and sorted.
+
+-}
 prettyExposing : Exposing -> Doc
 prettyExposing exposing_ =
     let
@@ -275,6 +286,8 @@ prettyDeclarations decls =
         |> doubleLines
 
 
+{-| Pretty prints a single top-level declaration.
+-}
 prettyDeclaration : Declaration -> Doc
 prettyDeclaration decl =
     case decl of
@@ -297,6 +310,8 @@ prettyDeclaration decl =
             prettyDestructuring (denode pattern) (denode expr)
 
 
+{-| Pretty prints an Elm function, which may include documentation and a signature too.
+-}
 prettyFun : Function -> Doc
 prettyFun fn =
     [ prettyMaybe prettyDocumentation (denodeMaybe fn.documentation)
@@ -306,6 +321,8 @@ prettyFun fn =
         |> Pretty.lines
 
 
+{-| Pretty prints a type alias definition, which may include documentation too.
+-}
 prettyTypeAlias : TypeAlias -> Doc
 prettyTypeAlias tAlias =
     let
@@ -326,6 +343,8 @@ prettyTypeAlias tAlias =
         |> Pretty.lines
 
 
+{-| Pretty prints a custom type declaration, which may include documentation too.
+-}
 prettyCustomType : Type -> Doc
 prettyCustomType type_ =
     let
@@ -362,6 +381,8 @@ prettyValueConstructor cons =
         |> Pretty.nest 4
 
 
+{-| Pretty prints a port declaration.
+-}
 prettyPortDeclaration : Signature -> Doc
 prettyPortDeclaration sig =
     [ Pretty.string "port"
@@ -394,6 +415,8 @@ prettyInfix infix_ =
         |> Pretty.words
 
 
+{-| Pretty prints a desctructuring declaration.
+-}
 prettyDestructuring : Pattern -> Expression -> Doc
 prettyDestructuring pattern expr =
     [ [ prettyPattern pattern
@@ -411,6 +434,8 @@ prettyDocumentation docs =
     Pretty.string docs
 
 
+{-| Pretty prints a type signature.
+-}
 prettySignature : Signature -> Doc
 prettySignature sig =
     [ [ Pretty.string (denode sig.name)
@@ -446,6 +471,8 @@ prettyArgs args =
 --== Patterns
 
 
+{-| Pretty prints a pattern.
+-}
 prettyPattern : Pattern -> Doc
 prettyPattern pattern =
     prettyPatternInner True pattern
@@ -692,6 +719,8 @@ adjustExpressionParentheses context expression =
         |> addParens
 
 
+{-| Pretty prints an expression.
+-}
 prettyExpression : Expression -> Doc
 prettyExpression expression =
     prettyExpressionInner topContext 4 expression
@@ -1286,6 +1315,8 @@ prettyRecordUpdateExpression indent var setters =
 --== Type Annotations
 
 
+{-| Pretty prints a type annotation.
+-}
 prettyTypeAnnotation : TypeAnnotation -> Doc
 prettyTypeAnnotation typeAnn =
     case typeAnn of
