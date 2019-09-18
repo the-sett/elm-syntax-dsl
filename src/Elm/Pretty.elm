@@ -755,7 +755,7 @@ prettyExpressionInner context indent expression =
             )
 
         RecordUpdateExpression var setters ->
-            prettyRecordUpdateExpression var setters
+            prettyRecordUpdateExpression indent var setters
 
         GLSLExpression val ->
             ( Debug.todo "glsl"
@@ -1193,8 +1193,8 @@ prettyRecordAccess expr field =
     )
 
 
-prettyRecordUpdateExpression : Node String -> List (Node RecordSetter) -> ( Doc, Bool )
-prettyRecordUpdateExpression var setters =
+prettyRecordUpdateExpression : Int -> Node String -> List (Node RecordSetter) -> ( Doc, Bool )
+prettyRecordUpdateExpression indent var setters =
     let
         open =
             [ Pretty.string "{"
@@ -1232,7 +1232,7 @@ prettyRecordUpdateExpression var setters =
                         |> addBarToFirst
                         |> Pretty.separators ", "
                     )
-                |> Pretty.nest 4
+                |> Pretty.nest indent
                 |> Pretty.surround Pretty.empty close
                 |> Pretty.align
                 |> optionalGroup alwaysBreak

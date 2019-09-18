@@ -198,6 +198,7 @@ indentation16 =
                               segmentLength model.count
                       in
                       floatModulo new size
+                  , more = more
               }
             , Cmd.none
             )
