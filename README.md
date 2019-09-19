@@ -26,6 +26,8 @@ running `elm-format` on the output should have no effect at all. The advantage o
 that if generated code moves to being edited by hand, there will not be a large white-space
 only diff created when `elm-format` is applied.
 
+### How to get the results as a String.
+
 To print the `Doc` created by the `pretty` functions, `the-sett/elm-pretty-printer`
 is used:
 
@@ -38,15 +40,37 @@ elmAsString =
       |> Pretty.pretty 120 -- Fit to a page width of 120 characters
 ```
 
-Broken stuff in elm-syntax:
+### Broken stuff in elm-syntax:
 
 * Not all Elm files I tried seem to parse.
 * Multi-line strings do something very weird and get jumbled up in order.
 * End-line comments are deleted.
 
-Known deviations from `elm-format`:
+### Unimplemented stuff:
+
+* GLSL syntax.
+* Any reformatting of comments.
+* Re-formatting the module exposings to match @docs tags in comments.
+
+### Known deviations from `elm-format`:
 
 * Float literals not getting a .0 added at the end.
 * Unicode characters.
 * Type annotations on functions sometimes split onto next line without being
 broken themselves.
+
+## Testing it.
+
+1. Put some .elm files in `test/examples`.
+2. Create directories `test/pre` and `test/post`.
+3. In `test/` run `npm start`.
+4. Diff `/pre` and `/post` to see how well it compares with elm-format.
+
+## Some other thoughts.
+
+This could be used to create a command line tool `elm-pretty`. Needs to address the broken stuff first though. End-line comments is a deal breaker on `elm-syntax` too, so quite a bit of work to achieve this.
+
+Due to the above, this is aimed at use for code generation purposes for the present.
+
+Will always aim to be compatible with the latest `elm-format`, there is no point in introducing a new standard to compete with it. Any deviations from `elm-format`
+invariance please create issues or pull requests, which will be gratefully received.
