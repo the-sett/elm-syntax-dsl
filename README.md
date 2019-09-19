@@ -3,6 +3,9 @@
 Provides a DSL that makes it simpler to write code in Elm that generates Elm code; simpler
 than `stil4m/elm-syntax` on which this DSL is based.
 
+Provides a pretty printer that prints out the abstract syntax tree constructed using
+the DSL as Elm source code, in a way that aims to be compatible with `elm-format`.
+
 ## Simpler code generation as a DSL.
 
 `stil4m/elm-syntax` uses a lot of records to capture parameters, and also wraps parts of the
