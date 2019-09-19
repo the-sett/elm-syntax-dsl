@@ -26,6 +26,17 @@ running `elm-format` on the output should have no effect at all. The advantage o
 that if generated code moves to being edited by hand, there will not be a large white-space
 only diff created when `elm-format` is applied.
 
+To print the `Doc` created by the `pretty` functions, `the-sett/elm-pretty-printer`
+is used:
+
+```
+import Elm.Pretty
+import Pretty
+
+elmAsString =
+    Elm.Pretty.pretty someFile
+      |> Pretty.pretty 120 -- Fit to a page width of 120 characters
+```
 
 Broken stuff in elm-syntax:
 
