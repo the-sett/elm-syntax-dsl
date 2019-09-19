@@ -507,16 +507,19 @@ letExpression letBlk =
 
 {-| CaseExpression CaseBlock
 -}
-caseExpression : CaseBlock -> Expression
-caseExpression caseBlk =
-    CaseExpression caseBlk
+caseExpression : Expression -> List ( Pattern, Expression ) -> Expression
+caseExpression expr cases =
+    List.map (\( pat, body ) -> case_ pat body) cases
+        |> caseBlock expr
+        |> CaseExpression
 
 
 {-| LambdaExpression Lambda
 -}
-lambdaExpression : Lambda -> Expression
-lambdaExpression lambd =
-    LambdaExpression lambd
+lambdaExpression : List Pattern -> Expression -> Expression
+lambdaExpression args expr =
+    lambda args expr
+        |> LambdaExpression
 
 
 {-| RecordExpr (List (Node RecordSetter))
