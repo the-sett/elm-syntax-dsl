@@ -1,6 +1,6 @@
 module Elm.CodeGen exposing
     ( Comment, Documentation, ModuleName, Module, File, Declaration, Import, TypeAnnotation
-    , Exposing, TopLevelExpose, Expression, Pattern
+    , Exposing, TopLevelExpose, Expression, Pattern, QualifiedNameRef
     , file
     , normalModule, portModule
     , all, explicit, infixExpose, functionExpose, typeOrAliasExpose, typeExpose, openExposedType, closedExposedType
@@ -13,7 +13,7 @@ module Elm.CodeGen exposing
     , letExpression, caseExpression, lambdaExpression, recordExpr, listExpr, recordAccess, recordAccessFunction
     , recordUpdateExpression, glslExpression
     , allPattern, unitPattern, charPattern, stringPattern, intPattern, hexPattern, floatPattern
-    , tuplePattern, recordPattern, unConsPattern, listPattern, varPattern, namedPattern, asPattern
+    , tuplePattern, recordPattern, unConsPattern, listPattern, varPattern, namedPattern, fqNamedPattern, asPattern
     , paranthesizedPattern
     , genericType, typed, unit, tupled, record, genericRecord, functionTypeAnnotation
     )
@@ -24,7 +24,7 @@ module Elm.CodeGen exposing
 # Types describing parts of the Elm AST.
 
 @docs Comment, Documentation, ModuleName, Module, File, Declaration, Import, TypeAnnotation
-@docs Exposing, TopLevelExpose, Expression, Pattern
+@docs Exposing, TopLevelExpose, Expression, Pattern, QualifiedNameRef
 
 
 # Functions for building Elm source files.
@@ -77,7 +77,7 @@ exposings that it needs and they can be combined and de-duplicated to produce a 
 # Functions for building de-structuring pattern matchings.
 
 @docs allPattern, unitPattern, charPattern, stringPattern, intPattern, hexPattern, floatPattern
-@docs tuplePattern, recordPattern, unConsPattern, listPattern, varPattern, namedPattern, asPattern
+@docs tuplePattern, recordPattern, unConsPattern, listPattern, varPattern, namedPattern, fqNamedPattern, asPattern
 @docs paranthesizedPattern
 
 
@@ -235,6 +235,12 @@ type alias InfixDirection =
 -}
 type alias Pattern =
     Elm.Syntax.Pattern.Pattern
+
+
+{-| A fully qualified name of a type including the module name.
+-}
+type alias QualifiedNameRef =
+    Elm.Syntax.Pattern.QualifiedNameRef
 
 
 
@@ -824,8 +830,15 @@ varPattern name =
 
 {-| NamedPattern QualifiedNameRef (List (Node Pattern))
 -}
-namedPattern : QualifiedNameRef -> List Pattern -> Pattern
-namedPattern qualName patterns =
+namedPattern : String -> List Pattern -> Pattern
+namedPattern name patterns =
+    NamedPattern { moduleName = [], name = name } (nodifyAll patterns)
+
+
+{-| NamedPattern QualifiedNameRef (List (Node Pattern))
+-}
+fqNamedPattern : QualifiedNameRef -> List Pattern -> Pattern
+fqNamedPattern qualName patterns =
     NamedPattern qualName (nodifyAll patterns)
 
 
