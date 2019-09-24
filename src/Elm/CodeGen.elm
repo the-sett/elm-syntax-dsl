@@ -13,7 +13,7 @@ module Elm.CodeGen exposing
     , tuple, unit, update, val
     , allPattern, unitPattern, charPattern, stringPattern, intPattern, hexPattern, floatPattern
     , tuplePattern, recordPattern, unConsPattern, listPattern, varPattern, namedPattern, fqNamedPattern, asPattern
-    , paranthesizedPattern
+    , parensPattern
     , genericType, typed, unitType, tupledType, record, genericRecord, functionTypeAnnotation
     )
 
@@ -76,7 +76,7 @@ exposings that it needs and they can be combined and de-duplicated to produce a 
 
 @docs allPattern, unitPattern, charPattern, stringPattern, intPattern, hexPattern, floatPattern
 @docs tuplePattern, recordPattern, unConsPattern, listPattern, varPattern, namedPattern, fqNamedPattern, asPattern
-@docs paranthesizedPattern
+@docs parensPattern
 
 
 # Functions for building Elm type annotations.
@@ -848,8 +848,8 @@ asPattern pattern name =
 
 {-| ParenthesizedPattern (Node Pattern)
 -}
-paranthesizedPattern : Pattern -> Pattern
-paranthesizedPattern pattern =
+parensPattern : Pattern -> Pattern
+parensPattern pattern =
     ParenthesizedPattern (nodify pattern)
 
 
