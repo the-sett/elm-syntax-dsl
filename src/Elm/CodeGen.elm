@@ -250,8 +250,7 @@ aliasDeclaration docs name args annotation =
 -}
 customTypeDeclaration : Maybe String -> String -> List String -> List ( String, List TypeAnnotation ) -> Declaration
 customTypeDeclaration docs name args constructors =
-    List.map (\( consName, annotation ) -> valueConstructor consName annotation) constructors
-        |> type_ docs name args
+    customType docs name args constructors
         |> CustomTypeDeclaration
 
 
@@ -860,12 +859,16 @@ signature name annotation =
 --== Elm.Syntax.Type
 
 
-type_ : Maybe String -> String -> List String -> List ValueConstructor -> Type
-type_ docs name args constructors =
+customType : Maybe String -> String -> List String -> List ( String, List TypeAnnotation ) -> Type
+customType docs name args constructors =
+    let
+        vcons =
+            List.map (\( consName, annotation ) -> valueConstructor consName annotation) constructors
+    in
     { documentation = nodifyMaybe docs
     , name = nodify name
     , generics = nodifyAll args
-    , constructors = nodifyAll constructors
+    , constructors = nodifyAll vcons
     }
 
 
