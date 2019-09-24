@@ -531,9 +531,11 @@ lambdaExpression args expr =
 
 {-| RecordExpr (List (Node RecordSetter))
 -}
-recordExpr : List RecordSetter -> Expression
+recordExpr : List ( String, Expression ) -> Expression
 recordExpr setters =
-    RecordExpr (nodifyAll setters)
+    List.map (\( fieldName, expr ) -> recordSetter fieldName expr) setters
+        |> nodifyAll
+        |> RecordExpr
 
 
 {-| ListExpr (List (Node Expression))
@@ -559,9 +561,11 @@ recordAccessFunction selector =
 
 {-| RecordUpdateExpression (Node String) (List (Node RecordSetter))
 -}
-recordUpdateExpression : String -> List RecordSetter -> Expression
+recordUpdateExpression : String -> List ( String, Expression ) -> Expression
 recordUpdateExpression varName setters =
-    RecordUpdateExpression (nodify varName) (nodifyAll setters)
+    List.map (\( fieldName, expr ) -> recordSetter fieldName expr) setters
+        |> nodifyAll
+        |> RecordUpdateExpression (nodify varName)
 
 
 {-| GLSLExpression String
