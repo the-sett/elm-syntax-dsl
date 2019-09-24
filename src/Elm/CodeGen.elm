@@ -1,14 +1,11 @@
 module Elm.CodeGen exposing
-    ( ModuleName, Module, File, Declaration, Import, TypeAnnotation
-    , Exposing, TopLevelExpose, Expression, Pattern
-    , file
+    ( file
     , normalModule, portModule
     , exposeAll, exposeExplicit
     , closedTypeExpose, funExpose, openTypeExpose, typeOrAliasExpose
     , importStmt
     , ImportsAndExposing, deDupeImportsAndExposing, emptyImportsAndExposing, addImport, addExposing
     , aliasDecl, customTypeDecl, funDecl, patternDecl, portDecl
-    , signature
     , access, accessFun, apply, caseExpr, chain, char, float, fqFun, fqVal, fun, glsl, hex
     , ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, pipe, prefixOp, string
     , tuple, unit, update, val
@@ -16,39 +13,39 @@ module Elm.CodeGen exposing
     , listPattern, namedPattern, parensPattern, recordPattern, stringPattern, tuplePattern, unConsPattern
     , unitPattern, varPattern
     , extRecordAnn, fqTyped, funAnn, recordAnn, tupleAnn, typeVar, typed, unitAnn
+    , signature
+    , ModuleName, Module, File, Declaration, Import, TypeAnnotation
+    , Exposing, TopLevelExpose, Expression, Pattern
     )
 
 {-| Elm.CodeGen is a DSL designed to make it easier to write Elm code that generates Elm code.
 
 
-# Types describing parts of the Elm AST.
-
-@docs ModuleName, Module, File, Declaration, Import, TypeAnnotation
-@docs Exposing, TopLevelExpose, Expression, Pattern
-
-
-# Functions for building Elm source files.
+# Build an Elm source file.
 
 @docs file
 
 
-# Functions for building module declarations.
+# Build a module declaration.
+
+`elm-syntax` also permits effects modules, but with kernel code restrictions you cannot use these so
+they have been ommitted from the DSL.
 
 @docs normalModule, portModule
 
 
-# Functions for building an exposing statement.
+# Build an 'exposing' statement.
 
 @docs exposeAll, exposeExplicit
 @docs closedTypeExpose, funExpose, openTypeExpose, typeOrAliasExpose
 
 
-# Functions for building import statements.
+# Build an import statement.
 
 @docs importStmt
 
 
-# Incrementally build up import and export lists.
+# Incrementally build import and exposing statements.
 
 This is useful during code generation where the exact imports and exports are not known in advance
 but depend on what code is actually generated. Each section of code generation can declare the imports and
@@ -57,33 +54,41 @@ exposings that it needs and they can be combined and de-duplicated to produce a 
 @docs ImportsAndExposing, deDupeImportsAndExposing, emptyImportsAndExposing, addImport, addExposing
 
 
-# Functions for building top-level declarations.
+# Build top-level declarations.
 
 @docs aliasDecl, customTypeDecl, funDecl, patternDecl, portDecl
 
 
-# Functions for building Elm type signatures.
-
-@docs signature
-
-
-# Functions for building Elm expressions.
+# Build an expression.
 
 @docs access, accessFun, apply, caseExpr, chain, char, float, fqFun, fqVal, fun, glsl, hex
 @docs ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, pipe, prefixOp, string
 @docs tuple, unit, update, val
 
 
-# Functions for building de-structuring pattern matchings.
+# Build a pattern matching expression.
 
 @docs allPattern, asPattern, charPattern, floatPattern, fqNamedPattern, hexPattern, intPattern
 @docs listPattern, namedPattern, parensPattern, recordPattern, stringPattern, tuplePattern, unConsPattern
 @docs unitPattern, varPattern
 
 
-# Functions for building Elm type annotations.
+# Build a type annotation.
 
 @docs extRecordAnn, fqTyped, funAnn, recordAnn, tupleAnn, typeVar, typed, unitAnn
+
+
+# Build a type signature.
+
+@docs signature
+
+
+# Types describing parts of the Elm AST.
+
+These types are all declared in `elm-syntax` but are re-exported here for convenience.
+
+@docs ModuleName, Module, File, Declaration, Import, TypeAnnotation
+@docs Exposing, TopLevelExpose, Expression, Pattern
 
 -}
 
