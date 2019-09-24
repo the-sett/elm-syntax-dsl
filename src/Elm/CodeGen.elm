@@ -13,6 +13,8 @@ module Elm.CodeGen exposing
     , listPattern, namedPattern, parensPattern, recordPattern, stringPattern, tuplePattern, unConsPattern
     , unitPattern, varPattern
     , extRecordAnn, fqTyped, funAnn, recordAnn, tupleAnn, typeVar, typed, unitAnn
+    , boolAnn, intAnn, floatAnn, stringAnn, charAnn
+    , listAnn, setAnn, dictAnn, maybeAnn
     , signature
     , ModuleName, Module, File, Declaration, Import, TypeAnnotation
     , Exposing, TopLevelExpose, Expression, Pattern
@@ -79,6 +81,8 @@ how a module is linked to other modules.
 # Build a type annotation.
 
 @docs extRecordAnn, fqTyped, funAnn, recordAnn, tupleAnn, typeVar, typed, unitAnn
+@docs boolAnn, intAnn, floatAnn, stringAnn, charAnn
+@docs listAnn, setAnn, dictAnn, maybeAnn
 
 
 # Build a type signature.
@@ -945,15 +949,74 @@ funAnn arg result =
     FunctionTypeAnnotation (nodify arg) (nodify result)
 
 
-{-| RecordDefinition
+{-| A `Bool` type annotation.
 -}
+boolAnn : TypeAnnotation
+boolAnn =
+    typed "Bool" []
+
+
+{-| An `Int` type annotation.
+-}
+intAnn : TypeAnnotation
+intAnn =
+    typed "Int" []
+
+
+{-| A `Float` type annotation.
+-}
+floatAnn : TypeAnnotation
+floatAnn =
+    typed "Float" []
+
+
+{-| A `String` type annotation.
+-}
+stringAnn : TypeAnnotation
+stringAnn =
+    typed "String" []
+
+
+{-| A `Char` type annotation.
+-}
+charAnn : TypeAnnotation
+charAnn =
+    typed "Char" []
+
+
+{-| Creates a `List` type annotation.
+-}
+listAnn : TypeAnnotation -> TypeAnnotation
+listAnn listArg =
+    typed "List" [ listArg ]
+
+
+{-| Creates a `Set` type annotation.
+-}
+setAnn : TypeAnnotation -> TypeAnnotation
+setAnn setArg =
+    typed "Set" [ setArg ]
+
+
+{-| Creates a `Dict` type annotation.
+-}
+dictAnn : TypeAnnotation -> TypeAnnotation -> TypeAnnotation
+dictAnn keyArg valArg =
+    typed "Dict" [ keyArg, valArg ]
+
+
+{-| Creates a `Maybe` type annotation.
+-}
+maybeAnn : TypeAnnotation -> TypeAnnotation
+maybeAnn maybeArg =
+    typed "Maybe" [ maybeArg ]
+
+
 recordDefinition : List RecordField -> RecordDefinition
 recordDefinition fields =
     nodifyAll fields
 
 
-{-| RecordField
--}
 recordField : String -> TypeAnnotation -> RecordField
 recordField field typeAnnotation =
     ( nodify field, nodify typeAnnotation )
