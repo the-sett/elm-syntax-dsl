@@ -4,7 +4,7 @@ module Elm.CodeGen exposing
     , exposeAll, exposeExplicit
     , closedTypeExpose, funExpose, openTypeExpose, typeOrAliasExpose
     , importStmt
-    , ImportsAndExposing, deDupeImportsAndExposing, emptyImportsAndExposing, addImport, addExposing
+    , Linkage, addExposing, addImport, combineLinkage, emptyLinkage
     , aliasDecl, customTypeDecl, funDecl, patternDecl, portDecl
     , access, accessFun, apply, caseExpr, chain, char, float, fqFun, fqVal, fun, glsl, hex
     , ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, pipe, prefixOp, string
@@ -51,7 +51,10 @@ This is useful during code generation where the exact imports and exports are no
 but depend on what code is actually generated. Each section of code generation can declare the imports and
 exposings that it needs and they can be combined and de-duplicated to produce a final list.
 
-@docs ImportsAndExposing, deDupeImportsAndExposing, emptyImportsAndExposing, addImport, addExposing
+I have used the name `Linkage` to refer to the combination of a modules imports and exports. It describes
+how a module is linked to other modules.
+
+@docs Linkage, addExposing, addImport, combineLinkage, emptyLinkage
 
 
 # Build top-level declarations.
@@ -113,17 +116,17 @@ import Elm.Syntax.TypeAnnotation exposing (RecordDefinition, RecordField, TypeAn
 --== Dynamic import and export lists.
 
 
-{-| Captures lists of imports and exposings of a module, allowing these to be built up
-dynamically as code generation progresses.
+{-| Linkage describes the lists of imports and exposings of a module and allows
+these to be built up incrementally as code generation progresses.
 -}
-type alias ImportsAndExposing =
+type alias Linkage =
     ( List Import, List TopLevelExpose )
 
 
 {-| Simplifies the imports and exposings by removing any duplicates.
 -}
-deDupeImportsAndExposing : List ImportsAndExposing -> ImportsAndExposing
-deDupeImportsAndExposing importsAndExposings =
+combineLinkage : List Linkage -> Linkage
+combineLinkage importsAndExposings =
     let
         ( imports, exposings ) =
             List.unzip importsAndExposings
@@ -135,14 +138,14 @@ deDupeImportsAndExposing importsAndExposings =
 
 {-| Creates empty imports and exposings lists.
 -}
-emptyImportsAndExposing : ImportsAndExposing
-emptyImportsAndExposing =
+emptyLinkage : Linkage
+emptyLinkage =
     ( [], [] )
 
 
 {-| Adds an import to the list.
 -}
-addImport : Import -> ImportsAndExposing -> ImportsAndExposing
+addImport : Import -> Linkage -> Linkage
 addImport imp iande =
     Tuple.mapFirst ((::) imp)
         iande
@@ -150,7 +153,7 @@ addImport imp iande =
 
 {-| Adds an exposing to the list.
 -}
-addExposing : TopLevelExpose -> ImportsAndExposing -> ImportsAndExposing
+addExposing : TopLevelExpose -> Linkage -> Linkage
 addExposing tlExpose iande =
     Tuple.mapSecond ((::) tlExpose)
         iande
