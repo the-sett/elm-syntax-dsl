@@ -9,13 +9,13 @@ module Elm.CodeGen exposing
     , ImportsAndExposing, deDupeImportsAndExposing, emptyImportsAndExposing, addImport, addExposing
     , aliasDecl, customTypeDecl, funDecl, patternDecl, portDecl
     , signature
-    , access, accessFunction, apply, caseExpr, chain, char, float, fqFun, fqVal, fun, glsl, hex
+    , access, accessFun, apply, caseExpr, chain, char, float, fqFun, fqVal, fun, glsl, hex
     , ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, pipe, prefixOp, string
     , tuple, unit, update, val
     , allPattern, asPattern, charPattern, floatPattern, fqNamedPattern, hexPattern, intPattern
     , listPattern, namedPattern, parensPattern, recordPattern, stringPattern, tuplePattern, unConsPattern
     , unitPattern, varPattern
-    , extRecordAnn, funAnn, recordAnn, tupleAnn, typeVar, typed, unitAnn
+    , extRecordAnn, fqTyped, funAnn, recordAnn, tupleAnn, typeVar, typed, unitAnn
     )
 
 {-| Elm.CodeGen is a DSL designed to make it easier to write Elm code that generates Elm code.
@@ -69,7 +69,7 @@ exposings that it needs and they can be combined and de-duplicated to produce a 
 
 # Functions for building Elm expressions.
 
-@docs access, accessFunction, apply, caseExpr, chain, char, float, fqFun, fqVal, fun, glsl, hex
+@docs access, accessFun, apply, caseExpr, chain, char, float, fqFun, fqVal, fun, glsl, hex
 @docs ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, pipe, prefixOp, string
 @docs tuple, unit, update, val
 
@@ -83,7 +83,7 @@ exposings that it needs and they can be combined and de-duplicated to produce a 
 
 # Functions for building Elm type annotations.
 
-@docs extRecordAnn, funAnn, recordAnn, tupleAnn, typeVar, typed, unitAnn
+@docs extRecordAnn, fqTyped, funAnn, recordAnn, tupleAnn, typeVar, typed, unitAnn
 
 -}
 
@@ -546,8 +546,8 @@ access expr selector =
 
 {-| RecordAccessFunction String
 -}
-accessFunction : String -> Expression
-accessFunction selector =
+accessFun : String -> Expression
+accessFun selector =
     RecordAccessFunction selector
 
 
@@ -909,9 +909,16 @@ typeVar name =
 
 {-| Typed (Node ( ModuleName, String )) (List (Node TypeAnnotation))
 -}
-typed : ModuleName -> String -> List TypeAnnotation -> TypeAnnotation
-typed moduleName name args =
+fqTyped : ModuleName -> String -> List TypeAnnotation -> TypeAnnotation
+fqTyped moduleName name args =
     Typed (nodify ( moduleName, name )) (nodifyAll args)
+
+
+{-| Typed (Node ( ModuleName, String )) (List (Node TypeAnnotation))
+-}
+typed : String -> List TypeAnnotation -> TypeAnnotation
+typed name args =
+    Typed (nodify ( [], name )) (nodifyAll args)
 
 
 {-| Unit
