@@ -215,15 +215,6 @@ type alias Expression =
     Elm.Syntax.Expression.Expression
 
 
-{-| The possible infix operator associativities.
-
-Deprecated in Elm 0.19.
-
--}
-type alias InfixDirection =
-    Elm.Syntax.Infix.InfixDirection
-
-
 {-| The AST for a de-structuring Elm pattern matching expression.
 -}
 type alias Pattern =
@@ -579,15 +570,11 @@ letBlock decls expr =
     }
 
 
-{-| LetFunction Function
--}
 letFunction : Function -> LetDeclaration
 letFunction func =
     LetFunction func
 
 
-{-| LetDestructuring (Node Pattern) (Node Expression)
--}
 letDestructuring : Pattern -> Expression -> LetDeclaration
 letDestructuring pattern expr =
     LetDestructuring (nodify pattern) (nodify expr)
@@ -661,9 +648,6 @@ importStmt modName aliasName exposes =
 --== Elm.Syntax.Infix
 
 
-{-| Defines an infix operator.
-Deprecated in Elm 0.19.
--}
 infix_ : InfixDirection -> Int -> String -> String -> Infix
 infix_ direction precedence symbol fn =
     { direction = nodify direction
@@ -673,22 +657,16 @@ infix_ direction precedence symbol fn =
     }
 
 
-{-| Left associative.
--}
 left : InfixDirection
 left =
     Left
 
 
-{-| Right assosiative.
--}
 right : InfixDirection
 right =
     Right
 
 
-{-| Non associative.
--}
 non : InfixDirection
 non =
     Non
@@ -712,8 +690,6 @@ portModule name exposes =
     PortModule <| defaultModuleData name (exposing_ exposes)
 
 
-{-| EffectModule EffectModuleData
--}
 effectModule : ModuleName -> List TopLevelExpose -> Maybe String -> Maybe String -> Module
 effectModule name exposes cmd sub =
     EffectModule <| effectModuleData name (exposing_ exposes) cmd sub
