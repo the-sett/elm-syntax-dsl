@@ -11,10 +11,10 @@ module Elm.CodeGen exposing
     , access, accessFunction, apply, caseExpr, chain, char, float, fqFun, fqVal, fun, glsl, hex
     , ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, pipe, prefixOp, string
     , tuple, unit, update, val
-    , allPattern, unitPattern, charPattern, stringPattern, intPattern, hexPattern, floatPattern
-    , tuplePattern, recordPattern, unConsPattern, listPattern, varPattern, namedPattern, fqNamedPattern, asPattern
-    , parensPattern
-    , genericType, typed, unitType, tupledType, record, genericRecord, functionTypeAnnotation
+    , allPattern, asPattern, charPattern, floatPattern, fqNamedPattern, hexPattern, intPattern
+    , listPattern, namedPattern, parensPattern, recordPattern, stringPattern, tuplePattern, unConsPattern
+    , unitPattern, varPattern
+    , extRecordAnn, funAnn, recordAnn, tupleAnn, typeVar, typed, unitAnn
     )
 
 {-| Elm.CodeGen is a DSL designed to make it easier to write Elm code that generates Elm code.
@@ -74,14 +74,14 @@ exposings that it needs and they can be combined and de-duplicated to produce a 
 
 # Functions for building de-structuring pattern matchings.
 
-@docs allPattern, unitPattern, charPattern, stringPattern, intPattern, hexPattern, floatPattern
-@docs tuplePattern, recordPattern, unConsPattern, listPattern, varPattern, namedPattern, fqNamedPattern, asPattern
-@docs parensPattern
+@docs allPattern, asPattern, charPattern, floatPattern, fqNamedPattern, hexPattern, intPattern
+@docs listPattern, namedPattern, parensPattern, recordPattern, stringPattern, tuplePattern, unConsPattern
+@docs unitPattern, varPattern
 
 
 # Functions for building Elm type annotations.
 
-@docs genericType, typed, unitType, tupledType, record, genericRecord, functionTypeAnnotation
+@docs extRecordAnn, funAnn, recordAnn, tupleAnn, typeVar, typed, unitAnn
 
 -}
 
@@ -909,8 +909,8 @@ typeAlias docs name args annotation =
 
 {-| GenericType String
 -}
-genericType : String -> TypeAnnotation
-genericType name =
+typeVar : String -> TypeAnnotation
+typeVar name =
     GenericType name
 
 
@@ -923,15 +923,15 @@ typed moduleName name args =
 
 {-| Unit
 -}
-unitType : TypeAnnotation
-unitType =
+unitAnn : TypeAnnotation
+unitAnn =
     Unit
 
 
 {-| Tupled (List (Node TypeAnnotation))
 -}
-tupledType : List TypeAnnotation -> TypeAnnotation
-tupledType args =
+tupleAnn : List TypeAnnotation -> TypeAnnotation
+tupleAnn args =
     Tupled (nodifyAll args)
 
 
@@ -946,8 +946,8 @@ recordAnn fields =
 
 {-| GenericRecord (Node String) (Node RecordDefinition)
 -}
-genericRecord : String -> List ( String, TypeAnnotation ) -> TypeAnnotation
-genericRecord argName fields =
+extRecordAnn : String -> List ( String, TypeAnnotation ) -> TypeAnnotation
+extRecordAnn argName fields =
     List.map (uncurry recordField) fields
         |> recordDefinition
         |> nodify
@@ -956,8 +956,8 @@ genericRecord argName fields =
 
 {-| FunctionTypeAnnotation (Node TypeAnnotation) (Node TypeAnnotation)
 -}
-functionTypeAnnotation : TypeAnnotation -> TypeAnnotation -> TypeAnnotation
-functionTypeAnnotation arg result =
+funAnn : TypeAnnotation -> TypeAnnotation -> TypeAnnotation
+funAnn arg result =
     FunctionTypeAnnotation (nodify arg) (nodify result)
 
 
