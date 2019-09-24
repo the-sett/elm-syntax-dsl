@@ -15,7 +15,7 @@ module Elm.CodeGen exposing
     , allPattern, unitPattern, charPattern, stringPattern, intPattern, hexPattern, floatPattern
     , tuplePattern, recordPattern, unConsPattern, listPattern, varPattern, namedPattern, fqNamedPattern, asPattern
     , paranthesizedPattern
-    , genericType, typed, unit, tupled, record, genericRecord, functionTypeAnnotation
+    , genericType, typed, unitType, tupledType, record, genericRecord, functionTypeAnnotation
     )
 
 {-| Elm.CodeGen is a DSL designed to make it easier to write Elm code that generates Elm code.
@@ -83,7 +83,7 @@ exposings that it needs and they can be combined and de-duplicated to produce a 
 
 # Functions for building Elm type annotations.
 
-@docs genericType, typed, unit, tupled, record, genericRecord, functionTypeAnnotation
+@docs genericType, typed, unitType, tupledType, record, genericRecord, functionTypeAnnotation
 
 -}
 
@@ -909,15 +909,15 @@ typed moduleName name args =
 
 {-| Unit
 -}
-unit : TypeAnnotation
-unit =
+unitType : TypeAnnotation
+unitType =
     Unit
 
 
 {-| Tupled (List (Node TypeAnnotation))
 -}
-tupled : List TypeAnnotation -> TypeAnnotation
-tupled args =
+tupledType : List TypeAnnotation -> TypeAnnotation
+tupledType args =
     Tupled (nodifyAll args)
 
 
