@@ -8,10 +8,9 @@ module Elm.CodeGen exposing
     , ImportsAndExposing, deDupeImportsAndExposing, emptyImportsAndExposing, addImport, addExposing
     , functionDeclaration, aliasDeclaration, customTypeDeclaration, portDeclaration, destructuring
     , signature
-    , pipe, chain, unitExpr, application, operatorApplication, functionOrValue, simpleVal, ifBlock, prefixOperator
-    , operator, integer, hex, floatable, negation, literal, charLiteral, tupledExpression, parenthesizedExpression
-    , letExpression, caseExpression, lambdaExpression, recordExpr, listExpr, recordAccess, recordAccessFunction
-    , recordUpdateExpression, glslExpression
+    , access, accessFunction, apply, caseExpr, chain, char, float, fqFun, fqVal, fun, glsl, hex
+    , ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, pipe, prefixOp, string
+    , tuple, unit, update, val
     , allPattern, unitPattern, charPattern, stringPattern, intPattern, hexPattern, floatPattern
     , tuplePattern, recordPattern, unConsPattern, listPattern, varPattern, namedPattern, fqNamedPattern, asPattern
     , paranthesizedPattern
@@ -68,10 +67,9 @@ exposings that it needs and they can be combined and de-duplicated to produce a 
 
 # Functions for building Elm expressions.
 
-@docs pipe, chain, unitExpr, application, operatorApplication, functionOrValue, simpleVal, ifBlock, prefixOperator
-@docs operator, integer, hex, floatable, negation, literal, charLiteral, tupledExpression, parenthesizedExpression
-@docs letExpression, caseExpression, lambdaExpression, recordExpr, listExpr, recordAccess, recordAccessFunction
-@docs recordUpdateExpression, glslExpression
+@docs access, accessFunction, apply, caseExpr, chain, char, float, fqFun, fqVal, fun, glsl, hex
+@docs ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, pipe, prefixOp, string
+@docs tuple, unit, update, val
 
 
 # Functions for building de-structuring pattern matchings.
@@ -118,10 +116,10 @@ type alias ImportsAndExposing =
 {-| Simplifies the imports and exposings by removing any duplicates.
 -}
 deDupeImportsAndExposing : List ImportsAndExposing -> ImportsAndExposing
-deDupeImportsAndExposing list =
+deDupeImportsAndExposing importsAndExposings =
     let
         ( imports, exposings ) =
-            List.unzip list
+            List.unzip importsAndExposings
     in
     ( List.concat imports
     , List.concat exposings
@@ -354,7 +352,7 @@ expression `a` combined with a list of expressions `[b, c, d]` results in:
 pipe : Expression -> List Expression -> Expression
 pipe head expressions =
     List.foldl
-        (\expr accum -> operatorApplication "|>" left accum expr)
+        (\expr accum -> opApply "|>" left accum expr)
         head
         expressions
 
@@ -368,135 +366,155 @@ expression `a` combined with a list of expressions `[b, c, d]` results in:
 chain : Expression -> List Expression -> Expression
 chain head expressions =
     List.foldl
-        (\expr accum -> operatorApplication ">>" left accum expr)
+        (\expr accum -> opApply ">>" left accum expr)
         head
         expressions
 
 
 {-| UnitExpr
 -}
-unitExpr : Expression
-unitExpr =
+unit : Expression
+unit =
     UnitExpr
 
 
 {-| Application (List (Node Expression))
 -}
-application : List Expression -> Expression
-application exprs =
+apply : List Expression -> Expression
+apply exprs =
     Application (nodifyAll exprs)
 
 
 {-| OperatorApplication String InfixDirection (Node Expression) (Node Expression)
 -}
-operatorApplication : String -> InfixDirection -> Expression -> Expression -> Expression
-operatorApplication symbol infixDir exprl exprr =
+opApply : String -> InfixDirection -> Expression -> Expression -> Expression
+opApply symbol infixDir exprl exprr =
     OperatorApplication symbol infixDir (nodify exprl) (nodify exprr)
 
 
 {-| FunctionOrValue ModuleName String
 -}
-functionOrValue : ModuleName -> String -> Expression
-functionOrValue moduleName name =
+fqFun : ModuleName -> String -> Expression
+fqFun moduleName name =
+    FunctionOrValue moduleName name
+
+
+{-| FunctionOrValue ModuleName String
+
+Note this is the same as `fqFun`
+
+-}
+fqVal : ModuleName -> String -> Expression
+fqVal moduleName name =
     FunctionOrValue moduleName name
 
 
 {-| Creates a FunctionOrValue with no qualifiying module.
 -}
-simpleVal : String -> Expression
-simpleVal name =
-    functionOrValue [] name
+fun : String -> Expression
+fun name =
+    fqFun [] name
+
+
+{-| Creates a FunctionOrValue with no qualifiying module.
+
+Note this is the same as `fun`.
+
+-}
+val : String -> Expression
+val name =
+    fqVal [] name
 
 
 {-| IfBlock (Node Expression) (Node Expression) (Node Expression)
 -}
-ifBlock : Expression -> Expression -> Expression -> Expression
-ifBlock boolExpr trueExpr falseExpr =
+ifExpr : Expression -> Expression -> Expression -> Expression
+ifExpr boolExpr trueExpr falseExpr =
     IfBlock (nodify boolExpr) (nodify trueExpr) (nodify falseExpr)
 
 
 {-| PrefixOperator String
 -}
-prefixOperator : String -> Expression
-prefixOperator symbol =
+prefixOp : String -> Expression
+prefixOp symbol =
     PrefixOperator symbol
 
 
 {-| Operator String
 -}
-operator : String -> Expression
-operator symbol =
+op : String -> Expression
+op symbol =
     Operator symbol
 
 
 {-| Integer Int
 -}
-integer : Int -> Expression
-integer val =
-    Integer val
+int : Int -> Expression
+int intVal =
+    Integer intVal
 
 
 {-| Hex Int
 -}
 hex : Int -> Expression
-hex val =
-    Hex val
+hex hexVal =
+    Hex hexVal
 
 
 {-| Floatable Float
 -}
-floatable : Float -> Expression
-floatable val =
-    Floatable val
+float : Float -> Expression
+float floatVal =
+    Floatable floatVal
 
 
 {-| Negation (Node Expression)
 -}
-negation : Expression -> Expression
-negation expr =
+negate : Expression -> Expression
+negate expr =
     Negation (nodify expr)
 
 
 {-| Literal String
 -}
-literal : String -> Expression
-literal val =
-    Literal val
+string : String -> Expression
+string literal =
+    Literal literal
 
 
 {-| CharLiteral Char
 -}
-charLiteral : Char -> Expression
-charLiteral val =
-    CharLiteral val
+char : Char -> Expression
+char charVal =
+    CharLiteral charVal
 
 
 {-| TupledExpression (List (Node Expression))
 -}
-tupledExpression : List Expression -> Expression
-tupledExpression exprs =
+tuple : List Expression -> Expression
+tuple exprs =
     TupledExpression (nodifyAll exprs)
 
 
 {-| ParenthesizedExpression (Node Expression)
 -}
-parenthesizedExpression : Expression -> Expression
-parenthesizedExpression expr =
+parens : Expression -> Expression
+parens expr =
     ParenthesizedExpression (nodify expr)
 
 
 {-| LetExpression LetBlock
 -}
-letExpression : List LetDeclaration -> Expression -> Expression
-letExpression declarations expr =
+letExpr : List LetDeclaration -> Expression -> Expression
+letExpr declarations expr =
     letBlock declarations expr
         |> LetExpression
 
 
 {-| CaseExpression CaseBlock
 -}
-caseExpression : Expression -> List ( Pattern, Expression ) -> Expression
-caseExpression expr cases =
+caseExpr : Expression -> List ( Pattern, Expression ) -> Expression
+caseExpr expr cases =
     List.map (\( pat, body ) -> case_ pat body) cases
         |> caseBlock expr
         |> CaseExpression
@@ -504,16 +522,16 @@ caseExpression expr cases =
 
 {-| LambdaExpression Lambda
 -}
-lambdaExpression : List Pattern -> Expression -> Expression
-lambdaExpression args expr =
-    lambda args expr
+lambda : List Pattern -> Expression -> Expression
+lambda args expr =
+    { args = nodifyAll args, expression = nodify expr }
         |> LambdaExpression
 
 
 {-| RecordExpr (List (Node RecordSetter))
 -}
-recordExpr : List ( String, Expression ) -> Expression
-recordExpr setters =
+record : List ( String, Expression ) -> Expression
+record setters =
     List.map (\( fieldName, expr ) -> recordSetter fieldName expr) setters
         |> nodifyAll
         |> RecordExpr
@@ -521,29 +539,29 @@ recordExpr setters =
 
 {-| ListExpr (List (Node Expression))
 -}
-listExpr : List Expression -> Expression
-listExpr exprs =
+list : List Expression -> Expression
+list exprs =
     ListExpr (nodifyAll exprs)
 
 
 {-| RecordAccess (Node Expression) (Node String)
 -}
-recordAccess : Expression -> String -> Expression
-recordAccess expr selector =
+access : Expression -> String -> Expression
+access expr selector =
     RecordAccess (nodify expr) (nodify selector)
 
 
 {-| RecordAccessFunction String
 -}
-recordAccessFunction : String -> Expression
-recordAccessFunction selector =
+accessFunction : String -> Expression
+accessFunction selector =
     RecordAccessFunction selector
 
 
 {-| RecordUpdateExpression (Node String) (List (Node RecordSetter))
 -}
-recordUpdateExpression : String -> List ( String, Expression ) -> Expression
-recordUpdateExpression varName setters =
+update : String -> List ( String, Expression ) -> Expression
+update varName setters =
     List.map (\( fieldName, expr ) -> recordSetter fieldName expr) setters
         |> nodifyAll
         |> RecordUpdateExpression (nodify varName)
@@ -551,16 +569,9 @@ recordUpdateExpression varName setters =
 
 {-| GLSLExpression String
 -}
-glslExpression : String -> Expression
-glslExpression expr =
+glsl : String -> Expression
+glsl expr =
     GLSLExpression expr
-
-
-lambda : List Pattern -> Expression -> Lambda
-lambda args expr =
-    { args = nodifyAll args
-    , expression = nodify expr
-    }
 
 
 letBlock : List LetDeclaration -> Expression -> LetBlock
@@ -747,36 +758,36 @@ unitPattern =
 {-| CharPattern Char
 -}
 charPattern : Char -> Pattern
-charPattern char =
-    CharPattern char
+charPattern charVal =
+    CharPattern charVal
 
 
 {-| StringPattern String
 -}
 stringPattern : String -> Pattern
-stringPattern val =
-    StringPattern val
+stringPattern literal =
+    StringPattern literal
 
 
 {-| IntPattern Int
 -}
 intPattern : Int -> Pattern
-intPattern val =
-    IntPattern val
+intPattern intVal =
+    IntPattern intVal
 
 
 {-| HexPattern Int
 -}
 hexPattern : Int -> Pattern
-hexPattern val =
-    HexPattern val
+hexPattern hexVal =
+    HexPattern hexVal
 
 
 {-| FloatPattern Float
 -}
 floatPattern : Float -> Pattern
-floatPattern val =
-    FloatPattern val
+floatPattern floatVal =
+    FloatPattern floatVal
 
 
 {-| TuplePattern (List (Node Pattern))
@@ -926,8 +937,8 @@ tupledType args =
 
 {-| Record RecordDefinition
 -}
-record : List ( String, TypeAnnotation ) -> TypeAnnotation
-record fields =
+recordAnn : List ( String, TypeAnnotation ) -> TypeAnnotation
+recordAnn fields =
     List.map (uncurry recordField) fields
         |> recordDefinition
         |> Record
