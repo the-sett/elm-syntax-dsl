@@ -7,7 +7,7 @@ module Elm.CodeGen exposing
     , closedTypeExpose, funExpose, openTypeExpose, typeOrAliasExpose
     , import_
     , ImportsAndExposing, deDupeImportsAndExposing, emptyImportsAndExposing, addImport, addExposing
-    , functionDeclaration, aliasDeclaration, customTypeDeclaration, portDeclaration, destructuring
+    , aliasDecl, customTypeDecl, funDecl, patternDecl, portDecl
     , signature
     , access, accessFunction, apply, caseExpr, chain, char, float, fqFun, fqVal, fun, glsl, hex
     , ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, pipe, prefixOp, string
@@ -59,7 +59,7 @@ exposings that it needs and they can be combined and de-duplicated to produce a 
 
 # Functions for building top-level declarations.
 
-@docs functionDeclaration, aliasDeclaration, customTypeDeclaration, portDeclaration, destructuring
+@docs aliasDecl, customTypeDecl, funDecl, patternDecl, portDecl
 
 
 # Functions for building Elm type signatures.
@@ -231,8 +231,8 @@ type alias Pattern =
 
 {-| FunctionDeclaration Function
 -}
-functionDeclaration : Maybe String -> Maybe Signature -> String -> List Pattern -> Expression -> Declaration
-functionDeclaration docs sig name args expr =
+funDecl : Maybe String -> Maybe Signature -> String -> List Pattern -> Expression -> Declaration
+funDecl docs sig name args expr =
     functionImplementation name args expr
         |> function docs sig
         |> FunctionDeclaration
@@ -240,41 +240,39 @@ functionDeclaration docs sig name args expr =
 
 {-| AliasDeclaration TypeAlias
 -}
-aliasDeclaration : Maybe String -> String -> List String -> TypeAnnotation -> Declaration
-aliasDeclaration docs name args annotation =
+aliasDecl : Maybe String -> String -> List String -> TypeAnnotation -> Declaration
+aliasDecl docs name args annotation =
     typeAlias docs name args annotation
         |> AliasDeclaration
 
 
 {-| CustomTypeDeclaration Type
 -}
-customTypeDeclaration : Maybe String -> String -> List String -> List ( String, List TypeAnnotation ) -> Declaration
-customTypeDeclaration docs name args constructors =
+customTypeDecl : Maybe String -> String -> List String -> List ( String, List TypeAnnotation ) -> Declaration
+customTypeDecl docs name args constructors =
     customType docs name args constructors
         |> CustomTypeDeclaration
 
 
 {-| PortDeclaration Signature
 -}
-portDeclaration : String -> TypeAnnotation -> Declaration
-portDeclaration name annotation =
+portDecl : String -> TypeAnnotation -> Declaration
+portDecl name annotation =
     signature name annotation
         |> PortDeclaration
 
 
-{-| InfixDeclaration Infix
--}
-infixDeclaration : InfixDirection -> Int -> String -> String -> Declaration
-infixDeclaration direction precedence symbol fn =
-    infix_ direction precedence symbol fn
-        |> InfixDeclaration
-
-
 {-| Destructuring (Node Pattern) (Node Expression)
 -}
-destructuring : Pattern -> Expression -> Declaration
-destructuring pattern expr =
+patternDecl : Pattern -> Expression -> Declaration
+patternDecl pattern expr =
     Destructuring (nodify pattern) (nodify expr)
+
+
+infixDecl : InfixDirection -> Int -> String -> String -> Declaration
+infixDecl direction precedence symbol fn =
+    infix_ direction precedence symbol fn
+        |> InfixDeclaration
 
 
 
