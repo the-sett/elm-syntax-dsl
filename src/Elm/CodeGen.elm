@@ -5,7 +5,7 @@ module Elm.CodeGen exposing
     , normalModule, portModule
     , exposeAll, exposeExplicit
     , closedTypeExpose, funExpose, openTypeExpose, typeOrAliasExpose
-    , import_
+    , importStmt
     , ImportsAndExposing, deDupeImportsAndExposing, emptyImportsAndExposing, addImport, addExposing
     , aliasDecl, customTypeDecl, funDecl, patternDecl, portDecl
     , signature
@@ -45,7 +45,7 @@ module Elm.CodeGen exposing
 
 # Functions for building import statements.
 
-@docs import_
+@docs importStmt
 
 
 # Incrementally build up import and export lists.
@@ -644,8 +644,8 @@ file mod imports declarations comments =
 {-| Creates an Elm import statement; the name of the module, an optional alias
 name for the module, and an optional list of exposings from the module.
 -}
-import_ : ModuleName -> Maybe ModuleName -> Maybe Exposing -> Import
-import_ modName aliasName exposes =
+importStmt : ModuleName -> Maybe ModuleName -> Maybe Exposing -> Import
+importStmt modName aliasName exposes =
     { moduleName = nodify modName
     , moduleAlias = nodifyMaybe aliasName
     , exposingList = nodifyMaybe exposes
