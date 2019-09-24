@@ -1,6 +1,6 @@
 module Elm.CodeGen exposing
     ( Comment, Documentation, ModuleName, Module, File, Declaration, Import, TypeAnnotation
-    , Exposing, TopLevelExpose, Expression, Pattern, QualifiedNameRef
+    , Exposing, TopLevelExpose, Expression, Pattern
     , file
     , normalModule, portModule
     , all, explicit, infixExpose, functionExpose, typeOrAliasExpose, typeExpose, openExposedType, closedExposedType
@@ -235,12 +235,6 @@ type alias InfixDirection =
 -}
 type alias Pattern =
     Elm.Syntax.Pattern.Pattern
-
-
-{-| A fully qualified name of a type including the module name.
--}
-type alias QualifiedNameRef =
-    Elm.Syntax.Pattern.QualifiedNameRef
 
 
 
@@ -842,9 +836,9 @@ namedPattern name patterns =
 
 {-| NamedPattern QualifiedNameRef (List (Node Pattern))
 -}
-fqNamedPattern : QualifiedNameRef -> List Pattern -> Pattern
-fqNamedPattern qualName patterns =
-    NamedPattern qualName (nodifyAll patterns)
+fqNamedPattern : ModuleName -> String -> List Pattern -> Pattern
+fqNamedPattern moduleName name patterns =
+    NamedPattern { moduleName = moduleName, name = name } (nodifyAll patterns)
 
 
 {-| AsPattern (Node Pattern) (Node String)
