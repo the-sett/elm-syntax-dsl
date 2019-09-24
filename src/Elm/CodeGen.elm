@@ -3,7 +3,8 @@ module Elm.CodeGen exposing
     , Exposing, TopLevelExpose, Expression, Pattern
     , file
     , normalModule, portModule
-    , all, explicit, infixExpose, functionExpose, typeOrAliasExpose, typeExpose, openExposedType, closedExposedType
+    , exposeAll, exposeExplicit
+    , closedTypeExpose, funExpose, openTypeExpose, typeOrAliasExpose
     , import_
     , ImportsAndExposing, deDupeImportsAndExposing, emptyImportsAndExposing, addImport, addExposing
     , functionDeclaration, aliasDeclaration, customTypeDeclaration, portDeclaration, destructuring
@@ -38,7 +39,8 @@ module Elm.CodeGen exposing
 
 # Functions for building an exposing statement.
 
-@docs all, explicit, infixExpose, functionExpose, typeOrAliasExpose, typeExpose, openExposedType, closedExposedType
+@docs exposeAll, exposeExplicit
+@docs closedTypeExpose, funExpose, openTypeExpose, typeOrAliasExpose
 
 
 # Functions for building import statements.
@@ -281,20 +283,18 @@ destructuring pattern expr =
 
 {-| All Range
 -}
-all : Exposing
-all =
+exposeAll : Exposing
+exposeAll =
     All emptyRange
 
 
 {-| Explicit (List (Node TopLevelExpose))
 -}
-explicit : List TopLevelExpose -> Exposing
-explicit topLevelExposes =
+exposeExplicit : List TopLevelExpose -> Exposing
+exposeExplicit topLevelExposes =
     Explicit (nodifyAll topLevelExposes)
 
 
-{-| InfixExpose String
--}
 infixExpose : String -> TopLevelExpose
 infixExpose sym =
     InfixExpose sym
@@ -302,8 +302,8 @@ infixExpose sym =
 
 {-| FunctionExpose String
 -}
-functionExpose : String -> TopLevelExpose
-functionExpose fn =
+funExpose : String -> TopLevelExpose
+funExpose fn =
     FunctionExpose fn
 
 
@@ -316,27 +316,22 @@ typeOrAliasExpose name =
 
 {-| TypeExpose ExposedType
 -}
-typeExpose : ExposedType -> TopLevelExpose
-typeExpose exposedType =
-    TypeExpose exposedType
-
-
-{-| Creates an exposing member for a type, exposing all of the types constructors.
--}
-openExposedType : String -> ExposedType
-openExposedType name =
+openTypeExpose : String -> TopLevelExpose
+openTypeExpose name =
     { name = name
     , open = Just emptyRange
     }
+        |> TypeExpose
 
 
-{-| Creates an exposing member for an opaque type, exposing none of its constructors.
+{-| TypeExpose ExposedType
 -}
-closedExposedType : String -> ExposedType
-closedExposedType name =
+closedTypeExpose : String -> TopLevelExpose
+closedTypeExpose name =
     { name = name
     , open = Nothing
     }
+        |> TypeExpose
 
 
 
