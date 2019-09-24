@@ -506,9 +506,10 @@ parenthesizedExpression expr =
 
 {-| LetExpression LetBlock
 -}
-letExpression : LetBlock -> Expression
-letExpression letBlk =
-    LetExpression letBlk
+letExpression : List LetDeclaration -> Expression -> Expression
+letExpression declarations expr =
+    letBlock declarations expr
+        |> LetExpression
 
 
 {-| CaseExpression CaseBlock
