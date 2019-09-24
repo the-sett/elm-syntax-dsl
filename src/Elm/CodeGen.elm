@@ -24,7 +24,7 @@ module Elm.CodeGen exposing
 # Types describing parts of the Elm AST.
 
 @docs Comment, Documentation, ModuleName, Module, File, Declaration, Import, TypeAnnotation
-@docs Exposing, TopLevelExpose, Expression, Pattern, QualifiedNameRef
+@docs Exposing, TopLevelExpose, Expression, Pattern
 
 
 # Functions for building Elm source files.
