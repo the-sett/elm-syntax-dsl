@@ -1,5 +1,5 @@
 module Elm.CodeGen exposing
-    ( Comment, Documentation, ModuleName, Module, File, Declaration, Import, TypeAnnotation
+    ( ModuleName, Module, File, Declaration, Import, TypeAnnotation
     , Exposing, TopLevelExpose, Expression, Pattern
     , file
     , normalModule, portModule
@@ -23,7 +23,7 @@ module Elm.CodeGen exposing
 
 # Types describing parts of the Elm AST.
 
-@docs Comment, Documentation, ModuleName, Module, File, Declaration, Import, TypeAnnotation
+@docs ModuleName, Module, File, Declaration, Import, TypeAnnotation
 @docs Exposing, TopLevelExpose, Expression, Pattern
 
 
@@ -155,18 +155,6 @@ addExposing tlExpose iande =
 --== Re-Export of Types
 
 
-{-| Comments are just Strings.
--}
-type alias Comment =
-    String
-
-
-{-| Documentation is just Strings.
--}
-type alias Documentation =
-    String
-
-
 {-| A module name can consist of mulitple Stirngs separated with '.'.
 -}
 type alias ModuleName =
@@ -243,7 +231,7 @@ type alias Pattern =
 
 {-| FunctionDeclaration Function
 -}
-functionDeclaration : Maybe Documentation -> Maybe Signature -> String -> List Pattern -> Expression -> Declaration
+functionDeclaration : Maybe String -> Maybe Signature -> String -> List Pattern -> Expression -> Declaration
 functionDeclaration docs sig name args expr =
     functionImplementation name args expr
         |> function docs sig
@@ -252,7 +240,7 @@ functionDeclaration docs sig name args expr =
 
 {-| AliasDeclaration TypeAlias
 -}
-aliasDeclaration : Maybe Documentation -> String -> List String -> TypeAnnotation -> Declaration
+aliasDeclaration : Maybe String -> String -> List String -> TypeAnnotation -> Declaration
 aliasDeclaration docs name args annotation =
     typeAlias docs name args annotation
         |> AliasDeclaration
@@ -260,7 +248,7 @@ aliasDeclaration docs name args annotation =
 
 {-| CustomTypeDeclaration Type
 -}
-customTypeDeclaration : Maybe Documentation -> String -> List String -> List ( String, List TypeAnnotation ) -> Declaration
+customTypeDeclaration : Maybe String -> String -> List String -> List ( String, List TypeAnnotation ) -> Declaration
 customTypeDeclaration docs name args constructors =
     List.map (\( consName, annotation ) -> valueConstructor consName annotation) constructors
         |> type_ docs name args
@@ -614,7 +602,7 @@ case_ pattern expr =
     ( nodify pattern, nodify expr )
 
 
-function : Maybe Documentation -> Maybe Signature -> FunctionImplementation -> Function
+function : Maybe String -> Maybe Signature -> FunctionImplementation -> Function
 function docs sig decl =
     { documentation = nodifyMaybe docs
     , signature = nodifyMaybe sig
@@ -637,7 +625,7 @@ functionImplementation name args expr =
 {-| Assembles all the components of an Elm file; the module declaration, the
 comments, the imports and the top-level declarations.
 -}
-file : Module -> List Import -> List Declaration -> List Comment -> File
+file : Module -> List Import -> List Declaration -> List String -> File
 file mod imports declarations comments =
     { moduleDefinition = nodify mod
     , imports = nodifyAll imports
@@ -872,7 +860,7 @@ signature name annotation =
 --== Elm.Syntax.Type
 
 
-type_ : Maybe Documentation -> String -> List String -> List ValueConstructor -> Type
+type_ : Maybe String -> String -> List String -> List ValueConstructor -> Type
 type_ docs name args constructors =
     { documentation = nodifyMaybe docs
     , name = nodify name
@@ -892,7 +880,7 @@ valueConstructor name annotations =
 --== Elm.Syntax.TypeAlias
 
 
-typeAlias : Maybe Documentation -> String -> List String -> TypeAnnotation -> TypeAlias
+typeAlias : Maybe String -> String -> List String -> TypeAnnotation -> TypeAlias
 typeAlias docs name args annotation =
     { documentation = nodifyMaybe docs
     , name = nodify name
