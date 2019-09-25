@@ -833,7 +833,7 @@ prettyExpressionInner context indent expression =
             prettyRecordAccess expr field
 
         RecordAccessFunction field ->
-            ( Pretty.string field
+            ( dot |> Pretty.a (Pretty.string field)
             , False
             )
 
