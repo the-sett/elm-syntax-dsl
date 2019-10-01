@@ -347,10 +347,15 @@ expression `a` combined with a list of expressions `[b, c, d]` results in:
 -}
 pipe : Expression -> List Expression -> Expression
 pipe head expressions =
-    List.foldl
-        (\expr accum -> opApply "|>" left accum expr)
-        head
-        expressions
+    case expressions of
+        [] ->
+            head
+
+        [ expr ] ->
+            opApply "|>" Left head expr
+
+        expr :: exprs ->
+            opApply "|>" Left head (pipe expr exprs)
 
 
 {-| Joins multiple expressions together with the function chain operator `>>`. An
@@ -361,10 +366,15 @@ expression `a` combined with a list of expressions `[b, c, d]` results in:
 -}
 chain : Expression -> List Expression -> Expression
 chain head expressions =
-    List.foldl
-        (\expr accum -> opApply ">>" left accum expr)
-        head
-        expressions
+    case expressions of
+        [] ->
+            head
+
+        [ expr ] ->
+            opApply ">>" Left head expr
+
+        expr :: exprs ->
+            opApply ">>" Left head (pipe expr exprs)
 
 
 {-| UnitExpr
