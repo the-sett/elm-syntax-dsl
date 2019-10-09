@@ -6,9 +6,10 @@ module Elm.CodeGen exposing
     , importStmt
     , Linkage, addExposing, addImport, combineLinkage, emptyLinkage
     , aliasDecl, customTypeDecl, funDecl, patternDecl, portDecl
-    , access, accessFun, apply, caseExpr, chain, char, float, fqFun, fqVal, fun, glsl, hex
-    , ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, pipe, prefixOp, string
-    , tuple, unit, update, val
+    , access, accessFun, apply, caseExpr, char, float, fqFun, fqVal, fun, glsl, hex
+    , ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, prefixOp, record
+    , string, tuple, unit, update, val
+    , chain, pipe
     , allPattern, asPattern, charPattern, floatPattern, fqNamedPattern, hexPattern, intPattern
     , listPattern, namedPattern, parensPattern, recordPattern, stringPattern, tuplePattern, unConsPattern
     , unitPattern, varPattern
@@ -66,9 +67,14 @@ how a module is linked to other modules.
 
 # Build an expression.
 
-@docs access, accessFun, apply, caseExpr, chain, char, float, fqFun, fqVal, fun, glsl, hex
-@docs ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, pipe, prefixOp, string
-@docs tuple, unit, update, val
+@docs access, accessFun, apply, caseExpr, char, float, fqFun, fqVal, fun, glsl, hex
+@docs ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, prefixOp, record
+@docs string, tuple, unit, update, val
+
+
+# Helper functions for common expression patterns.
+
+@docs chain, pipe
 
 
 # Build a pattern matching expression.
