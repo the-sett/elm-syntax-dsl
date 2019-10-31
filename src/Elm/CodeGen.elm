@@ -5,7 +5,7 @@ module Elm.CodeGen exposing
     , closedTypeExpose, funExpose, openTypeExpose, typeOrAliasExpose
     , importStmt
     , Linkage, addExposing, addImport, combineLinkage, emptyLinkage
-    , aliasDecl, customTypeDecl, funDecl, patternDecl, portDecl
+    , aliasDecl, customTypeDecl, funDecl, valDecl, portDecl
     , access, accessFun, apply, caseExpr, char, float, fqFun, fqVal, fun, glsl, hex
     , ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, prefixOp, record
     , string, tuple, unit, update, val
@@ -62,7 +62,7 @@ how a module is linked to other modules.
 
 # Build top-level declarations.
 
-@docs aliasDecl, customTypeDecl, funDecl, patternDecl, portDecl
+@docs aliasDecl, customTypeDecl, funDecl, valDecl, portDecl
 
 
 # Build an expression.
@@ -271,11 +271,13 @@ portDecl name annotation =
         |> PortDeclaration
 
 
-{-| Destructuring (Node Pattern) (Node Expression)
+{-| A top-level value declaration or constant.
 -}
-patternDecl : Pattern -> Expression -> Declaration
-patternDecl pattern expr =
-    Destructuring (nodify pattern) (nodify expr)
+valDecl : Maybe String -> Maybe Signature -> String -> Expression -> Declaration
+valDecl docs sig name expr =
+    functionImplementation name [] expr
+        |> function docs sig
+        |> FunctionDeclaration
 
 
 infixDecl : InfixDirection -> Int -> String -> String -> Declaration
