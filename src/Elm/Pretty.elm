@@ -1173,7 +1173,7 @@ prettyLambdaExpression indent lambda =
             prettyExpressionInner topContext 4 (denode lambda.expression)
     in
     ( [ Pretty.string "\\"
-            |> Pretty.a (List.map prettyPattern (denodeAll lambda.args) |> Pretty.words)
+            |> Pretty.a (List.map (prettyPatternInner False) (denodeAll lambda.args) |> Pretty.words)
             |> Pretty.a (Pretty.string " ->")
       , prettyExpr
       ]
