@@ -9,6 +9,7 @@ module Elm.CodeGen exposing
     , access, accessFun, apply, caseExpr, char, float, fqFun, fqVal, fun, glsl, hex
     , ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, prefixOp, record
     , string, tuple, unit, update, val
+    , letFunction, letDestructuring, letVal
     , chain, pipe
     , allPattern, asPattern, charPattern, floatPattern, fqNamedPattern, hexPattern, intPattern
     , listPattern, namedPattern, parensPattern, recordPattern, stringPattern, tuplePattern, unConsPattern
@@ -70,6 +71,7 @@ how a module is linked to other modules.
 @docs access, accessFun, apply, caseExpr, char, float, fqFun, fqVal, fun, glsl, hex
 @docs ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, prefixOp, record
 @docs string, tuple, unit, update, val
+@docs letFunction, letDestructuring, letVal
 
 
 # Helper functions for common expression patterns.
@@ -525,6 +527,27 @@ letExpr declarations expr =
         |> LetExpression
 
 
+{-| A function declared inside a let block.
+-}
+letFunction : Function -> LetDeclaration
+letFunction func =
+    LetFunction func
+
+
+{-| A value declared inside a let block.
+-}
+letVal : String -> Expression -> LetDeclaration
+letVal valName expr =
+    LetDestructuring (varPattern valName |> nodify) (nodify expr)
+
+
+{-| A pattern matching declared inside a let block.
+-}
+letDestructuring : Pattern -> Expression -> LetDeclaration
+letDestructuring pattern expr =
+    LetDestructuring (nodify pattern) (nodify expr)
+
+
 {-| CaseExpression CaseBlock
 -}
 caseExpr : Expression -> List ( Pattern, Expression ) -> Expression
@@ -593,16 +616,6 @@ letBlock decls expr =
     { declarations = nodifyAll decls
     , expression = nodify expr
     }
-
-
-letFunction : Function -> LetDeclaration
-letFunction func =
-    LetFunction func
-
-
-letDestructuring : Pattern -> Expression -> LetDeclaration
-letDestructuring pattern expr =
-    LetDestructuring (nodify pattern) (nodify expr)
 
 
 recordSetter : String -> Expression -> RecordSetter
