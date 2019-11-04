@@ -244,10 +244,10 @@ type alias Pattern =
 
 {-| FunctionDeclaration Function
 -}
-funDecl : Maybe String -> Maybe Signature -> String -> List Pattern -> Expression -> Declaration
+funDecl : Maybe String -> Maybe TypeAnnotation -> String -> List Pattern -> Expression -> Declaration
 funDecl docs sig name args expr =
     functionImplementation name args expr
-        |> function docs sig
+        |> function docs (Maybe.map (signature name) sig)
         |> FunctionDeclaration
 
 
@@ -277,10 +277,10 @@ portDecl name annotation =
 
 {-| A top-level value declaration or constant.
 -}
-valDecl : Maybe String -> Maybe Signature -> String -> Expression -> Declaration
+valDecl : Maybe String -> Maybe TypeAnnotation -> String -> Expression -> Declaration
 valDecl docs sig name expr =
     functionImplementation name [] expr
-        |> function docs sig
+        |> function docs (Maybe.map (signature name) sig)
         |> FunctionDeclaration
 
 
