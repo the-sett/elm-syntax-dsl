@@ -10,6 +10,7 @@ module Elm.CodeGen exposing
     , ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, prefixOp, record
     , string, tuple, unit, update, val
     , letFunction, letDestructuring, letVal
+    , infixLeft, infixRight, infixNon
     , chain, pipe
     , allPattern, asPattern, charPattern, floatPattern, fqNamedPattern, hexPattern, intPattern
     , listPattern, namedPattern, parensPattern, recordPattern, stringPattern, tuplePattern, unConsPattern
@@ -72,6 +73,7 @@ how a module is linked to other modules.
 @docs ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, prefixOp, record
 @docs string, tuple, unit, update, val
 @docs letFunction, letDestructuring, letVal
+@docs infixLeft, infixRight, infixNon
 
 
 # Helper functions for common expression patterns.
@@ -695,18 +697,24 @@ infix_ direction precedence symbol fn =
     }
 
 
-left : InfixDirection
-left =
+{-| Denotes an infix operator that is left associative.
+-}
+infixLeft : InfixDirection
+infixLeft =
     Left
 
 
-right : InfixDirection
-right =
+{-| Denotes an infix operator that is right associative.
+-}
+infixRight : InfixDirection
+infixRight =
     Right
 
 
-non : InfixDirection
-non =
+{-| Denotes an infix operator that is non-associative.
+-}
+infixNon : InfixDirection
+infixNon =
     Non
 
 
