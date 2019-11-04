@@ -531,9 +531,11 @@ letExpr declarations expr =
 
 {-| A function declared inside a let block.
 -}
-letFunction : Function -> LetDeclaration
-letFunction func =
-    LetFunction func
+letFunction : String -> List Pattern -> Expression -> LetDeclaration
+letFunction name args expr =
+    functionImplementation name args expr
+        |> function Nothing Nothing
+        |> LetFunction
 
 
 {-| A value declared inside a let block.
