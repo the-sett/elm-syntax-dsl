@@ -7,9 +7,10 @@ module Elm.CodeGen exposing
     , Linkage, addExposing, addImport, combineLinkage, emptyLinkage
     , aliasDecl, customTypeDecl, funDecl, valDecl, portDecl
     , access, accessFun, apply, construct, caseExpr, char, float, fqConstruct, fqFun, fqVal, fun, glsl, hex
-    , ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, prefixOp, record
+    , ifExpr, int, lambda, letExpr, list, negate, parens, record
     , string, tuple, unit, update, val
     , letFunction, letDestructuring, letVal
+    , binOp, op, opApply, prefixOp
     , infixLeft, infixRight, infixNon
     , chain, pipe
     , allPattern, asPattern, charPattern, floatPattern, fqNamedPattern, hexPattern, intPattern
@@ -70,9 +71,14 @@ how a module is linked to other modules.
 # Build an expression.
 
 @docs access, accessFun, apply, construct, caseExpr, char, float, fqConstruct, fqFun, fqVal, fun, glsl, hex
-@docs ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, prefixOp, record
+@docs ifExpr, int, lambda, letExpr, list, negate, parens, record
 @docs string, tuple, unit, update, val
 @docs letFunction, letDestructuring, letVal
+
+
+# Expressions involving operators.
+
+@docs binOp, op, opApply, prefixOp
 @docs infixLeft, infixRight, infixNon
 
 
@@ -410,13 +416,6 @@ construct name args =
     apply (fun name :: args)
 
 
-{-| OperatorApplication String InfixDirection (Node Expression) (Node Expression)
--}
-opApply : String -> InfixDirection -> Expression -> Expression -> Expression
-opApply symbol infixDir exprl exprr =
-    OperatorApplication symbol infixDir (nodify exprl) (nodify exprr)
-
-
 {-| FunctionOrValue ModuleName String
 -}
 fqFun : ModuleName -> String -> Expression
@@ -464,20 +463,6 @@ val name =
 ifExpr : Expression -> Expression -> Expression -> Expression
 ifExpr boolExpr trueExpr falseExpr =
     IfBlock (nodify boolExpr) (nodify trueExpr) (nodify falseExpr)
-
-
-{-| PrefixOperator String
--}
-prefixOp : String -> Expression
-prefixOp symbol =
-    PrefixOperator symbol
-
-
-{-| Operator String
--}
-op : String -> Expression
-op symbol =
-    Operator symbol
 
 
 {-| Integer Int
@@ -671,38 +656,37 @@ functionImplementation name args expr =
 
 
 
---== Elm.Syntax.File
+--== Operators
 
 
-{-| Assembles all the components of an Elm file; the module declaration, the
-comments, the imports and the top-level declarations.
+{-| Operator String
 -}
-file : Module -> List Import -> List Declaration -> List String -> File
-file mod imports declarations comments =
-    { moduleDefinition = nodify mod
-    , imports = nodifyAll imports
-    , declarations = nodifyAll declarations
-    , comments = nodifyAll comments
-    }
+op : String -> Expression
+op symbol =
+    Operator symbol
 
 
-
---== Elm.Syntax.Import
-
-
-{-| Creates an Elm import statement; the name of the module, an optional alias
-name for the module, and an optional list of exposings from the module.
+{-| PrefixOperator String
 -}
-importStmt : ModuleName -> Maybe ModuleName -> Maybe Exposing -> Import
-importStmt modName aliasName exposes =
-    { moduleName = nodify modName
-    , moduleAlias = nodifyMaybe aliasName
-    , exposingList = nodifyMaybe exposes
-    }
+prefixOp : String -> Expression
+prefixOp symbol =
+    PrefixOperator symbol
 
 
+{-| Applies a binary operator to left and right expressions. This version of
+operator application allows the expression to be given in the order that is usual;
+that being `expr op expr`.
+-}
+binOp : Expression -> String -> Expression -> Expression
+binOp expr1 symbol expr2 =
+    opApply symbol infixNon expr1 expr2
 
---== Elm.Syntax.Infix
+
+{-| OperatorApplication String InfixDirection (Node Expression) (Node Expression)
+-}
+opApply : String -> InfixDirection -> Expression -> Expression -> Expression
+opApply symbol infixDir exprl exprr =
+    OperatorApplication symbol infixDir (nodify exprl) (nodify exprr)
 
 
 infix_ : InfixDirection -> Int -> String -> String -> Infix
@@ -733,6 +717,37 @@ infixRight =
 infixNon : InfixDirection
 infixNon =
     Non
+
+
+
+--== Elm.Syntax.File
+
+
+{-| Assembles all the components of an Elm file; the module declaration, the
+comments, the imports and the top-level declarations.
+-}
+file : Module -> List Import -> List Declaration -> List String -> File
+file mod imports declarations comments =
+    { moduleDefinition = nodify mod
+    , imports = nodifyAll imports
+    , declarations = nodifyAll declarations
+    , comments = nodifyAll comments
+    }
+
+
+
+--== Elm.Syntax.Import
+
+
+{-| Creates an Elm import statement; the name of the module, an optional alias
+name for the module, and an optional list of exposings from the module.
+-}
+importStmt : ModuleName -> Maybe ModuleName -> Maybe Exposing -> Import
+importStmt modName aliasName exposes =
+    { moduleName = nodify modName
+    , moduleAlias = nodifyMaybe aliasName
+    , exposingList = nodifyMaybe exposes
+    }
 
 
 
