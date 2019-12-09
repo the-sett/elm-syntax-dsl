@@ -6,7 +6,7 @@ module Elm.CodeGen exposing
     , importStmt
     , Linkage, addExposing, addImport, combineLinkage, emptyLinkage
     , aliasDecl, customTypeDecl, funDecl, valDecl, portDecl
-    , access, accessFun, apply, caseExpr, char, float, fqFun, fqVal, fun, glsl, hex
+    , access, accessFun, apply, construct, caseExpr, char, float, fqConstruct, fqFun, fqVal, fun, glsl, hex
     , ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, prefixOp, record
     , string, tuple, unit, update, val
     , letFunction, letDestructuring, letVal
@@ -69,7 +69,7 @@ how a module is linked to other modules.
 
 # Build an expression.
 
-@docs access, accessFun, apply, caseExpr, char, float, fqFun, fqVal, fun, glsl, hex
+@docs access, accessFun, apply, construct, caseExpr, char, float, fqConstruct, fqFun, fqVal, fun, glsl, hex
 @docs ifExpr, int, lambda, letExpr, list, negate, op, opApply, parens, prefixOp, record
 @docs string, tuple, unit, update, val
 @docs letFunction, letDestructuring, letVal
@@ -403,6 +403,13 @@ apply exprs =
     Application (nodifyAll exprs)
 
 
+{-| Apply a named constructor to a list of arguments.
+-}
+construct : String -> List Expression -> Expression
+construct name args =
+    apply (fun name :: args)
+
+
 {-| OperatorApplication String InfixDirection (Node Expression) (Node Expression)
 -}
 opApply : String -> InfixDirection -> Expression -> Expression -> Expression
@@ -415,6 +422,14 @@ opApply symbol infixDir exprl exprr =
 fqFun : ModuleName -> String -> Expression
 fqFun moduleName name =
     FunctionOrValue moduleName name
+
+
+{-| Apply a named constructor fully qualified with a module name, to a list of
+arguments.
+-}
+fqConstruct : ModuleName -> String -> List Expression -> Expression
+fqConstruct moduleName name args =
+    apply (fqFun moduleName name :: args)
 
 
 {-| FunctionOrValue ModuleName String
