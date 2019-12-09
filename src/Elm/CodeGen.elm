@@ -370,10 +370,10 @@ pipe head expressions =
             head
 
         [ expr ] ->
-            binOpApply Left head "|>" expr
+            binOpApply head "|>" expr
 
         expr :: exprs ->
-            binOpApply Left head "|>" (pipe expr exprs)
+            binOpApply head "|>" (pipe expr exprs)
 
 
 {-| Joins multiple expressions together with the function chain operator `>>`. An
@@ -389,10 +389,10 @@ chain head expressions =
             head
 
         [ expr ] ->
-            binOpApply Left head ">>" expr
+            binOpApply head ">>" expr
 
         expr :: exprs ->
-            binOpApply Left head ">>" (pipe expr exprs)
+            binOpApply head ">>" (pipe expr exprs)
 
 
 {-| UnitExpr
@@ -698,8 +698,8 @@ Yields:
     2 + 3
 
 -}
-binOpApply : InfixDirection -> Expression -> String -> Expression -> Expression
-binOpApply _ exprl symbol exprr =
+binOpApply : Expression -> String -> Expression -> Expression
+binOpApply exprl symbol exprr =
     OperatorApplication symbol infixNon (nodify exprl) (nodify exprr)
 
 
