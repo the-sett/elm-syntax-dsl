@@ -1,12 +1,13 @@
 module Elm.Pretty exposing
-    ( pretty
+    ( prepareLayout, pretty
     , prettyImports, prettyExposing
     , prettyDeclaration, prettyFun, prettyTypeAlias, prettyCustomType, prettyPortDeclaration, prettyDestructuring
     , prettySignature, prettyPattern, prettyExpression, prettyTypeAnnotation
     )
 
 {-| Elm.Pretty is a pretty printer for Elm syntax trees. It makes use of
-`the-sett/elm-pretty-printer` to best fit the code to a given character width.
+`the-sett/elm-pretty-printer` to best fit the code to a given page width in
+characters.
 
 It aims to output code that is fully stable with respect to `elm-format` in the
 sense that running `elm-format` on the output should have no effect at all. The
@@ -19,16 +20,23 @@ is used:
     import Elm.Pretty
     import Pretty
 
-    elmAsString =
-        Elm.Pretty.pretty someFile
-            |> Pretty.pretty 120
 
     -- Fit to a page width of 120 characters
+    elmAsString =
+        Elm.Pretty.prepareLayout someFile
+            |> Pretty.pretty 120
+
+There is also a helper `pretty` function in this module that can go straight to
+a `String`, for convenience:
+
+    -- Fit to a page width of 120 characters
+    elmAsString =
+        Elm.Pretty.pretty 120 someFile
 
 
 # Pretty prints an entire Elm file.
 
-@docs pretty
+@docs prepareLayout, pretty
 
 
 # Pretty printing snippets of Elm.
@@ -63,14 +71,18 @@ import Maybe.Extra
 import Pretty exposing (Doc)
 
 
+{-| Prepares a file of Elm code for layout by the pretty printer.
 
---== File Headers
+Note that the `Doc` type returned by this is a `Pretty.Doc`. This can be printed
+to a string by the `the-sett/elm-pretty-printer` package.
 
+These `Doc` based functions are exposed in case you want to pretty print some
+Elm inside something else with the pretty printer. The `pretty` function can be
+used to go directly from a `File` to a `String`, if that is more convenient.
 
-{-| Pretty prints a file of Elm code.
 -}
-pretty : File -> Doc
-pretty file =
+prepareLayout : File -> Doc
+prepareLayout file =
     let
         importsPretty =
             case file.imports of
@@ -89,6 +101,15 @@ pretty file =
         |> Pretty.a (prettyComments (denodeAll file.comments))
         |> Pretty.a importsPretty
         |> Pretty.a (prettyDeclarations (denodeAll file.declarations))
+
+
+{-| Prints a file of Elm code to the given page width, making use of the pretty
+printer.
+-}
+pretty : Int -> File -> String
+pretty width file =
+    prepareLayout file
+        |> Pretty.pretty 120
 
 
 prettyModule : Module -> Doc
