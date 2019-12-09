@@ -10,7 +10,7 @@ module Elm.CodeGen exposing
     , ifExpr, int, lambda, letExpr, list, negate, parens, record
     , string, tuple, unit, update, val
     , letFunction, letDestructuring, letVal
-    , binOp, op, opApply, prefixOp
+    , binOp, binOpApply, prefixOp, prefixOpApply
     , infixLeft, infixRight, infixNon
     , chain, pipe
     , allPattern, asPattern, charPattern, floatPattern, fqNamedPattern, hexPattern, intPattern
@@ -78,7 +78,7 @@ how a module is linked to other modules.
 
 # Expressions involving operators.
 
-@docs binOp, op, opApply, prefixOp
+@docs binOp, binOpApply, prefixOp, prefixOpApply
 @docs infixLeft, infixRight, infixNon
 
 
@@ -370,10 +370,10 @@ pipe head expressions =
             head
 
         [ expr ] ->
-            opApply "|>" Left head expr
+            binOpApply Left head "|>" expr
 
         expr :: exprs ->
-            opApply "|>" Left head (pipe expr exprs)
+            binOpApply Left head "|>" (pipe expr exprs)
 
 
 {-| Joins multiple expressions together with the function chain operator `>>`. An
@@ -389,10 +389,10 @@ chain head expressions =
             head
 
         [ expr ] ->
-            opApply ">>" Left head expr
+            binOpApply Left head ">>" expr
 
         expr :: exprs ->
-            opApply ">>" Left head (pipe expr exprs)
+            binOpApply Left head ">>" (pipe expr exprs)
 
 
 {-| UnitExpr
@@ -659,14 +659,28 @@ functionImplementation name args expr =
 --== Operators
 
 
-{-| Operator String
+{-| Creates a binary operator in its prefix form, as a bracketed expression.
+
+    binOp "="
+
+Yields:
+
+    (=)
+
 -}
-op : String -> Expression
-op symbol =
+binOp : String -> Expression
+binOp symbol =
     Operator symbol
 
 
 {-| PrefixOperator String
+
+    prefixOp "-"
+
+Yields:
+
+    (-)
+
 -}
 prefixOp : String -> Expression
 prefixOp symbol =
@@ -676,17 +690,31 @@ prefixOp symbol =
 {-| Applies a binary operator to left and right expressions. This version of
 operator application allows the expression to be given in the order that is usual;
 that being `expr op expr`.
+
+    binOpApply (int 2) "+" (int 3)
+
+Yields:
+
+    2 + 3
+
 -}
-binOp : Expression -> String -> Expression -> Expression
-binOp expr1 symbol expr2 =
-    opApply symbol infixNon expr1 expr2
+binOpApply : InfixDirection -> Expression -> String -> Expression -> Expression
+binOpApply _ exprl symbol exprr =
+    OperatorApplication symbol infixNon (nodify exprl) (nodify exprr)
 
 
-{-| OperatorApplication String InfixDirection (Node Expression) (Node Expression)
+{-| Applies a prefix operator to an expression.
+
+    prefixOpApply "-" (int 5)
+
+Yields:
+
+     -5
+
 -}
-opApply : String -> InfixDirection -> Expression -> Expression -> Expression
-opApply symbol infixDir exprl exprr =
-    OperatorApplication symbol infixDir (nodify exprl) (nodify exprr)
+prefixOpApply : String -> Expression -> Expression
+prefixOpApply symbol expr =
+    apply [ prefixOp symbol, expr ]
 
 
 infix_ : InfixDirection -> Int -> String -> String -> Infix
