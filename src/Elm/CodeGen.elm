@@ -10,8 +10,9 @@ module Elm.CodeGen exposing
     , ifExpr, int, lambda, letExpr, list, negate, parens, record
     , string, tuple, unit, update, val
     , letFunction, letDestructuring, letVal
-    , binOp, binOpApply, prefixOp, prefixOpApply
-    , infixLeft, infixRight, infixNon
+    , BinOp, composer, composel, power, mult, div, intDiv, modulo, remOp, plus
+    , minus, append, cons, equals, notEqual, lt, gt, lte, gte, and, or, piper, pipel
+    , binOp, applyBinOp, applyUnaryMinus
     , chain, pipe
     , allPattern, asPattern, charPattern, floatPattern, fqNamedPattern, hexPattern, intPattern
     , listPattern, namedPattern, parensPattern, recordPattern, stringPattern, tuplePattern, unConsPattern
@@ -78,8 +79,9 @@ how a module is linked to other modules.
 
 # Expressions involving operators.
 
-@docs binOp, binOpApply, prefixOp, prefixOpApply
-@docs infixLeft, infixRight, infixNon
+@docs BinOp, composer, composel, power, mult, div, intDiv, modulo, remOp, plus
+@docs minus, append, cons, equals, notEqual, lt, gt, lte, gte, and, or, piper, pipel
+@docs binOp, applyBinOp, applyUnaryMinus
 
 
 # Helper functions for common expression patterns.
@@ -370,10 +372,10 @@ pipe head expressions =
             head
 
         [ expr ] ->
-            binOpApply head "|>" expr
+            applyBinOp head piper expr
 
         expr :: exprs ->
-            binOpApply head "|>" (pipe expr exprs)
+            applyBinOp head piper (pipe expr exprs)
 
 
 {-| Joins multiple expressions together with the function chain operator `>>`. An
@@ -389,10 +391,10 @@ chain head expressions =
             head
 
         [ expr ] ->
-            binOpApply head ">>" expr
+            applyBinOp head composer expr
 
         expr :: exprs ->
-            binOpApply head ">>" (pipe expr exprs)
+            applyBinOp head composer (pipe expr exprs)
 
 
 {-| UnitExpr
@@ -659,62 +661,208 @@ functionImplementation name args expr =
 --== Operators
 
 
+{-| Represents all of the binary operators allowed in Elm.
+-}
+type BinOp
+    = BinOp String InfixDirection Int
+
+
+{-| The compose right operator `>>`.
+-}
+composer : BinOp
+composer =
+    BinOp ">>" infixLeft 9
+
+
+{-| The compose left operator `<<`.
+-}
+composel : BinOp
+composel =
+    BinOp "<<" infixRight 9
+
+
+{-| The to-the-power-of operator `^`
+-}
+power : BinOp
+power =
+    BinOp "^" infixRight 8
+
+
+{-| The multiplication operator `*`.
+-}
+mult : BinOp
+mult =
+    BinOp "*" infixLeft 7
+
+
+{-| The division operator `/`.
+-}
+div : BinOp
+div =
+    BinOp "/" infixLeft 7
+
+
+{-| The integer division operator `//`.
+-}
+intDiv : BinOp
+intDiv =
+    BinOp "//" infixLeft 7
+
+
+{-| The modulo operator `%`.
+-}
+modulo : BinOp
+modulo =
+    BinOp "%" infixLeft 7
+
+
+{-| The remainder operator `rem`.
+-}
+remOp : BinOp
+remOp =
+    BinOp "rem" infixLeft 7
+
+
+{-| The addition operator `+`.
+-}
+plus : BinOp
+plus =
+    BinOp "+" infixLeft 6
+
+
+{-| The subtraction operator `-`.
+-}
+minus : BinOp
+minus =
+    BinOp "-" infixLeft 6
+
+
+{-| The append oeprator `++`.
+-}
+append : BinOp
+append =
+    BinOp "++" infixRight 5
+
+
+{-| The cons operator `::`.
+-}
+cons : BinOp
+cons =
+    BinOp "::" infixRight 5
+
+
+{-| The equality operator `==`.
+-}
+equals : BinOp
+equals =
+    BinOp "==" infixLeft 4
+
+
+{-| The inequality operator `/=`.
+-}
+notEqual : BinOp
+notEqual =
+    BinOp "1/" infixLeft 4
+
+
+{-| The less-than operator `<`.
+-}
+lt : BinOp
+lt =
+    BinOp "<" infixLeft 4
+
+
+{-| The greater-than operator `>`.
+-}
+gt : BinOp
+gt =
+    BinOp ">" infixLeft 4
+
+
+{-| The less-than-or-equal operator `<=`.
+-}
+lte : BinOp
+lte =
+    BinOp "<=" infixRight 4
+
+
+{-| The greater-than-or-equal operator `>=`.
+-}
+gte : BinOp
+gte =
+    BinOp ">=" infixRight 4
+
+
+{-| The logical and operator `&&`.
+-}
+and : BinOp
+and =
+    BinOp "&&" infixRight 3
+
+
+{-| The logical or operator `||`.
+-}
+or : BinOp
+or =
+    BinOp "||" infixRight 2
+
+
+{-| The pipe right operator `|>`.
+-}
+piper : BinOp
+piper =
+    BinOp "|>" infixLeft 0
+
+
+{-| The pipe left operator `<|`.
+-}
+pipel : BinOp
+pipel =
+    BinOp "<|" infixRight 0
+
+
 {-| Creates a binary operator in its prefix form, as a bracketed expression.
 
-    binOp "="
+    binOp equals
 
 Yields:
 
     (=)
 
 -}
-binOp : String -> Expression
-binOp symbol =
+binOp : BinOp -> Expression
+binOp (BinOp symbol _ _) =
     Operator symbol
 
 
-{-| PrefixOperator String
+{-| Applies a binary operator to left and right expressions. This takes the
+expression in the order that is usual; that being `expr op expr`.
 
-    prefixOp "-"
-
-Yields:
-
-    (-)
-
--}
-prefixOp : String -> Expression
-prefixOp symbol =
-    PrefixOperator symbol
-
-
-{-| Applies a binary operator to left and right expressions. This version of
-operator application allows the expression to be given in the order that is usual;
-that being `expr op expr`.
-
-    binOpApply (int 2) "+" (int 3)
+    applyBinOp (int 2) plus (int 3)
 
 Yields:
 
     2 + 3
 
 -}
-binOpApply : Expression -> String -> Expression -> Expression
-binOpApply exprl symbol exprr =
-    OperatorApplication symbol infixNon (nodify exprl) (nodify exprr)
+applyBinOp : Expression -> BinOp -> Expression -> Expression
+applyBinOp exprl (BinOp symbol dir _) exprr =
+    OperatorApplication symbol dir (nodify exprl) (nodify exprr)
 
 
-{-| Applies a prefix operator to an expression.
+{-| There is only one unary operator in Elm, and that is the minus sign prefixed
+onto some numeric expression.
 
-    prefixOpApply "-" (int 5)
+    applyUnaryMinus (int 5)
 
 Yields:
 
      -5
 
 -}
-prefixOpApply : String -> Expression -> Expression
-prefixOpApply symbol expr =
-    apply [ prefixOp symbol, expr ]
+applyUnaryMinus : Expression -> Expression
+applyUnaryMinus expr =
+    apply [ PrefixOperator "-", expr ]
 
 
 infix_ : InfixDirection -> Int -> String -> String -> Infix
