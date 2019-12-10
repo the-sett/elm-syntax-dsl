@@ -6,13 +6,13 @@ module Elm.CodeGen exposing
     , importStmt
     , Linkage, addExposing, addImport, combineLinkage, emptyLinkage
     , aliasDecl, customTypeDecl, funDecl, valDecl, portDecl
+    , BinOp, composer, composel, power, mult, div, intDiv, modulo, remOp, plus
+    , minus, append, cons, equals, notEqual, lt, gt, lte, gte, and, or, piper, pipel
+    , binOp, applyBinOp, applyUnaryMinus
     , access, accessFun, apply, construct, caseExpr, char, float, fqConstruct, fqFun, fqVal, fun, glsl, hex
     , ifExpr, int, lambda, letExpr, list, negate, parens, record
     , string, tuple, unit, update, val
     , letFunction, letDestructuring, letVal
-    , BinOp, composer, composel, power, mult, div, intDiv, modulo, remOp, plus
-    , minus, append, cons, equals, notEqual, lt, gt, lte, gte, and, or, piper, pipel
-    , binOp, applyBinOp, applyUnaryMinus
     , chain, pipe
     , allPattern, asPattern, charPattern, floatPattern, fqNamedPattern, hexPattern, intPattern
     , listPattern, namedPattern, parensPattern, recordPattern, stringPattern, tuplePattern, unConsPattern
@@ -69,19 +69,19 @@ how a module is linked to other modules.
 @docs aliasDecl, customTypeDecl, funDecl, valDecl, portDecl
 
 
-# Build an expression.
+# Operators
+
+@docs BinOp, composer, composel, power, mult, div, intDiv, modulo, remOp, plus
+@docs minus, append, cons, equals, notEqual, lt, gt, lte, gte, and, or, piper, pipel
+@docs binOp, applyBinOp, applyUnaryMinus
+
+
+# Other Expressions.
 
 @docs access, accessFun, apply, construct, caseExpr, char, float, fqConstruct, fqFun, fqVal, fun, glsl, hex
 @docs ifExpr, int, lambda, letExpr, list, negate, parens, record
 @docs string, tuple, unit, update, val
 @docs letFunction, letDestructuring, letVal
-
-
-# Expressions involving operators.
-
-@docs BinOp, composer, composel, power, mult, div, intDiv, modulo, remOp, plus
-@docs minus, append, cons, equals, notEqual, lt, gt, lte, gte, and, or, piper, pipel
-@docs binOp, applyBinOp, applyUnaryMinus
 
 
 # Helper functions for common expression patterns.
@@ -769,28 +769,28 @@ notEqual =
 -}
 lt : BinOp
 lt =
-    BinOp "<" infixLeft 4
+    BinOp "<" infixNon 4
 
 
 {-| The greater-than operator `>`.
 -}
 gt : BinOp
 gt =
-    BinOp ">" infixLeft 4
+    BinOp ">" infixNon 4
 
 
 {-| The less-than-or-equal operator `<=`.
 -}
 lte : BinOp
 lte =
-    BinOp "<=" infixRight 4
+    BinOp "<=" infixNon 4
 
 
 {-| The greater-than-or-equal operator `>=`.
 -}
 gte : BinOp
 gte =
-    BinOp ">=" infixRight 4
+    BinOp ">=" infixNon 4
 
 
 {-| The logical and operator `&&`.
