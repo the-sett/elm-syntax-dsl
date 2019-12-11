@@ -25,3 +25,23 @@ type CommentPart
     = Markdown String
     | Code String
     | DocTags (List String)
+
+
+{-| Pretty prints a document comment.
+
+Where possible the comment will be re-flowed to fit the specified page width.
+
+-}
+prettyDocComment : Comment DocComment -> Int -> String
+prettyDocComment _ _ =
+    ""
+
+
+{-| Pretty prints a file comment.
+
+Where possible the comment will be re-flowed to fit the specified page width.
+
+-}
+prettyFileComment : Comment FileComment -> Int -> ( String, List String )
+prettyFileComment _ _ =
+    ( "", [] )
