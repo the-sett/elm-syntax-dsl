@@ -5,6 +5,7 @@ module Elm.CodeGen exposing
     , closedTypeExpose, funExpose, openTypeExpose, typeOrAliasExpose
     , importStmt
     , Linkage, addExposing, addImport, combineLinkage, emptyLinkage
+    , Comment, emptyDocComment, emptyFileComment, markdown, code, docTags
     , aliasDecl, customTypeDecl, funDecl, valDecl, portDecl
     , BinOp, composer, composel, power, mult, div, intDiv, modulo, remOp, plus
     , minus, append, cons, equals, notEqual, lt, gt, lte, gte, and, or, piper, pipel
@@ -64,6 +65,11 @@ how a module is linked to other modules.
 @docs Linkage, addExposing, addImport, combineLinkage, emptyLinkage
 
 
+# Build comments in a structured way.
+
+@docs Comment, emptyDocComment, emptyFileComment, markdown, code, docTags
+
+
 # Build top-level declarations.
 
 @docs aliasDecl, customTypeDecl, funDecl, valDecl, portDecl
@@ -117,6 +123,7 @@ These types are all declared in `elm-syntax` but are re-exported here for conven
 
 -}
 
+import Elm.Comments exposing (Comment(..), CommentPart(..))
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Exposing exposing (ExposedType, Exposing(..), TopLevelExpose(..))
 import Elm.Syntax.Expression exposing (Case, CaseBlock, Expression(..), Function, FunctionImplementation, Lambda, LetBlock, LetDeclaration(..), RecordSetter)
@@ -244,6 +251,55 @@ type alias Expression =
 -}
 type alias Pattern =
     Elm.Syntax.Pattern.Pattern
+
+
+
+--== Comments
+
+
+{-| A structured representation of an Elm comment on a file or declaration.
+-}
+type alias Comment a =
+    Elm.Comments.Comment a
+
+
+{-| Creates an empty documenting comment that will go on a declaration.
+-}
+emptyDocComment : Comment Elm.Comments.DocComment
+emptyDocComment =
+    Comment []
+
+
+{-| Creates an empty comment that will go on a module file.
+-}
+emptyFileComment : Comment Elm.Comments.FileComment
+emptyFileComment =
+    Comment []
+
+
+{-| Adds some markdown to a comment.
+-}
+markdown : String -> Comment a -> Comment a
+markdown mdown (Comment parts) =
+    Markdown mdown :: parts |> Comment
+
+
+{-| Adds a code block to a comment.
+-}
+code : String -> Comment a -> Comment a
+code codeVal (Comment parts) =
+    Code codeVal :: parts |> Comment
+
+
+{-| Adds a set of doc tags to a comment.
+
+Doc tags will never be merged into a single line, but if they are too long to fit
+the page width, the pretty printer can break them into separate lines.
+
+-}
+docTags : List String -> Comment Elm.Comments.FileComment -> Comment Elm.Comments.FileComment
+docTags tags (Comment parts) =
+    DocTags tags :: parts |> Comment
 
 
 
