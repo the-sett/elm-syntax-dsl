@@ -1,4 +1,4 @@
-module Elm.Comments exposing (Comment(..), CommentPart(..), DocComment, FileComment)
+module Elm.Comments exposing (Comment(..), CommentPart(..), DocComment, FileComment, prettyDocComment, prettyFileComment)
 
 {-| A component DSL that helps with building comments.
 
@@ -32,10 +32,10 @@ type CommentPart
 Where possible the comment will be re-flowed to fit the specified page width.
 
 -}
-prettyDocComment : Comment DocComment -> Int -> String
-prettyDocComment (Comment parts) width =
+prettyDocComment : Int -> Comment DocComment -> String
+prettyDocComment width (Comment parts) =
     List.foldr
-        (\part accum -> accum ++ partToString part width)
+        (\part accum -> accum ++ partToString width part)
         ""
         parts
 
@@ -45,13 +45,13 @@ prettyDocComment (Comment parts) width =
 Where possible the comment will be re-flowed to fit the specified page width.
 
 -}
-prettyFileComment : Comment FileComment -> Int -> ( String, List (List String) )
-prettyFileComment (Comment parts) width =
+prettyFileComment : Int -> Comment FileComment -> ( String, List (List String) )
+prettyFileComment width (Comment parts) =
     List.foldr
         (\part ( strAccum, tagsAccum ) ->
             let
                 ( str, tags ) =
-                    partToStringAndTags part width
+                    partToStringAndTags width part
             in
             ( strAccum ++ str, tags :: tagsAccum )
         )
@@ -59,8 +59,8 @@ prettyFileComment (Comment parts) width =
         parts
 
 
-partToString : CommentPart -> Int -> String
-partToString part width =
+partToString : Int -> CommentPart -> String
+partToString width part =
     case part of
         Markdown val ->
             val
@@ -72,8 +72,8 @@ partToString part width =
             "@doc " ++ String.join ", " tags
 
 
-partToStringAndTags : CommentPart -> Int -> ( String, List String )
-partToStringAndTags part width =
+partToStringAndTags : Int -> CommentPart -> ( String, List String )
+partToStringAndTags width part =
     case part of
         Markdown val ->
             ( val, [] )

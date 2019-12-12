@@ -49,7 +49,7 @@ a `String`, for convenience:
 
 import Bool.Extra
 import Elm.CodeGen exposing (Declaration(..), File(..))
-import Elm.Syntax.Comments exposing (Comment)
+import Elm.Comments
 import Elm.Syntax.Declaration
 import Elm.Syntax.Documentation exposing (Documentation)
 import Elm.Syntax.Exposing exposing (ExposedType, Exposing(..), TopLevelExpose(..))
@@ -90,13 +90,17 @@ prepareLayout width file =
                 (prettyDocComment width)
                 decls
 
-        innerFile =
+        ( innerFile, tags ) =
             case file of
                 FileWithComment comment decls fileFn ->
-                    fileFn "" (layoutComments decls)
+                    let
+                        ( fileCommentStr, innerTags ) =
+                            Elm.Comments.prettyFileComment width comment
+                    in
+                    ( fileFn fileCommentStr (layoutComments decls), innerTags )
 
                 FileNoComment decls fileFn ->
-                    fileFn (layoutComments decls)
+                    ( fileFn (layoutComments decls), [] )
     in
     prettyModule (denode innerFile.moduleDefinition)
         |> Pretty.a Pretty.line
@@ -232,7 +236,7 @@ prettyEffectModuleData moduleData =
         ]
 
 
-prettyComments : List Comment -> Doc
+prettyComments : List String -> Doc
 prettyComments comments =
     case comments of
         [] ->
@@ -377,7 +381,7 @@ prettyDocComment : Int -> Declaration -> Elm.Syntax.Declaration.Declaration
 prettyDocComment width decl =
     case decl of
         DeclWithComment comment declFn ->
-            declFn ""
+            declFn (Elm.Comments.prettyDocComment width comment)
 
         DeclNoComment declNoComment ->
             declNoComment
