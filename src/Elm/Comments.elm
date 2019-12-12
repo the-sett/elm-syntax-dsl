@@ -8,6 +8,8 @@ can be extracted to order the exposing clause by.
 
 -}
 
+import Parser exposing (Parser)
+
 
 type DocComment
     = DocComment
@@ -83,3 +85,15 @@ partToStringAndTags width part =
 
         DocTags tags ->
             ( "@doc " ++ String.join ", " tags, tags )
+
+
+docCommentParser : Parser (Comment DocComment)
+docCommentParser =
+    Parser.getSource
+        |> Parser.map (\val -> Comment [ Markdown val ])
+
+
+fileCommentParser : Parser (Comment FileComment)
+fileCommentParser =
+    Parser.getSource
+        |> Parser.map (\val -> Comment [ Markdown val ])
