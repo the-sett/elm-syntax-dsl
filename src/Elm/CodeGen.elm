@@ -123,7 +123,7 @@ These types are all declared in `elm-syntax` but are re-exported here for conven
 
 -}
 
-import Elm.Comments exposing (Comment(..), CommentPart(..))
+import Elm.Comments exposing (Comment(..), CommentPart(..), DocComment, FileComment)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Exposing exposing (ExposedType, Exposing(..), TopLevelExpose(..))
 import Elm.Syntax.Expression exposing (Case, CaseBlock, Expression(..), Function, FunctionImplementation, Lambda, LetBlock, LetDeclaration(..), RecordSetter)
@@ -206,15 +206,17 @@ type alias Module =
 
 {-| The AST for an Elm file.
 -}
-type alias File =
-    Elm.Syntax.File.File
+type File
+    = FileWithComment (Comment FileComment) (List Declaration) (String -> List Elm.Syntax.Declaration.Declaration -> Elm.Syntax.File.File)
+    | FileNoComment (List Declaration) (List Elm.Syntax.Declaration.Declaration -> Elm.Syntax.File.File)
 
 
 {-| The AST for a top-level Elm declaration; a function, a value, a type or a
 type alias.
 -}
-type alias Declaration =
-    Elm.Syntax.Declaration.Declaration
+type Declaration
+    = DeclWithComment (Comment DocComment) (String -> Elm.Syntax.Declaration.Declaration)
+    | DeclNoComment Elm.Syntax.Declaration.Declaration
 
 
 {-| The AST for an Elm import statement.
@@ -308,27 +310,58 @@ docTags tags (Comment parts) =
 
 {-| FunctionDeclaration Function
 -}
-funDecl : Maybe String -> Maybe TypeAnnotation -> String -> List Pattern -> Expression -> Declaration
+funDecl : Maybe (Comment DocComment) -> Maybe TypeAnnotation -> String -> List Pattern -> Expression -> Declaration
 funDecl docs sig name args expr =
-    functionImplementation name args expr
-        |> function docs (Maybe.map (signature name) sig)
-        |> FunctionDeclaration
+    case docs of
+        Just docComment ->
+            (\strDocs ->
+                functionImplementation name args expr
+                    |> function (Just strDocs) (Maybe.map (signature name) sig)
+                    |> FunctionDeclaration
+            )
+                |> DeclWithComment docComment
+
+        Nothing ->
+            functionImplementation name args expr
+                |> function Nothing (Maybe.map (signature name) sig)
+                |> FunctionDeclaration
+                |> DeclNoComment
 
 
 {-| AliasDeclaration TypeAlias
 -}
-aliasDecl : Maybe String -> String -> List String -> TypeAnnotation -> Declaration
+aliasDecl : Maybe (Comment DocComment) -> String -> List String -> TypeAnnotation -> Declaration
 aliasDecl docs name args annotation =
-    typeAlias docs name args annotation
-        |> AliasDeclaration
+    case docs of
+        Just docComment ->
+            (\strDocs ->
+                typeAlias (Just strDocs) name args annotation
+                    |> AliasDeclaration
+            )
+                |> DeclWithComment docComment
+
+        Nothing ->
+            typeAlias Nothing name args annotation
+                |> AliasDeclaration
+                |> DeclNoComment
 
 
 {-| CustomTypeDeclaration Type
 -}
-customTypeDecl : Maybe String -> String -> List String -> List ( String, List TypeAnnotation ) -> Declaration
+customTypeDecl : Maybe (Comment DocComment) -> String -> List String -> List ( String, List TypeAnnotation ) -> Declaration
 customTypeDecl docs name args constructors =
-    customType docs name args constructors
-        |> CustomTypeDeclaration
+    case docs of
+        Just docComment ->
+            (\strDocs ->
+                customType (Just strDocs) name args constructors
+                    |> CustomTypeDeclaration
+            )
+                |> DeclWithComment docComment
+
+        Nothing ->
+            customType Nothing name args constructors
+                |> CustomTypeDeclaration
+                |> DeclNoComment
 
 
 {-| PortDeclaration Signature
@@ -337,21 +370,27 @@ portDecl : String -> TypeAnnotation -> Declaration
 portDecl name annotation =
     signature name annotation
         |> PortDeclaration
+        |> DeclNoComment
 
 
 {-| A top-level value declaration or constant.
 -}
-valDecl : Maybe String -> Maybe TypeAnnotation -> String -> Expression -> Declaration
+valDecl : Maybe (Comment DocComment) -> Maybe TypeAnnotation -> String -> Expression -> Declaration
 valDecl docs sig name expr =
-    functionImplementation name [] expr
-        |> function docs (Maybe.map (signature name) sig)
-        |> FunctionDeclaration
+    case docs of
+        Just docComment ->
+            (\strDocs ->
+                functionImplementation name [] expr
+                    |> function (Just strDocs) (Maybe.map (signature name) sig)
+                    |> FunctionDeclaration
+            )
+                |> DeclWithComment docComment
 
-
-infixDecl : InfixDirection -> Int -> String -> String -> Declaration
-infixDecl direction precedence symbol fn =
-    infix_ direction precedence symbol fn
-        |> InfixDeclaration
+        Nothing ->
+            functionImplementation name [] expr
+                |> function Nothing (Maybe.map (signature name) sig)
+                |> FunctionDeclaration
+                |> DeclNoComment
 
 
 
@@ -958,13 +997,28 @@ infixNon =
 {-| Assembles all the components of an Elm file; the module declaration, the
 comments, the imports and the top-level declarations.
 -}
-file : Module -> List Import -> List Declaration -> List String -> File
-file mod imports declarations comments =
-    { moduleDefinition = nodify mod
-    , imports = nodifyAll imports
-    , declarations = nodifyAll declarations
-    , comments = nodifyAll comments
-    }
+file : Module -> List Import -> List Declaration -> Maybe (Comment FileComment) -> File
+file mod imports declarations docs =
+    case docs of
+        Just docComment ->
+            (\strDocs innerDeclarations ->
+                { moduleDefinition = nodify mod
+                , imports = nodifyAll imports
+                , declarations = nodifyAll innerDeclarations
+                , comments = nodifyAll [ strDocs ]
+                }
+            )
+                |> FileWithComment docComment declarations
+
+        Nothing ->
+            (\innerDeclarations ->
+                { moduleDefinition = nodify mod
+                , imports = nodifyAll imports
+                , declarations = nodifyAll innerDeclarations
+                , comments = nodifyAll []
+                }
+            )
+                |> FileNoComment declarations
 
 
 
