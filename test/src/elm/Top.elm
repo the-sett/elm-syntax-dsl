@@ -77,7 +77,7 @@ update msg model =
                 Ok file ->
                     let
                         pretty =
-                            Elm.Pretty.pretty file
+                            Elm.Pretty.pretty 120 file
                                 |> Pretty.pretty 120
                     in
                     ( model, codeOutPort ( name, pretty ) )
