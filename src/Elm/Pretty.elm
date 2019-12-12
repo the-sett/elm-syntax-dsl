@@ -48,12 +48,13 @@ a `String`, for convenience:
 -}
 
 import Bool.Extra
+import Elm.CodeGen exposing (Declaration(..), File(..))
 import Elm.Syntax.Comments exposing (Comment)
-import Elm.Syntax.Declaration exposing (Declaration(..))
+import Elm.Syntax.Declaration
 import Elm.Syntax.Documentation exposing (Documentation)
 import Elm.Syntax.Exposing exposing (ExposedType, Exposing(..), TopLevelExpose(..))
 import Elm.Syntax.Expression exposing (Case, CaseBlock, Expression(..), Function, FunctionImplementation, Lambda, LetBlock, LetDeclaration(..), RecordSetter)
-import Elm.Syntax.File exposing (File)
+import Elm.Syntax.File
 import Elm.Syntax.Import exposing (Import)
 import Elm.Syntax.Infix exposing (Infix, InfixDirection(..))
 import Elm.Syntax.Module exposing (DefaultModuleData, EffectModuleData, Module(..))
@@ -81,26 +82,41 @@ Elm inside something else with the pretty printer. The `pretty` function can be
 used to go directly from a `File` to a `String`, if that is more convenient.
 
 -}
-prepareLayout : File -> Doc
-prepareLayout file =
+prepareLayout : Int -> File -> Doc
+prepareLayout width file =
     let
-        importsPretty =
-            case file.imports of
-                [] ->
-                    Pretty.line
+        layoutComments decls =
+            List.map
+                (prettyDocComment width)
+                decls
 
-                _ ->
-                    prettyImports (denodeAll file.imports)
-                        |> Pretty.a Pretty.line
-                        |> Pretty.a Pretty.line
-                        |> Pretty.a Pretty.line
+        innerFile =
+            case file of
+                FileWithComment comment decls fileFn ->
+                    fileFn "" (layoutComments decls)
+
+                FileNoComment decls fileFn ->
+                    fileFn (layoutComments decls)
     in
-    prettyModule (denode file.moduleDefinition)
+    prettyModule (denode innerFile.moduleDefinition)
         |> Pretty.a Pretty.line
         |> Pretty.a Pretty.line
-        |> Pretty.a (prettyComments (denodeAll file.comments))
-        |> Pretty.a importsPretty
-        |> Pretty.a (prettyDeclarations (denodeAll file.declarations))
+        |> Pretty.a (prettyComments (denodeAll innerFile.comments))
+        |> Pretty.a (importsPretty innerFile)
+        |> Pretty.a (prettyDeclarations (denodeAll innerFile.declarations))
+
+
+importsPretty : Elm.Syntax.File.File -> Doc
+importsPretty file =
+    case file.imports of
+        [] ->
+            Pretty.line
+
+        _ ->
+            prettyImports (denodeAll file.imports)
+                |> Pretty.a Pretty.line
+                |> Pretty.a Pretty.line
+                |> Pretty.a Pretty.line
 
 
 {-| Prints a file of Elm code to the given page width, making use of the pretty
@@ -108,8 +124,8 @@ printer.
 -}
 pretty : Int -> File -> String
 pretty width file =
-    prepareLayout file
-        |> Pretty.pretty 120
+    prepareLayout width file
+        |> Pretty.pretty width
 
 
 prettyModule : Module -> Doc
@@ -308,39 +324,63 @@ prettyTopLevelExpose tlExpose =
 --== Declarations
 
 
-prettyDeclarations : List Declaration -> Doc
+{-| Pretty prints a single top-level declaration.
+-}
+prettyDeclaration : Int -> Declaration -> Doc
+prettyDeclaration width decl =
+    let
+        innerDecl =
+            prettyDocComment width decl
+    in
+    prettyElmSyntaxDeclaration innerDecl
+
+
+{-| Pretty prints an elm-syntax declaration.
+-}
+prettyElmSyntaxDeclaration : Elm.Syntax.Declaration.Declaration -> Doc
+prettyElmSyntaxDeclaration decl =
+    case decl of
+        Elm.Syntax.Declaration.FunctionDeclaration fn ->
+            prettyFun fn
+
+        Elm.Syntax.Declaration.AliasDeclaration tAlias ->
+            prettyTypeAlias tAlias
+
+        Elm.Syntax.Declaration.CustomTypeDeclaration type_ ->
+            prettyCustomType type_
+
+        Elm.Syntax.Declaration.PortDeclaration sig ->
+            prettyPortDeclaration sig
+
+        Elm.Syntax.Declaration.InfixDeclaration infix_ ->
+            prettyInfix infix_
+
+        Elm.Syntax.Declaration.Destructuring pattern expr ->
+            prettyDestructuring (denode pattern) (denode expr)
+
+
+prettyDeclarations : List Elm.Syntax.Declaration.Declaration -> Doc
 prettyDeclarations decls =
     List.map
         (\decl ->
-            prettyDeclaration decl
+            prettyElmSyntaxDeclaration decl
                 |> Pretty.a Pretty.line
         )
         decls
         |> doubleLines
 
 
-{-| Pretty prints a single top-level declaration.
+{-| Pretty prints any doc comments on a declaration to string format, and provides
+the result as an elm-syntax declaration.
 -}
-prettyDeclaration : Declaration -> Doc
-prettyDeclaration decl =
+prettyDocComment : Int -> Declaration -> Elm.Syntax.Declaration.Declaration
+prettyDocComment width decl =
     case decl of
-        FunctionDeclaration fn ->
-            prettyFun fn
+        DeclWithComment comment declFn ->
+            declFn ""
 
-        AliasDeclaration tAlias ->
-            prettyTypeAlias tAlias
-
-        CustomTypeDeclaration type_ ->
-            prettyCustomType type_
-
-        PortDeclaration sig ->
-            prettyPortDeclaration sig
-
-        InfixDeclaration infix_ ->
-            prettyInfix infix_
-
-        Destructuring pattern expr ->
-            prettyDestructuring (denode pattern) (denode expr)
+        DeclNoComment declNoComment ->
+            declNoComment
 
 
 {-| Pretty prints an Elm function, which may include documentation and a signature too.

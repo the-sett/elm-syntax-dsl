@@ -22,7 +22,7 @@ module Elm.CodeGen exposing
     , boolAnn, intAnn, floatAnn, stringAnn, charAnn
     , listAnn, setAnn, dictAnn, maybeAnn
     , signature
-    , ModuleName, Module, File, Declaration, Import, TypeAnnotation
+    , ModuleName, Module, File(..), Declaration(..), Import, TypeAnnotation
     , Exposing, TopLevelExpose, Expression, Pattern
     )
 
