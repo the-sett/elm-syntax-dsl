@@ -12,10 +12,26 @@ determine how to lay out exposing lists to match.
 
 -}
 
-import Elm.CodeGen exposing (File)
+import Elm.CodeGen exposing (File(..))
+import Elm.Parser
+import Elm.Processing
+import Elm.Syntax.File
 import Parser exposing (DeadEnd, Parser)
 
 
 parse : String -> Result (List DeadEnd) File
-parse =
-    ()
+parse val =
+    Elm.Parser.parse val
+        |> Result.map (Elm.Processing.process Elm.Processing.init)
+        |> Result.map parseFileComments
+
+
+parseFileComments : Elm.Syntax.File.File -> File
+parseFileComments file =
+    case file.comments of
+        _ ->
+            FileNoComment [] (always file)
+
+
+
+--(List Elm.Syntax.Declaration.Declaration -> Elm.Syntax.File.File)

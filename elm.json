@@ -6,7 +6,8 @@
     "version": "4.0.1",
     "exposed-modules": [
         "Elm.CodeGen",
-        "Elm.Pretty"
+        "Elm.Pretty",
+        "Elm.DSLParser"
     ],
     "elm-version": "0.19.0 <= v < 0.20.0",
     "dependencies": {
