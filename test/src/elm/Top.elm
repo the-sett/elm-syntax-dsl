@@ -1,5 +1,6 @@
 port module Top exposing (main)
 
+import Elm.DSLParser
 import Elm.Parser
 import Elm.Pretty
 import Elm.Processing
@@ -63,8 +64,7 @@ update msg model =
         ( Normal, ModelData name val ) ->
             let
                 elmAstResult =
-                    Elm.Parser.parse val
-                        |> Result.map (Elm.Processing.process Elm.Processing.init)
+                    Elm.DSLParser.parse val
             in
             case elmAstResult of
                 Err _ ->
@@ -78,7 +78,6 @@ update msg model =
                     let
                         pretty =
                             Elm.Pretty.pretty 120 file
-                                |> Pretty.pretty 120
                     in
                     ( model, codeOutPort ( name, pretty ) )
 
