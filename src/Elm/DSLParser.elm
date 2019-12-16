@@ -103,6 +103,8 @@ declNoDocs decl =
             decl
 
 
+{-| Extracts the documentation from a declaration as a string.
+-}
 docsFromDecl : ESD.Declaration -> Maybe String
 docsFromDecl decl =
     case decl of
