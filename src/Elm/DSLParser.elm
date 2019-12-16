@@ -10,6 +10,8 @@ markdown including descriptive text, code examples and docs tags. The structured
 format is used to re-flow comments to fit a page width, and to use doc tags to
 determine how to lay out exposing lists to match.
 
+@docs parse
+
 -}
 
 import Elm.CodeGen as CG exposing (Declaration, File)
@@ -22,6 +24,8 @@ import Parser exposing (DeadEnd, Parser)
 import Util exposing (denode, denodeAll, denodeMaybe, nodify)
 
 
+{-| Parses a string into a file of Elm code.
+-}
 parse : String -> Result (List DeadEnd) File
 parse val =
     Elm.Parser.parse val
