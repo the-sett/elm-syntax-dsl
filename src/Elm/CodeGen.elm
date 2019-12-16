@@ -132,13 +132,14 @@ import Elm.Syntax.Import exposing (Import)
 import Elm.Syntax.Infix exposing (Infix, InfixDirection(..))
 import Elm.Syntax.Module exposing (DefaultModuleData, EffectModuleData, Module(..))
 import Elm.Syntax.ModuleName exposing (ModuleName)
-import Elm.Syntax.Node exposing (Node(..))
+import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Pattern exposing (Pattern(..), QualifiedNameRef)
 import Elm.Syntax.Range exposing (Location, Range, emptyRange)
 import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.Type exposing (Type, ValueConstructor)
 import Elm.Syntax.TypeAlias exposing (TypeAlias)
 import Elm.Syntax.TypeAnnotation exposing (RecordDefinition, RecordField, TypeAnnotation(..))
+import Util exposing (nodify, nodifyAll, nodifyMaybe)
 
 
 
@@ -1369,21 +1370,6 @@ recordField field typeAnnotation =
 
 
 --== Helpers
-
-
-nodify : a -> Node a
-nodify exp =
-    Node emptyRange exp
-
-
-nodifyMaybe : Maybe a -> Maybe (Node a)
-nodifyMaybe =
-    Maybe.map nodify
-
-
-nodifyAll : List a -> List (Node a)
-nodifyAll =
-    List.map nodify
 
 
 uncurry : (a -> b -> c) -> ( a, b ) -> c

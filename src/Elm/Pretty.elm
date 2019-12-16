@@ -70,6 +70,7 @@ import Hex
 import ImportsAndExposing
 import Maybe.Extra
 import Pretty exposing (Doc)
+import Util exposing (denode, denodeAll, denodeMaybe, nodify, nodifyAll, nodifyMaybe)
 
 
 {-| Prepares a file of Elm code for layout by the pretty printer.
@@ -1616,26 +1617,6 @@ isNakedCompound typeAnn =
 --== Helpers
 
 
-denode : Node a -> a
-denode =
-    Node.value
-
-
-denodeAll : List (Node a) -> List a
-denodeAll =
-    List.map denode
-
-
-denodeMaybe : Maybe (Node a) -> Maybe a
-denodeMaybe =
-    Maybe.map denode
-
-
-nodify : a -> Node a
-nodify exp =
-    Node emptyRange exp
-
-
 prettyMaybe : (a -> Doc) -> Maybe a -> Doc
 prettyMaybe prettyFn maybeVal =
     Maybe.map prettyFn maybeVal
@@ -1826,8 +1807,3 @@ precedence symbol =
 
         _ ->
             0
-
-
-nodifyAll : List a -> List (Node a)
-nodifyAll =
-    List.map nodify

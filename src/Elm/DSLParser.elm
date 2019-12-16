@@ -17,6 +17,7 @@ import Elm.Parser
 import Elm.Processing
 import Elm.Syntax.File
 import Parser exposing (DeadEnd, Parser)
+import Util exposing (denode)
 
 
 parse : String -> Result (List DeadEnd) File
@@ -28,19 +29,23 @@ parse val =
 
 parseFileComments : Elm.Syntax.File.File -> File
 parseFileComments file =
-    case file.comments of
-        [] ->
+    case List.reverse file.comments |> List.head of
+        Nothing ->
             { moduleDefinition = file.moduleDefinition
             , imports = file.imports
             , declarations = []
             , comments = Nothing
             }
 
-        fileComments ->
+        Just fc ->
             { moduleDefinition = file.moduleDefinition
             , imports = file.imports
             , declarations = []
-            , comments = Just Elm.CodeGen.emptyFileComment
+            , comments =
+                Just
+                    (Elm.CodeGen.emptyFileComment
+                        |> Elm.CodeGen.markdown (denode fc)
+                    )
             }
 
 
