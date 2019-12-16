@@ -48,7 +48,7 @@ a `String`, for convenience:
 -}
 
 import Bool.Extra
-import Elm.CodeGen exposing (Declaration(..), File(..))
+import Elm.CodeGen exposing (Declaration(..), File)
 import Elm.Comments
 import Elm.Syntax.Declaration
 import Elm.Syntax.Documentation exposing (Documentation)
@@ -85,22 +85,34 @@ used to go directly from a `File` to a `String`, if that is more convenient.
 prepareLayout : Int -> File -> Doc
 prepareLayout width file =
     let
-        layoutComments decls =
+        layoutDeclComments decls =
             List.map
                 (prettyDocComment width)
                 decls
 
         ( innerFile, tags ) =
-            case file of
-                FileWithComment comment decls fileFn ->
+            case file.comments of
+                Just comment ->
                     let
                         ( fileCommentStr, innerTags ) =
                             Elm.Comments.prettyFileComment width comment
                     in
-                    ( fileFn fileCommentStr (layoutComments decls), innerTags )
+                    ( { moduleDefinition = file.moduleDefinition
+                      , imports = file.imports
+                      , declarations = layoutDeclComments file.declarations |> nodifyAll
+                      , comments = nodifyAll [ fileCommentStr ]
+                      }
+                    , innerTags
+                    )
 
-                FileNoComment decls fileFn ->
-                    ( fileFn (layoutComments decls), [] )
+                Nothing ->
+                    ( { moduleDefinition = file.moduleDefinition
+                      , imports = file.imports
+                      , declarations = layoutDeclComments file.declarations |> nodifyAll
+                      , comments = []
+                      }
+                    , []
+                    )
     in
     prettyModule (denode innerFile.moduleDefinition)
         |> Pretty.a Pretty.line
@@ -1814,3 +1826,8 @@ precedence symbol =
 
         _ ->
             0
+
+
+nodifyAll : List a -> List (Node a)
+nodifyAll =
+    List.map nodify

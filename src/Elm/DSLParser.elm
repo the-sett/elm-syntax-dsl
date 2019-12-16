@@ -12,7 +12,7 @@ determine how to lay out exposing lists to match.
 
 -}
 
-import Elm.CodeGen exposing (File(..))
+import Elm.CodeGen exposing (File)
 import Elm.Parser
 import Elm.Processing
 import Elm.Syntax.File
@@ -29,8 +29,19 @@ parse val =
 parseFileComments : Elm.Syntax.File.File -> File
 parseFileComments file =
     case file.comments of
-        _ ->
-            FileNoComment [] (always file)
+        [] ->
+            { moduleDefinition = file.moduleDefinition
+            , imports = file.imports
+            , declarations = []
+            , comments = Nothing
+            }
+
+        fileComments ->
+            { moduleDefinition = file.moduleDefinition
+            , imports = file.imports
+            , declarations = []
+            , comments = Just Elm.CodeGen.emptyFileComment
+            }
 
 
 

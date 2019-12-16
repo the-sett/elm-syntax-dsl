@@ -22,7 +22,7 @@ module Elm.CodeGen exposing
     , boolAnn, intAnn, floatAnn, stringAnn, charAnn
     , listAnn, setAnn, dictAnn, maybeAnn
     , signature
-    , ModuleName, Module, File(..), Declaration(..), Import, TypeAnnotation
+    , ModuleName, Module, File, Declaration(..), Import, TypeAnnotation
     , Exposing, TopLevelExpose, Expression, Pattern
     )
 
@@ -206,9 +206,12 @@ type alias Module =
 
 {-| The AST for an Elm file.
 -}
-type File
-    = FileWithComment (Comment FileComment) (List Declaration) (String -> List Elm.Syntax.Declaration.Declaration -> Elm.Syntax.File.File)
-    | FileNoComment (List Declaration) (List Elm.Syntax.Declaration.Declaration -> Elm.Syntax.File.File)
+type alias File =
+    { moduleDefinition : Node Module
+    , imports : List (Node Import)
+    , declarations : List Declaration
+    , comments : Maybe (Comment FileComment)
+    }
 
 
 {-| The AST for a top-level Elm declaration; a function, a value, a type or a
@@ -999,26 +1002,11 @@ comments, the imports and the top-level declarations.
 -}
 file : Module -> List Import -> List Declaration -> Maybe (Comment FileComment) -> File
 file mod imports declarations docs =
-    case docs of
-        Just docComment ->
-            (\strDocs innerDeclarations ->
-                { moduleDefinition = nodify mod
-                , imports = nodifyAll imports
-                , declarations = nodifyAll innerDeclarations
-                , comments = nodifyAll [ strDocs ]
-                }
-            )
-                |> FileWithComment docComment declarations
-
-        Nothing ->
-            (\innerDeclarations ->
-                { moduleDefinition = nodify mod
-                , imports = nodifyAll imports
-                , declarations = nodifyAll innerDeclarations
-                , comments = nodifyAll []
-                }
-            )
-                |> FileNoComment declarations
+    { moduleDefinition = nodify mod
+    , imports = nodifyAll imports
+    , declarations = declarations
+    , comments = docs
+    }
 
 
 
