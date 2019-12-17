@@ -28,6 +28,7 @@ can be extracted to order the exposing clause by.
 -}
 
 import Parser exposing (Parser)
+import Pretty exposing (Doc)
 
 
 type DocComment
@@ -55,10 +56,11 @@ Where possible the comment will be re-flowed to fit the specified page width.
 -}
 prettyDocComment : Int -> Comment DocComment -> String
 prettyDocComment width (Comment parts) =
-    List.foldr
-        (\part accum -> accum ++ partToString width part)
-        ""
-        parts
+    List.map prettyCommentPart parts
+        |> Pretty.lines
+        |> delimeters
+        |> Pretty.pretty width
+        |> Debug.log "doc comment"
 
 
 {-| Pretty prints a file comment.
@@ -80,17 +82,34 @@ prettyFileComment width (Comment parts) =
         parts
 
 
-partToString : Int -> CommentPart -> String
-partToString width part =
+prettyCommentPart : CommentPart -> Doc
+prettyCommentPart part =
     case part of
         Markdown val ->
-            val
+            prettyMarkdown val
 
         Code val ->
-            "    " ++ val
+            prettyCode val
 
         DocTags tags ->
-            "@doc " ++ String.join ", " tags
+            prettyTags tags
+
+
+prettyMarkdown val =
+    Pretty.string val
+
+
+prettyCode val =
+    Pretty.string val
+        |> Pretty.indent 4
+
+
+prettyTags tags =
+    [ Pretty.string "@doc"
+    , List.map Pretty.string tags
+        |> Pretty.join (Pretty.string ", ")
+    ]
+        |> Pretty.words
 
 
 partToStringAndTags : Int -> CommentPart -> ( String, List String )
@@ -116,3 +135,11 @@ fileCommentParser : Parser (Comment FileComment)
 fileCommentParser =
     Parser.getSource
         |> Parser.map (\val -> Comment [ Markdown val ])
+
+
+delimeters : Doc -> Doc
+delimeters doc =
+    Pretty.string "{-| "
+        |> Pretty.a doc
+        |> Pretty.a Pretty.line
+        |> Pretty.a (Pretty.string "-}")
