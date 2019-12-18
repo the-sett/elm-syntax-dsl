@@ -14,13 +14,16 @@ determine how to lay out exposing lists to match.
 
 -}
 
+--exposing ((|.), (|=))
+
 import Elm.CodeGen as CG exposing (Declaration, File)
+import Elm.Comments exposing (Comment(..), CommentPart(..))
 import Elm.Parser
 import Elm.Processing
 import Elm.Syntax.Declaration as ESD
 import Elm.Syntax.Expression exposing (Function)
 import Elm.Syntax.File
-import Parser exposing (DeadEnd, Parser)
+import Parser exposing ((|.), (|=), DeadEnd, Parser)
 import Util exposing (denode, denodeAll, denodeMaybe, nodify)
 
 
@@ -37,12 +40,9 @@ parseFileComments : Elm.Syntax.File.File -> File
 parseFileComments file =
     let
         fileComments =
-            case List.reverse file.comments |> List.head of
-                Nothing ->
-                    Nothing
-
-                Just fc ->
-                    CG.emptyFileComment |> CG.markdown (denode fc) |> Just
+            List.reverse file.comments
+                |> denodeAll
+                |> findFirstComment
     in
     CG.file (denode file.moduleDefinition)
         (denodeAll file.imports)
@@ -54,12 +54,8 @@ parseDeclComments : ESD.Declaration -> Declaration
 parseDeclComments decl =
     let
         docComments =
-            case docsFromDecl decl of
-                Nothing ->
-                    Nothing
-
-                Just val ->
-                    CG.emptyDocComment |> CG.markdown val |> Just
+            docsFromDecl decl
+                |> Maybe.andThen tryParseComment
     in
     case docComments of
         Nothing ->
@@ -67,6 +63,32 @@ parseDeclComments decl =
 
         Just val ->
             CG.DeclWithComment val (declWithDocs decl)
+
+
+findFirstComment : List String -> Maybe (Comment a)
+findFirstComment comments =
+    case comments of
+        [] ->
+            Nothing
+
+        c :: cs ->
+            case Parser.run commentParser c of
+                Err _ ->
+                    findFirstComment cs
+
+                Ok val ->
+                    Just val
+
+
+tryParseComment : String -> Maybe (Comment a)
+tryParseComment comment =
+    Parser.run commentParser comment |> Result.toMaybe
+
+
+commentParser : Parser (Comment a)
+commentParser =
+    Parser.succeed (\val -> Comment [ Markdown val ])
+        |= (Parser.multiComment "{-" "-}" Parser.Nestable |> Parser.getChompedString)
 
 
 {-| Replaces the documentation on a declaration with the specified string.
