@@ -87,7 +87,6 @@ prettyDocComment width comment =
         |> Pretty.lines
         |> delimeters
         |> Pretty.pretty width
-        |> Debug.log "doc comment"
 
 
 {-| Pretty prints a file comment.
@@ -101,7 +100,6 @@ prettyFileComment width comment =
         |> Pretty.lines
         |> delimeters
         |> Pretty.pretty width
-        |> Debug.log "doc comment"
     , []
     )
 
