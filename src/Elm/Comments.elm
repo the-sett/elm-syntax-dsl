@@ -70,16 +70,13 @@ Where possible the comment will be re-flowed to fit the specified page width.
 -}
 prettyFileComment : Int -> Comment FileComment -> ( String, List (List String) )
 prettyFileComment width (Comment parts) =
-    List.foldr
-        (\part ( strAccum, tagsAccum ) ->
-            let
-                ( str, tags ) =
-                    partToStringAndTags width part
-            in
-            ( strAccum ++ str, tags :: tagsAccum )
-        )
-        ( "", [] )
-        parts
+    ( List.map prettyCommentPart parts
+        |> Pretty.lines
+        |> delimeters
+        |> Pretty.pretty width
+        |> Debug.log "doc comment"
+    , []
+    )
 
 
 prettyCommentPart : CommentPart -> Doc

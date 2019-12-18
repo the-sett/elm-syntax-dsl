@@ -87,8 +87,14 @@ tryParseComment comment =
 
 commentParser : Parser (Comment a)
 commentParser =
-    Parser.succeed (\val -> Comment [ Markdown val ])
-        |= (Parser.multiComment "{-" "-}" Parser.Nestable |> Parser.getChompedString)
+    Parser.succeed (\val -> Comment [ removeDelims val |> Markdown ])
+        |= (Parser.multiComment "{-|" "-}" Parser.Nestable |> Parser.getChompedString)
+
+
+removeDelims : String -> String
+removeDelims val =
+    String.slice 3 -2 val
+        |> String.trim
 
 
 {-| Replaces the documentation on a declaration with the specified string.
