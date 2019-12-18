@@ -17,7 +17,7 @@ determine how to lay out exposing lists to match.
 --exposing ((|.), (|=))
 
 import Elm.CodeGen as CG exposing (Declaration, File)
-import Elm.Comments exposing (Comment(..), CommentPart(..))
+import Elm.Comments as Comments exposing (Comment, CommentPart(..))
 import Elm.Parser
 import Elm.Processing
 import Elm.Syntax.Declaration as ESD
@@ -87,7 +87,8 @@ tryParseComment comment =
 
 commentParser : Parser (Comment a)
 commentParser =
-    Parser.succeed (\val -> Comment [ removeDelims val |> Markdown ])
+    Parser.succeed
+        (\val -> Comments.addPart Comments.emptyComment (removeDelims val |> Markdown))
         |= (Parser.multiComment "{-|" "-}" Parser.Nestable |> Parser.getChompedString)
 
 

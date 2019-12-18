@@ -1,5 +1,6 @@
 module Elm.Comments exposing
-    ( Comment(..), CommentPart(..), DocComment, FileComment
+    ( Comment, CommentPart(..), DocComment, FileComment
+    , emptyComment, addPart
     , prettyDocComment, prettyFileComment
     , docCommentParser, fileCommentParser
     )
@@ -14,6 +15,11 @@ can be extracted to order the exposing clause by.
 # Structured comments
 
 @docs Comment, CommentPart, DocComment, FileComment
+
+
+# Building comments
+
+@docs emptyComment, addPart
 
 
 # Pretty printing of comments
@@ -49,14 +55,35 @@ type CommentPart
     | DocTags (List String)
 
 
+{-| Creates an empty comment of any type.
+-}
+emptyComment : Comment a
+emptyComment =
+    Comment []
+
+
+{-| Adds a part to a comment.
+-}
+addPart : Comment a -> CommentPart -> Comment a
+addPart (Comment parts) part =
+    Comment (part :: parts)
+
+
+{-| Gets the parts of a comment in the correct order.
+-}
+getParts : Comment a -> List CommentPart
+getParts (Comment parts) =
+    List.reverse parts
+
+
 {-| Pretty prints a document comment.
 
 Where possible the comment will be re-flowed to fit the specified page width.
 
 -}
 prettyDocComment : Int -> Comment DocComment -> String
-prettyDocComment width (Comment parts) =
-    List.map prettyCommentPart parts
+prettyDocComment width comment =
+    List.map prettyCommentPart (getParts comment)
         |> Pretty.lines
         |> delimeters
         |> Pretty.pretty width
@@ -69,14 +96,22 @@ Where possible the comment will be re-flowed to fit the specified page width.
 
 -}
 prettyFileComment : Int -> Comment FileComment -> ( String, List (List String) )
-prettyFileComment width (Comment parts) =
-    ( List.map prettyCommentPart parts
+prettyFileComment width comment =
+    ( List.map prettyCommentPart (getParts comment)
         |> Pretty.lines
         |> delimeters
         |> Pretty.pretty width
         |> Debug.log "doc comment"
     , []
     )
+
+
+{-| Combines lists of doc tags that are together in the comment into single lists,
+then breaks those lists up to fit the page width.
+-}
+layoutTags : Int -> List CommentPart -> ( List CommentPart, List (List String) )
+layoutTags width parts =
+    ( parts, [] )
 
 
 prettyCommentPart : CommentPart -> Doc

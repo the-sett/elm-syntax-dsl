@@ -123,7 +123,7 @@ These types are all declared in `elm-syntax` but are re-exported here for conven
 
 -}
 
-import Elm.Comments exposing (Comment(..), CommentPart(..), DocComment, FileComment)
+import Elm.Comments as Comments exposing (Comment, CommentPart(..), DocComment, FileComment)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Exposing exposing (ExposedType, Exposing(..), TopLevelExpose(..))
 import Elm.Syntax.Expression exposing (Case, CaseBlock, Expression(..), Function, FunctionImplementation, Lambda, LetBlock, LetDeclaration(..), RecordSetter)
@@ -266,35 +266,37 @@ type alias Pattern =
 {-| A structured representation of an Elm comment on a file or declaration.
 -}
 type alias Comment a =
-    Elm.Comments.Comment a
+    Comments.Comment a
 
 
 {-| Creates an empty documenting comment that will go on a declaration.
 -}
-emptyDocComment : Comment Elm.Comments.DocComment
+emptyDocComment : Comment Comments.DocComment
 emptyDocComment =
-    Comment []
+    Comments.emptyComment
 
 
 {-| Creates an empty comment that will go on a module file.
 -}
-emptyFileComment : Comment Elm.Comments.FileComment
+emptyFileComment : Comment Comments.FileComment
 emptyFileComment =
-    Comment []
+    Comments.emptyComment
 
 
 {-| Adds some markdown to a comment.
 -}
 markdown : String -> Comment a -> Comment a
-markdown mdown (Comment parts) =
-    Markdown mdown :: parts |> Comment
+markdown mdown comment =
+    Markdown mdown
+        |> Comments.addPart comment
 
 
 {-| Adds a code block to a comment.
 -}
 code : String -> Comment a -> Comment a
-code codeVal (Comment parts) =
-    Code codeVal :: parts |> Comment
+code codeVal comment =
+    Code codeVal
+        |> Comments.addPart comment
 
 
 {-| Adds a set of doc tags to a comment.
@@ -303,9 +305,10 @@ Doc tags will never be merged into a single line, but if they are too long to fi
 the page width, the pretty printer can break them into separate lines.
 
 -}
-docTags : List String -> Comment Elm.Comments.FileComment -> Comment Elm.Comments.FileComment
-docTags tags (Comment parts) =
-    DocTags tags :: parts |> Comment
+docTags : List String -> Comment Comments.FileComment -> Comment Comments.FileComment
+docTags tags comment =
+    DocTags tags
+        |> Comments.addPart comment
 
 
 
