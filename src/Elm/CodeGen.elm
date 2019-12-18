@@ -5,7 +5,7 @@ module Elm.CodeGen exposing
     , closedTypeExpose, funExpose, openTypeExpose, typeOrAliasExpose
     , importStmt
     , Linkage, addExposing, addImport, combineLinkage, emptyLinkage
-    , Comment, emptyDocComment, emptyFileComment, markdown, code, docTags
+    , Comment, emptyDocComment, emptyFileComment, markdown, code, docTags, docTagsFromExposings
     , aliasDecl, customTypeDecl, funDecl, valDecl, portDecl
     , BinOp, composer, composel, power, mult, div, intDiv, modulo, remOp, plus
     , minus, append, cons, equals, notEqual, lt, gt, lte, gte, and, or, piper, pipel
@@ -67,7 +67,7 @@ how a module is linked to other modules.
 
 # Build comments in a structured way.
 
-@docs Comment, emptyDocComment, emptyFileComment, markdown, code, docTags
+@docs Comment, emptyDocComment, emptyFileComment, markdown, code, docTags, docTagsFromExposings
 
 
 # Build top-level declarations.
@@ -308,6 +308,35 @@ the page width, the pretty printer can break them into separate lines.
 docTags : List String -> Comment Comments.FileComment -> Comment Comments.FileComment
 docTags tags comment =
     DocTags tags
+        |> Comments.addPart comment
+
+
+{-| Adds a set of doc tags taking from a description of what a module exposes,
+into a comment.
+
+Doc tags will never be merged into a single line, but if they are too long to fit
+the page width, the pretty printer can break them into separate lines.
+
+-}
+docTagsFromExposings : List TopLevelExpose -> Comment Comments.FileComment -> Comment Comments.FileComment
+docTagsFromExposings exposings comment =
+    let
+        asTag tlExpose =
+            case tlExpose of
+                InfixExpose name ->
+                    name
+
+                FunctionExpose name ->
+                    name
+
+                TypeOrAliasExpose name ->
+                    name
+
+                TypeExpose exposedType ->
+                    exposedType.name
+    in
+    List.map asTag exposings
+        |> DocTags
         |> Comments.addPart comment
 
 

@@ -138,7 +138,7 @@ prettyCode val =
 
 
 prettyTags tags =
-    [ Pretty.string "@doc"
+    [ Pretty.string "@docs"
     , List.map Pretty.string tags
         |> Pretty.join (Pretty.string ", ")
     ]
