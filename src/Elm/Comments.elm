@@ -96,11 +96,15 @@ Where possible the comment will be re-flowed to fit the specified page width.
 -}
 prettyFileComment : Int -> Comment FileComment -> ( String, List (List String) )
 prettyFileComment width comment =
-    ( List.map prettyCommentPart (getParts comment)
+    let
+        ( parts, splits ) =
+            layoutTags width (getParts comment)
+    in
+    ( List.map prettyCommentPart parts
         |> Pretty.lines
         |> delimeters
         |> Pretty.pretty width
-    , []
+    , splits
     )
 
 
@@ -109,7 +113,90 @@ then breaks those lists up to fit the page width.
 -}
 layoutTags : Int -> List CommentPart -> ( List CommentPart, List (List String) )
 layoutTags width parts =
-    ( parts, [] )
+    List.foldr
+        (\part ( accumParts, accumDocTags ) ->
+            case part of
+                DocTags tags ->
+                    let
+                        splits =
+                            fitAndSplit width tags
+                    in
+                    ( List.map DocTags splits ++ accumParts
+                    , accumDocTags ++ splits
+                    )
+
+                otherPart ->
+                    ( otherPart :: accumParts, accumDocTags )
+        )
+        ( [], [] )
+        (mergeDocTags parts)
+
+
+{-| Takes tags from the input and builds them into an output list until the
+given width limit cannot be kept to. When the width limit is breached the output
+spills over into more lists.
+
+Each list must contain at least one tag, even if this were to breach the width
+limit.
+
+-}
+fitAndSplit : Int -> List String -> List (List String)
+fitAndSplit width tags =
+    case Debug.log "toFit" tags of
+        [] ->
+            []
+
+        t :: ts ->
+            let
+                ( splitsExceptLast, lastSplit, _ ) =
+                    List.foldl
+                        (\tag ( allSplits, curSplit, remaining ) ->
+                            if String.length tag <= remaining then
+                                ( allSplits, tag :: curSplit, remaining - String.length tag )
+
+                            else
+                                ( allSplits ++ [ List.reverse curSplit ], [ tag ], width - String.length tag )
+                        )
+                        ( [], [ t ], width - String.length t )
+                        ts
+            in
+            splitsExceptLast ++ [ List.reverse lastSplit ]
+
+
+{-| Merges neighbouring lists of doc tags together.
+-}
+mergeDocTags : List CommentPart -> List CommentPart
+mergeDocTags innerParts =
+    let
+        ( partsExceptMaybeFirst, maybeFirstPart ) =
+            List.foldr
+                (\part ( accum, context ) ->
+                    case context of
+                        Nothing ->
+                            case part of
+                                DocTags tags ->
+                                    ( accum, Just tags )
+
+                                otherPart ->
+                                    ( otherPart :: accum, Nothing )
+
+                        Just contextTags ->
+                            case part of
+                                DocTags tags ->
+                                    ( accum, Just (contextTags ++ tags) )
+
+                                otherPart ->
+                                    ( otherPart :: DocTags (List.sort contextTags) :: accum, Nothing )
+                )
+                ( [], Nothing )
+                innerParts
+    in
+    case maybeFirstPart of
+        Nothing ->
+            partsExceptMaybeFirst
+
+        Just tags ->
+            DocTags (List.sort tags) :: partsExceptMaybeFirst
 
 
 prettyCommentPart : CommentPart -> Doc
