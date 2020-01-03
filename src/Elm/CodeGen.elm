@@ -5,7 +5,7 @@ module Elm.CodeGen exposing
     , closedTypeExpose, funExpose, openTypeExpose, typeOrAliasExpose
     , importStmt
     , Linkage, addExposing, addImport, combineLinkage, emptyLinkage
-    , Comment, emptyDocComment, emptyFileComment, markdown, code, docTags, docTagsFromExposings
+    , Comment, DocComment, FileComment, emptyDocComment, emptyFileComment, markdown, code, docTags, docTagsFromExposings
     , aliasDecl, customTypeDecl, funDecl, valDecl, portDecl
     , BinOp, composer, composel, power, mult, div, intDiv, modulo, remOp, plus
     , minus, append, cons, equals, notEqual, lt, gt, lte, gte, and, or, piper, pipel
@@ -67,7 +67,7 @@ how a module is linked to other modules.
 
 # Build comments in a structured way.
 
-@docs Comment, emptyDocComment, emptyFileComment, markdown, code, docTags, docTagsFromExposings
+@docs Comment, DocComment, FileComment, emptyDocComment, emptyFileComment, markdown, code, docTags, docTagsFromExposings
 
 
 # Build top-level declarations.
@@ -267,6 +267,18 @@ type alias Pattern =
 -}
 type alias Comment a =
     Comments.Comment a
+
+
+{-| A comment type for doc comments on top-level declarations.
+-}
+type alias DocComment =
+    Comments.DocComment
+
+
+{-| A comment type for file comments at the head of a .elm file.
+-}
+type alias FileComment =
+    Comments.FileComment
 
 
 {-| Creates an empty documenting comment that will go on a declaration.
