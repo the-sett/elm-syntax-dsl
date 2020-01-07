@@ -142,7 +142,7 @@ limit.
 -}
 fitAndSplit : Int -> List String -> List (List String)
 fitAndSplit width tags =
-    case Debug.log "toFit" tags of
+    case tags of
         [] ->
             []
 
