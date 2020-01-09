@@ -1,3 +1,7 @@
+**Contacts for Support**
+- @rupertlssmith on https://elmlang.slack.com
+- @rupert on https://discourse.elm-lang.org
+
 # elm-syntax-dsl
 
 Provides a DSL that makes it simpler to write code in Elm that generates Elm code; simpler
