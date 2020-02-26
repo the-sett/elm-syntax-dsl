@@ -23,7 +23,7 @@ module Elm.CodeGen exposing
     , listAnn, setAnn, dictAnn, maybeAnn
     , signature
     , ModuleName, Module, File, Declaration(..), Import, TypeAnnotation
-    , Exposing, TopLevelExpose, Expression, Pattern
+    , Exposing, TopLevelExpose, Expression, Pattern, LetDeclaration
     )
 
 {-| Elm.CodeGen is a DSL designed to make it easier to write Elm code that generates Elm code.
@@ -119,7 +119,7 @@ how a module is linked to other modules.
 These types are all declared in `elm-syntax` but are re-exported here for convenience.
 
 @docs ModuleName, Module, File, Declaration, Import, TypeAnnotation
-@docs Exposing, TopLevelExpose, Expression, Pattern
+@docs Exposing, TopLevelExpose, Expression, Pattern, LetDeclaration
 
 -}
 
@@ -257,6 +257,12 @@ type alias Expression =
 -}
 type alias Pattern =
     Elm.Syntax.Pattern.Pattern
+
+
+{-| The AST for an Elm let declaration.
+-}
+type alias LetDeclaration =
+    Elm.Syntax.Expression.LetDeclaration
 
 
 

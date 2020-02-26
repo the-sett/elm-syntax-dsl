@@ -3,7 +3,7 @@
     "name": "the-sett/elm-syntax-dsl",
     "summary": "A DSL for creating Elm syntax trees and pretty printing Elm source code.",
     "license": "BSD-3-Clause",
-    "version": "5.0.0",
+    "version": "5.1.0",
     "exposed-modules": [
         "Elm.CodeGen",
         "Elm.Pretty",
