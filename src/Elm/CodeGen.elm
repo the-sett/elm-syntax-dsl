@@ -543,7 +543,7 @@ chain head expressions =
             applyBinOp head composer expr
 
         expr :: exprs ->
-            applyBinOp head composer (pipe expr exprs)
+            applyBinOp head composer (chain expr exprs)
 
 
 binOpChain : Expression -> BinOp -> List Expression -> Expression
