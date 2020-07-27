@@ -546,6 +546,16 @@ chain head expressions =
             applyBinOp head composer (chain expr exprs)
 
 
+{-| Joins multiple expressions together with a binary operator. An
+expression `a`, and operator op, combined with a list of expressions `[b, c, d]`
+results in:
+
+    a op b op c op d
+
+The expression is not bracketed so will parse as the operator associativity
+directs.
+
+-}
 binOpChain : Expression -> BinOp -> List Expression -> Expression
 binOpChain head binop expressions =
     case expressions of
