@@ -14,7 +14,7 @@ module Elm.CodeGen exposing
     , ifExpr, int, lambda, letExpr, list, negate, parens, record
     , string, tuple, unit, update, val
     , letFunction, letDestructuring, letVal
-    , chain, pipe
+    , chain, pipe, binOpChain
     , allPattern, asPattern, charPattern, floatPattern, fqNamedPattern, hexPattern, intPattern
     , listPattern, namedPattern, parensPattern, recordPattern, stringPattern, tuplePattern, unConsPattern
     , unitPattern, varPattern
@@ -92,7 +92,7 @@ how a module is linked to other modules.
 
 # Helper functions for common expression patterns.
 
-@docs chain, pipe
+@docs chain, pipe, binOpChain
 
 
 # Build a pattern matching expression.
@@ -543,7 +543,30 @@ chain head expressions =
             applyBinOp head composer expr
 
         expr :: exprs ->
-            applyBinOp head composer (pipe expr exprs)
+            applyBinOp head composer (chain expr exprs)
+
+
+{-| Joins multiple expressions together with a binary operator. An
+expression `a`, and operator op, combined with a list of expressions `[b, c, d]`
+results in:
+
+    a op b op c op d
+
+The expression is not bracketed so will parse as the operator associativity
+directs.
+
+-}
+binOpChain : Expression -> BinOp -> List Expression -> Expression
+binOpChain head binop expressions =
+    case expressions of
+        [] ->
+            head
+
+        [ expr ] ->
+            applyBinOp head binop expr
+
+        expr :: exprs ->
+            applyBinOp head binop (binOpChain expr binop exprs)
 
 
 {-| UnitExpr
