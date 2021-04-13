@@ -1678,8 +1678,17 @@ escape val =
 escapeChar : Char -> String
 escapeChar val =
     case val of
+        '\\' ->
+            "\\\\"
+
         '\'' ->
             "\\'"
+
+        '\t' ->
+            "\\t"
+
+        '\n' ->
+            "\\n"
 
         c ->
             String.fromChar c
