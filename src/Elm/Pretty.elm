@@ -631,7 +631,7 @@ prettyPatternInner isTop pattern =
             Pretty.string (String.fromInt val)
 
         HexPattern val ->
-            Pretty.string (Hex.toString val)
+            Pretty.string (toHexString val)
 
         FloatPattern val ->
             Pretty.string (String.fromFloat val)
