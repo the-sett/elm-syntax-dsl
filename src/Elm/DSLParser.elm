@@ -21,7 +21,6 @@ import Elm.Comments as Comments exposing (Comment, CommentPart(..))
 import Elm.Parser
 import Elm.Processing
 import Elm.Syntax.Declaration as ESD
-import Elm.Syntax.Expression exposing (Function)
 import Elm.Syntax.File
 import Parser exposing ((|.), (|=), DeadEnd, Parser)
 import Util exposing (denode, denodeAll, denodeMaybe, nodify)
