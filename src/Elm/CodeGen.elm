@@ -289,14 +289,14 @@ type alias FileComment =
 
 {-| Creates an empty documenting comment that will go on a declaration.
 -}
-emptyDocComment : Comment Comments.DocComment
+emptyDocComment : Comment DocComment
 emptyDocComment =
     Comments.emptyComment
 
 
 {-| Creates an empty comment that will go on a module file.
 -}
-emptyFileComment : Comment Comments.FileComment
+emptyFileComment : Comment FileComment
 emptyFileComment =
     Comments.emptyComment
 
@@ -323,7 +323,7 @@ Doc tags will never be merged into a single line, but if they are too long to fi
 the page width, the pretty printer can break them into separate lines.
 
 -}
-docTags : List String -> Comment Comments.FileComment -> Comment Comments.FileComment
+docTags : List String -> Comment FileComment -> Comment FileComment
 docTags tags comment =
     DocTags tags
         |> Comments.addPart comment
@@ -336,7 +336,7 @@ Doc tags will never be merged into a single line, but if they are too long to fi
 the page width, the pretty printer can break them into separate lines.
 
 -}
-docTagsFromExposings : List TopLevelExpose -> Comment Comments.FileComment -> Comment Comments.FileComment
+docTagsFromExposings : List TopLevelExpose -> Comment FileComment -> Comment FileComment
 docTagsFromExposings exposings comment =
     let
         asTag tlExpose =
