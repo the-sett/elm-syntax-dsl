@@ -615,14 +615,14 @@ fqVal moduleName name =
     FunctionOrValue moduleName name
 
 
-{-| Creates a FunctionOrValue with no qualifiying module.
+{-| Creates a FunctionOrValue with no qualifying module.
 -}
 fun : String -> Expression
 fun name =
     fqFun [] name
 
 
-{-| Creates a FunctionOrValue with no qualifiying module.
+{-| Creates a FunctionOrValue with no qualifying module.
 
 Note this is the same as `fun`.
 
