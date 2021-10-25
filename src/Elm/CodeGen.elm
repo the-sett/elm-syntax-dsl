@@ -909,7 +909,7 @@ minus =
     BinOp "-" infixLeft 6
 
 
-{-| The append oeprator `++`.
+{-| The append operator `++`.
 -}
 append : BinOp
 append =
