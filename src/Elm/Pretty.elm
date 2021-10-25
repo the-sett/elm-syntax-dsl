@@ -1,9 +1,9 @@
 module Elm.Pretty exposing
     ( prepareLayout, pretty
+    , prettyModule
     , prettyImports, prettyExposing
     , prettyDeclaration, prettyFun, prettyTypeAlias, prettyCustomType, prettyPortDeclaration, prettyDestructuring
     , prettySignature, prettyPattern, prettyExpression, prettyTypeAnnotation
-    , prettyModule
     )
 
 {-| Elm.Pretty is a pretty printer for Elm syntax trees. It makes use of
@@ -24,7 +24,7 @@ is used:
 
     -- Fit to a page width of 120 characters
     elmAsString =
-        Elm.Pretty.prepareLayout someFile
+        Elm.Pretty.prepareLayout 120 someFile
             |> Pretty.pretty 120
 
 There is also a helper `pretty` function in this module that can go straight to
@@ -42,6 +42,7 @@ a `String`, for convenience:
 
 # Pretty printing snippets of Elm.
 
+@docs prettyModule
 @docs prettyImports, prettyExposing
 @docs prettyDeclaration, prettyFun, prettyTypeAlias, prettyCustomType, prettyPortDeclaration, prettyDestructuring
 @docs prettySignature, prettyPattern, prettyExpression, prettyTypeAnnotation
