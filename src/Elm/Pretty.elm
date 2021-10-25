@@ -52,25 +52,23 @@ import Elm.CodeGen exposing (Declaration(..), File)
 import Elm.Comments
 import Elm.Syntax.Declaration
 import Elm.Syntax.Documentation exposing (Documentation)
-import Elm.Syntax.Exposing exposing (ExposedType, Exposing(..), TopLevelExpose(..))
-import Elm.Syntax.Expression exposing (Case, CaseBlock, Expression(..), Function, FunctionImplementation, Lambda, LetBlock, LetDeclaration(..), RecordSetter)
+import Elm.Syntax.Exposing exposing (Exposing(..), TopLevelExpose(..))
+import Elm.Syntax.Expression exposing (CaseBlock, Expression(..), Function, FunctionImplementation, Lambda, LetBlock, LetDeclaration(..), RecordSetter)
 import Elm.Syntax.File
 import Elm.Syntax.Import exposing (Import)
 import Elm.Syntax.Infix exposing (Infix, InfixDirection(..))
 import Elm.Syntax.Module exposing (DefaultModuleData, EffectModuleData, Module(..))
 import Elm.Syntax.ModuleName exposing (ModuleName)
-import Elm.Syntax.Node as Node exposing (Node(..))
-import Elm.Syntax.Pattern exposing (Pattern(..), QualifiedNameRef)
-import Elm.Syntax.Range exposing (Location, Range, emptyRange)
+import Elm.Syntax.Node exposing (Node)
+import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.Type exposing (Type, ValueConstructor)
 import Elm.Syntax.TypeAlias exposing (TypeAlias)
-import Elm.Syntax.TypeAnnotation exposing (RecordDefinition, RecordField, TypeAnnotation(..))
+import Elm.Syntax.TypeAnnotation exposing (RecordField, TypeAnnotation(..))
 import Hex
 import ImportsAndExposing
-import Maybe.Extra
 import Pretty exposing (Doc)
-import Util exposing (denode, denodeAll, denodeMaybe, nodify, nodifyAll, nodifyMaybe)
+import Util exposing (denode, denodeAll, denodeMaybe, nodify, nodifyAll)
 
 
 {-| Prepares a file of Elm code for layout by the pretty printer.
