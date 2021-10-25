@@ -3,6 +3,7 @@ module Elm.Pretty exposing
     , prettyImports, prettyExposing
     , prettyDeclaration, prettyFun, prettyTypeAlias, prettyCustomType, prettyPortDeclaration, prettyDestructuring
     , prettySignature, prettyPattern, prettyExpression, prettyTypeAnnotation
+    , prettyModule
     )
 
 {-| Elm.Pretty is a pretty printer for Elm syntax trees. It makes use of
@@ -143,6 +144,8 @@ pretty width file =
         |> Pretty.pretty width
 
 
+{-| Pretty prints a module definition.
+-}
 prettyModule : Module -> Doc
 prettyModule mod =
     case mod of
