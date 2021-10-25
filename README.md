@@ -42,9 +42,10 @@ is used:
 import Elm.Pretty
 import Pretty
 
+-- Fit to a page width of 120 characters
 elmAsString =
-    Elm.Pretty.pretty someFile
-      |> Pretty.pretty 120 -- Fit to a page width of 120 characters
+    Elm.Pretty.prepareLayout 120 someFile
+      |> Pretty.pretty 120
 ```
 
 ### Broken stuff in elm-syntax:
