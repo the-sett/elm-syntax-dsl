@@ -503,7 +503,7 @@ prettyInfix infix_ =
         |> Pretty.words
 
 
-{-| Pretty prints a desctructuring declaration.
+{-| Pretty prints a destructuring declaration.
 -}
 prettyDestructuring : Pattern -> Expression -> Doc
 prettyDestructuring pattern expr =
