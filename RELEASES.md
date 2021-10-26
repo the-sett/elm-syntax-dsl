@@ -1,6 +1,6 @@
 ## Version 5.3.0
 
-Exposing `Elm.CodeGen.infixExpose`, so can expose custom operators from `elm/parser`.
+Exposing `Elm.CodeGen.infixExpose`, so can expose custom operators from `elm/parser` and `elm/url`.
 
 Exposing `Elm.Pretty.prettyModule` for pretty printing module definitions on 
 their own.
