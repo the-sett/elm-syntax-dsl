@@ -1,5 +1,6 @@
 module Elm.Pretty exposing
     ( prepareLayout, pretty
+    , prettyModule
     , prettyImports, prettyExposing
     , prettyDeclaration, prettyFun, prettyTypeAlias, prettyCustomType, prettyPortDeclaration, prettyDestructuring
     , prettySignature, prettyPattern, prettyExpression, prettyTypeAnnotation
@@ -23,7 +24,7 @@ is used:
 
     -- Fit to a page width of 120 characters
     elmAsString =
-        Elm.Pretty.prepareLayout someFile
+        Elm.Pretty.prepareLayout 120 someFile
             |> Pretty.pretty 120
 
 There is also a helper `pretty` function in this module that can go straight to
@@ -41,6 +42,7 @@ a `String`, for convenience:
 
 # Pretty printing snippets of Elm.
 
+@docs prettyModule
 @docs prettyImports, prettyExposing
 @docs prettyDeclaration, prettyFun, prettyTypeAlias, prettyCustomType, prettyPortDeclaration, prettyDestructuring
 @docs prettySignature, prettyPattern, prettyExpression, prettyTypeAnnotation
@@ -52,25 +54,23 @@ import Elm.CodeGen exposing (Declaration(..), File)
 import Elm.Comments
 import Elm.Syntax.Declaration
 import Elm.Syntax.Documentation exposing (Documentation)
-import Elm.Syntax.Exposing exposing (ExposedType, Exposing(..), TopLevelExpose(..))
-import Elm.Syntax.Expression exposing (Case, CaseBlock, Expression(..), Function, FunctionImplementation, Lambda, LetBlock, LetDeclaration(..), RecordSetter)
+import Elm.Syntax.Exposing exposing (Exposing(..), TopLevelExpose(..))
+import Elm.Syntax.Expression exposing (CaseBlock, Expression(..), Function, FunctionImplementation, Lambda, LetBlock, LetDeclaration(..), RecordSetter)
 import Elm.Syntax.File
 import Elm.Syntax.Import exposing (Import)
 import Elm.Syntax.Infix exposing (Infix, InfixDirection(..))
 import Elm.Syntax.Module exposing (DefaultModuleData, EffectModuleData, Module(..))
 import Elm.Syntax.ModuleName exposing (ModuleName)
-import Elm.Syntax.Node as Node exposing (Node(..))
-import Elm.Syntax.Pattern exposing (Pattern(..), QualifiedNameRef)
-import Elm.Syntax.Range exposing (Location, Range, emptyRange)
+import Elm.Syntax.Node exposing (Node)
+import Elm.Syntax.Pattern exposing (Pattern(..))
 import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.Type exposing (Type, ValueConstructor)
 import Elm.Syntax.TypeAlias exposing (TypeAlias)
-import Elm.Syntax.TypeAnnotation exposing (RecordDefinition, RecordField, TypeAnnotation(..))
+import Elm.Syntax.TypeAnnotation exposing (RecordField, TypeAnnotation(..))
 import Hex
 import ImportsAndExposing
-import Maybe.Extra
 import Pretty exposing (Doc)
-import Util exposing (denode, denodeAll, denodeMaybe, nodify, nodifyAll, nodifyMaybe)
+import Util exposing (denode, denodeAll, denodeMaybe, nodify, nodifyAll)
 
 
 {-| Prepares a file of Elm code for layout by the pretty printer.
@@ -145,6 +145,8 @@ pretty width file =
         |> Pretty.pretty width
 
 
+{-| Pretty prints a module definition.
+-}
 prettyModule : Module -> Doc
 prettyModule mod =
     case mod of
@@ -505,7 +507,7 @@ prettyInfix infix_ =
         |> Pretty.words
 
 
-{-| Pretty prints a desctructuring declaration.
+{-| Pretty prints a destructuring declaration.
 -}
 prettyDestructuring : Pattern -> Expression -> Doc
 prettyDestructuring pattern expr =
