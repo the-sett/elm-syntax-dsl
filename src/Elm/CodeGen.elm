@@ -125,16 +125,16 @@ These types are all declared in `elm-syntax` but are re-exported here for conven
 
 import Elm.Comments as Comments exposing (Comment, CommentPart(..), DocComment, FileComment)
 import Elm.Syntax.Declaration exposing (Declaration(..))
-import Elm.Syntax.Exposing exposing (ExposedType, Exposing(..), TopLevelExpose(..))
-import Elm.Syntax.Expression exposing (Case, CaseBlock, Expression(..), Function, FunctionImplementation, Lambda, LetBlock, LetDeclaration(..), RecordSetter)
+import Elm.Syntax.Exposing exposing (Exposing(..), TopLevelExpose(..))
+import Elm.Syntax.Expression exposing (Case, CaseBlock, Expression(..), Function, FunctionImplementation, LetBlock, LetDeclaration(..), RecordSetter)
 import Elm.Syntax.File exposing (File)
 import Elm.Syntax.Import exposing (Import)
 import Elm.Syntax.Infix exposing (Infix, InfixDirection(..))
 import Elm.Syntax.Module exposing (DefaultModuleData, EffectModuleData, Module(..))
 import Elm.Syntax.ModuleName exposing (ModuleName)
-import Elm.Syntax.Node as Node exposing (Node(..))
-import Elm.Syntax.Pattern exposing (Pattern(..), QualifiedNameRef)
-import Elm.Syntax.Range exposing (Location, Range, emptyRange)
+import Elm.Syntax.Node as Node exposing (Node)
+import Elm.Syntax.Pattern exposing (Pattern(..))
+import Elm.Syntax.Range exposing (emptyRange)
 import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.Type exposing (Type, ValueConstructor)
 import Elm.Syntax.TypeAlias exposing (TypeAlias)
@@ -289,14 +289,14 @@ type alias FileComment =
 
 {-| Creates an empty documenting comment that will go on a declaration.
 -}
-emptyDocComment : Comment Comments.DocComment
+emptyDocComment : Comment DocComment
 emptyDocComment =
     Comments.emptyComment
 
 
 {-| Creates an empty comment that will go on a module file.
 -}
-emptyFileComment : Comment Comments.FileComment
+emptyFileComment : Comment FileComment
 emptyFileComment =
     Comments.emptyComment
 
@@ -323,7 +323,7 @@ Doc tags will never be merged into a single line, but if they are too long to fi
 the page width, the pretty printer can break them into separate lines.
 
 -}
-docTags : List String -> Comment Comments.FileComment -> Comment Comments.FileComment
+docTags : List String -> Comment FileComment -> Comment FileComment
 docTags tags comment =
     DocTags tags
         |> Comments.addPart comment
@@ -336,7 +336,7 @@ Doc tags will never be merged into a single line, but if they are too long to fi
 the page width, the pretty printer can break them into separate lines.
 
 -}
-docTagsFromExposings : List TopLevelExpose -> Comment Comments.FileComment -> Comment Comments.FileComment
+docTagsFromExposings : List TopLevelExpose -> Comment FileComment -> Comment FileComment
 docTagsFromExposings exposings comment =
     let
         asTag tlExpose =
@@ -618,14 +618,14 @@ fqVal moduleName name =
     FunctionOrValue moduleName name
 
 
-{-| Creates a FunctionOrValue with no qualifiying module.
+{-| Creates a FunctionOrValue with no qualifying module.
 -}
 fun : String -> Expression
 fun name =
     fqFun [] name
 
 
-{-| Creates a FunctionOrValue with no qualifiying module.
+{-| Creates a FunctionOrValue with no qualifying module.
 
 Note this is the same as `fun`.
 
@@ -912,7 +912,7 @@ minus =
     BinOp "-" infixLeft 6
 
 
-{-| The append oeprator `++`.
+{-| The append operator `++`.
 -}
 append : BinOp
 append =

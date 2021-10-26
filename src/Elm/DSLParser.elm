@@ -2,7 +2,7 @@ module Elm.DSLParser exposing (parse)
 
 {-| An Elm source code parser.
 
-This differes from the parser in Elm.Parser which is part of `stil4m/elm-syntax`,
+This differs from the parser in Elm.Parser which is part of `stil4m/elm-syntax`,
 in that it does not parse comments just as strings, but into a structured format.
 
 The structured format know the difference between different parts of the comment
@@ -21,7 +21,6 @@ import Elm.Comments as Comments exposing (Comment, CommentPart(..))
 import Elm.Parser
 import Elm.Processing
 import Elm.Syntax.Declaration as ESD
-import Elm.Syntax.Expression exposing (Function)
 import Elm.Syntax.File
 import Parser exposing ((|.), (|=), DeadEnd, Parser)
 import Util exposing (denode, denodeAll, denodeMaybe, nodify)

@@ -85,7 +85,7 @@ prettyDocComment : Int -> Comment DocComment -> String
 prettyDocComment width comment =
     List.map prettyCommentPart (getParts comment)
         |> Pretty.lines
-        |> delimeters
+        |> delimiters
         |> Pretty.pretty width
 
 
@@ -102,7 +102,7 @@ prettyFileComment width comment =
     in
     ( List.map prettyCommentPart parts
         |> Pretty.lines
-        |> delimeters
+        |> delimiters
         |> Pretty.pretty width
     , splits
     )
@@ -259,8 +259,8 @@ fileCommentParser =
         |> Parser.map (\val -> Comment [ Markdown val ])
 
 
-delimeters : Doc -> Doc
-delimeters doc =
+delimiters : Doc -> Doc
+delimiters doc =
     Pretty.string "{-| "
         |> Pretty.a doc
         |> Pretty.a Pretty.line

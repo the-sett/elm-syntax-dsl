@@ -1,4 +1,4 @@
-module Util exposing (..)
+module Util exposing (denode, denodeAll, denodeMaybe, nodify, nodifyAll, nodifyMaybe)
 
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (emptyRange)
