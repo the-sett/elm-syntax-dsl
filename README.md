@@ -45,7 +45,7 @@ import Pretty
 -- Fit to a page width of 120 characters
 elmAsString =
     Elm.Pretty.prepareLayout 120 someFile
-      |> Pretty.pretty 120
+        |> Pretty.pretty 120
 ```
 
 ### Broken stuff in elm-syntax:
