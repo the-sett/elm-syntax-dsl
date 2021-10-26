@@ -1,7 +1,7 @@
 module Elm.CodeGen exposing
     ( file
     , normalModule, portModule
-    , exposeAll, exposeExplicit
+    , exposeAll, exposeExplicit, infixExpose
     , closedTypeExpose, funExpose, openTypeExpose, typeOrAliasExpose
     , importStmt
     , Linkage, addExposing, addImport, combineLinkage, emptyLinkage
@@ -44,7 +44,7 @@ they have been ommitted from the DSL.
 
 # Build an 'exposing' statement.
 
-@docs exposeAll, exposeExplicit
+@docs exposeAll, exposeExplicit, infixExpose
 @docs closedTypeExpose, funExpose, openTypeExpose, typeOrAliasExpose
 
 
@@ -465,6 +465,9 @@ exposeExplicit topLevelExposes =
     Explicit (nodifyAll topLevelExposes)
 
 
+{-| Custom operators were removed from Elm 0.19, but you can still import them
+from the kernel modules that do define them, such as elm/parser.
+-}
 infixExpose : String -> TopLevelExpose
 infixExpose sym =
     InfixExpose sym
