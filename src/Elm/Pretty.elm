@@ -314,14 +314,14 @@ prettyExposing exposing_ =
 prettyTopLevelExposes : List TopLevelExpose -> Doc Token
 prettyTopLevelExposes exposes =
     List.map prettyTopLevelExpose exposes
-        |> Pretty.join (Token.symbol ", ")
+        |> Pretty.join (Pretty.string ", ")
 
 
 prettyTopLevelExpose : TopLevelExpose -> Doc Token
 prettyTopLevelExpose tlExpose =
     case tlExpose of
         InfixExpose val ->
-            Token.symbol val
+            Pretty.string val
                 |> Pretty.parens
 
         FunctionExpose val ->
@@ -337,7 +337,7 @@ prettyTopLevelExpose tlExpose =
 
                 Just _ ->
                     Token.type_ exposedType.name
-                        |> Pretty.a (Token.symbol "(..)")
+                        |> Pretty.a (Pretty.string "(..)")
 
 
 
@@ -423,7 +423,7 @@ prettyTypeAlias tAlias =
             [ Token.keyword "type alias"
             , Token.type_ (denode tAlias.name)
             , List.map Token.plain (denodeAll tAlias.generics) |> Pretty.words
-            , Token.symbol "="
+            , Pretty.string "="
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
@@ -448,7 +448,7 @@ prettyCustomType type_ =
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
-                |> Pretty.a (Token.symbol "= ")
+                |> Pretty.a (Pretty.string "= ")
                 |> Pretty.a (prettyValueConstructors (denodeAll type_.constructors))
                 |> Pretty.nest 4
     in
@@ -461,7 +461,7 @@ prettyCustomType type_ =
 prettyValueConstructors : List ValueConstructor -> Doc Token
 prettyValueConstructors constructors =
     List.map prettyValueConstructor constructors
-        |> Pretty.join (Pretty.line |> Pretty.a (Token.symbol "| "))
+        |> Pretty.join (Pretty.line |> Pretty.a (Pretty.string "| "))
 
 
 prettyValueConstructor : ValueConstructor -> Doc Token
@@ -513,7 +513,7 @@ prettyInfix infix_ =
 prettyDestructuring : Pattern -> Expression -> Doc Token
 prettyDestructuring pattern expr =
     [ [ prettyPattern pattern
-      , Token.symbol "="
+      , Pretty.string "="
       ]
         |> Pretty.words
     , prettyExpression expr
@@ -532,7 +532,7 @@ prettyDocumentation docs =
 prettySignature : Signature -> Doc Token
 prettySignature sig =
     [ [ Token.signature (denode sig.name)
-      , Token.symbol ":"
+      , Pretty.string ":"
       ]
         |> Pretty.words
     , prettyTypeAnnotation (denode sig.typeAnnotation)
@@ -547,7 +547,7 @@ prettyFunctionImplementation impl =
     Pretty.words
         [ Token.signature (denode impl.name)
         , prettyArgs (denodeAll impl.arguments)
-        , Token.symbol "="
+        , Pretty.string "="
         ]
         |> Pretty.a Pretty.line
         |> Pretty.a (prettyExpression (denode impl.expression))
@@ -617,10 +617,10 @@ prettyPatternInner : Bool -> Pattern -> Doc Token
 prettyPatternInner isTop pattern =
     case adjustPatternParentheses isTop pattern of
         AllPattern ->
-            Token.symbol "_"
+            Pretty.string "_"
 
         UnitPattern ->
-            Token.symbol "()"
+            Pretty.string "()"
 
         CharPattern val ->
             Token.literal (escapeChar val)
@@ -643,20 +643,20 @@ prettyPatternInner isTop pattern =
             Pretty.space
                 |> Pretty.a
                     (List.map (prettyPatternInner True) (denodeAll vals)
-                        |> Pretty.join (Token.symbol ", ")
+                        |> Pretty.join (Pretty.string ", ")
                     )
                 |> Pretty.a Pretty.space
                 |> Pretty.parens
 
         RecordPattern fields ->
             List.map Token.plain (denodeAll fields)
-                |> Pretty.join (Token.symbol ", ")
+                |> Pretty.join (Pretty.string ", ")
                 |> Pretty.surround Pretty.space Pretty.space
                 |> Pretty.braces
 
         UnConsPattern hdPat tlPat ->
             [ prettyPatternInner False (denode hdPat)
-            , Token.symbol "::"
+            , Pretty.string "::"
             , prettyPatternInner False (denode tlPat)
             ]
                 |> Pretty.words
@@ -664,18 +664,18 @@ prettyPatternInner isTop pattern =
         ListPattern listPats ->
             case listPats of
                 [] ->
-                    Token.symbol "[]"
+                    Pretty.string "[]"
 
                 _ ->
                     let
                         open =
-                            Pretty.a Pretty.space (Token.symbol "[")
+                            Pretty.a Pretty.space (Pretty.string "[")
 
                         close =
-                            Pretty.a (Token.symbol "]") Pretty.space
+                            Pretty.a (Pretty.string "]") Pretty.space
                     in
                     List.map (prettyPatternInner False) (denodeAll listPats)
-                        |> Pretty.join (Token.symbol ", ")
+                        |> Pretty.join (Pretty.string ", ")
                         |> Pretty.surround open close
 
         VarPattern var ->
@@ -824,7 +824,7 @@ prettyExpressionInner : Context -> Int -> Expression -> ( Doc Token, Bool )
 prettyExpressionInner context indent expression =
     case adjustExpressionParentheses context expression of
         UnitExpr ->
-            ( Token.symbol "()"
+            ( Pretty.string "()"
             , False
             )
 
@@ -849,7 +849,7 @@ prettyExpressionInner context indent expression =
             )
 
         Operator symbol ->
-            ( Token.symbol symbol
+            ( Pretty.string symbol
             , False
             )
 
@@ -1028,7 +1028,7 @@ prettyOperatorApplicationRight indent symbol _ exprl exprr =
             case rightSide of
                 ( hdExpr, hdBreak ) :: tl ->
                     List.append (denode left |> expandExpr leftIndent context)
-                        (( Token.symbol sym |> Pretty.a Pretty.space |> Pretty.a hdExpr, hdBreak ) :: tl)
+                        (( Pretty.string sym |> Pretty.a Pretty.space |> Pretty.a hdExpr, hdBreak ) :: tl)
 
                 [] ->
                     []
@@ -1130,14 +1130,14 @@ prettyTupledExpression : Int -> List (Node Expression) -> ( Doc Token, Bool )
 prettyTupledExpression indent exprs =
     let
         open =
-            Pretty.a Pretty.space (Token.symbol "(")
+            Pretty.a Pretty.space (Pretty.string "(")
 
         close =
-            Pretty.a (Token.symbol ")") Pretty.line
+            Pretty.a (Pretty.string ")") Pretty.line
     in
     case exprs of
         [] ->
-            ( Token.symbol "()", False )
+            ( Pretty.string "()", False )
 
         _ ->
             let
@@ -1159,10 +1159,10 @@ prettyParenthesizedExpression : Int -> Node Expression -> ( Doc Token, Bool )
 prettyParenthesizedExpression indent expr =
     let
         open =
-            Token.symbol "("
+            Pretty.string "("
 
         close =
-            Pretty.a (Token.symbol ")") Pretty.tightline
+            Pretty.a (Pretty.string ")") Pretty.tightline
 
         ( prettyExpr, alwaysBreak ) =
             prettyExpressionInner topContext (decrementIndent indent 1) (denode expr)
@@ -1199,7 +1199,7 @@ prettyLetDeclaration indent letDecl =
 
         LetDestructuring pattern expr ->
             [ prettyPatternInner False (denode pattern)
-            , Token.symbol "="
+            , Pretty.string "="
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
@@ -1231,7 +1231,7 @@ prettyCaseBlock indent caseBlock =
 
         prettyCase ( pattern, expr ) =
             prettyPattern (denode pattern)
-                |> Pretty.a (Token.symbol " ->")
+                |> Pretty.a (Pretty.string " ->")
                 |> Pretty.a Pretty.line
                 |> Pretty.a (prettyExpressionInner topContext 4 (denode expr) |> Tuple.first |> Pretty.indent 4)
                 |> Pretty.indent indent
@@ -1255,7 +1255,7 @@ prettyLambdaExpression indent lambda =
     in
     ( [ Pretty.string "\\"
             |> Pretty.a (List.map (prettyPatternInner False) (denodeAll lambda.args) |> Pretty.words)
-            |> Pretty.a (Token.symbol " ->")
+            |> Pretty.a (Pretty.string " ->")
       , prettyExpr
       ]
         |> Pretty.lines
@@ -1270,15 +1270,15 @@ prettyRecordExpr : List (Node RecordSetter) -> ( Doc Token, Bool )
 prettyRecordExpr setters =
     let
         open =
-            Pretty.a Pretty.space (Token.symbol "{")
+            Pretty.a Pretty.space (Pretty.string "{")
 
         close =
-            Pretty.a (Token.symbol "}")
+            Pretty.a (Pretty.string "}")
                 Pretty.line
     in
     case setters of
         [] ->
-            ( Token.symbol "{}", False )
+            ( Pretty.string "{}", False )
 
         _ ->
             let
@@ -1303,7 +1303,7 @@ prettySetter ( fld, val ) =
             prettyExpressionInner topContext 4 (denode val)
     in
     ( [ [ Pretty.string (denode fld)
-        , Token.symbol "="
+        , Pretty.string "="
         ]
             |> Pretty.words
       , prettyExpr
@@ -1319,14 +1319,14 @@ prettyList : Int -> List (Node Expression) -> ( Doc Token, Bool )
 prettyList indent exprs =
     let
         open =
-            Pretty.a Pretty.space (Token.symbol "[")
+            Pretty.a Pretty.space (Pretty.string "[")
 
         close =
-            Pretty.a (Token.symbol "]") Pretty.line
+            Pretty.a (Pretty.string "]") Pretty.line
     in
     case exprs of
         [] ->
-            ( Token.symbol "[]", False )
+            ( Pretty.string "[]", False )
 
         _ ->
             let
@@ -1352,7 +1352,7 @@ prettyRecordAccess expr field =
     in
     ( prettyExpr
         |> Pretty.a dot
-        |> Pretty.a (Pretty.string (denode field))
+        |> Pretty.a (Token.plain (denode field))
     , alwaysBreak
     )
 
@@ -1361,14 +1361,14 @@ prettyRecordUpdateExpression : Int -> Node String -> List (Node RecordSetter) ->
 prettyRecordUpdateExpression indent var setters =
     let
         open =
-            [ Token.symbol "{"
+            [ Pretty.string "{"
             , Token.plain (denode var)
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
 
         close =
-            Pretty.a (Token.symbol "}")
+            Pretty.a (Pretty.string "}")
                 Pretty.line
 
         addBarToFirst exprs =
@@ -1377,11 +1377,11 @@ prettyRecordUpdateExpression indent var setters =
                     []
 
                 hd :: tl ->
-                    Pretty.a hd (Token.symbol "| ") :: tl
+                    Pretty.a hd (Pretty.string "| ") :: tl
     in
     case setters of
         [] ->
-            ( Token.symbol "{}", False )
+            ( Pretty.string "{}", False )
 
         _ ->
             let
@@ -1420,7 +1420,7 @@ prettyTypeAnnotation typeAnn =
             prettyTyped fqName anns
 
         Unit ->
-            Token.symbol "()"
+            Pretty.string "()"
 
         Tupled anns ->
             prettyTupled anns
@@ -1460,7 +1460,7 @@ prettyTupled anns =
     Pretty.space
         |> Pretty.a
             (List.map prettyTypeAnnotation (denodeAll anns)
-                |> Pretty.join (Token.symbol ", ")
+                |> Pretty.join (Pretty.string ", ")
             )
         |> Pretty.a Pretty.space
         |> Pretty.parens
@@ -1479,14 +1479,14 @@ prettyRecord : List RecordField -> Doc Token
 prettyRecord fields =
     let
         open =
-            Pretty.a Pretty.space (Token.symbol "{")
+            Pretty.a Pretty.space (Pretty.string "{")
 
         close =
-            Pretty.a (Token.symbol "}") Pretty.line
+            Pretty.a (Pretty.string "}") Pretty.line
     in
     case fields of
         [] ->
-            Token.symbol "{}"
+            Pretty.string "{}"
 
         _ ->
             fields
@@ -1501,14 +1501,14 @@ prettyGenericRecord : String -> List RecordField -> Doc Token
 prettyGenericRecord paramName fields =
     let
         open =
-            [ Token.symbol "{"
+            [ Pretty.string "{"
             , Token.plain paramName
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
 
         close =
-            Pretty.a (Token.symbol "}")
+            Pretty.a (Pretty.string "}")
                 Pretty.line
 
         addBarToFirst exprs =
@@ -1517,11 +1517,11 @@ prettyGenericRecord paramName fields =
                     []
 
                 hd :: tl ->
-                    Pretty.a hd (Token.symbol "| ") :: tl
+                    Pretty.a hd (Pretty.string "| ") :: tl
     in
     case fields of
         [] ->
-            Token.symbol "{}"
+            Pretty.string "{}"
 
         _ ->
             open
@@ -1540,7 +1540,7 @@ prettyGenericRecord paramName fields =
 prettyFieldTypeAnn : ( String, TypeAnnotation ) -> Doc Token
 prettyFieldTypeAnn ( name, ann ) =
     [ [ Token.plain name
-      , Token.symbol ":"
+      , Pretty.string ":"
       ]
         |> Pretty.words
     , prettyTypeAnnotation ann
@@ -1580,7 +1580,7 @@ prettyFunctionTypeAnnotation left right =
             case rightSide of
                 hd :: tl ->
                     (denode innerLeft |> expandLeft)
-                        :: ([ Token.symbol "->", hd ] |> Pretty.words)
+                        :: ([ Pretty.string "->", hd ] |> Pretty.words)
                         :: tl
 
                 [] ->
@@ -1641,7 +1641,7 @@ decrementIndent currentIndent spaces =
 
 dot : Doc Token
 dot =
-    Token.symbol "."
+    Pretty.string "."
 
 
 quotes : Doc Token -> Doc Token
@@ -1661,7 +1661,7 @@ singleQuotes doc =
 
 sqParens : Doc Token -> Doc Token
 sqParens doc =
-    Pretty.surround (Token.symbol "[") (Token.symbol "]") doc
+    Pretty.surround (Pretty.string "[") (Pretty.string "]") doc
 
 
 doubleLines : List (Doc Token) -> Doc Token

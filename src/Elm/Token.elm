@@ -1,11 +1,10 @@
-module Elm.Token exposing (Token(..), comment, keyword, literal, number, signature, symbol, plain, type_)
+module Elm.Token exposing (Token(..), comment, keyword, literal, number, signature, plain, type_)
 
 import Pretty exposing (Doc)
 
 
 type Token
     = Keyword
-    | Symbol
     | Comment
     | Type
     | Text
@@ -17,11 +16,6 @@ type Token
 keyword : String -> Doc Token
 keyword str =
     Pretty.taggedString str Keyword
-
-
-symbol : String -> Doc Token
-symbol str =
-    Pretty.taggedString str Symbol
 
 
 comment : String -> Doc Token
