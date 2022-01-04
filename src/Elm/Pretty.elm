@@ -849,7 +849,7 @@ prettyExpressionInner context indent expression =
             )
 
         Operator symbol ->
-            ( Token.operator symbol
+            ( Token.symbol symbol
             , False
             )
 
@@ -1377,7 +1377,7 @@ prettyRecordUpdateExpression indent var setters =
                     []
 
                 hd :: tl ->
-                    Pretty.a hd (Token.operator "| ") :: tl
+                    Pretty.a hd (Token.symbol "| ") :: tl
     in
     case setters of
         [] ->
@@ -1517,7 +1517,7 @@ prettyGenericRecord paramName fields =
                     []
 
                 hd :: tl ->
-                    Pretty.a hd (Token.operator "| ") :: tl
+                    Pretty.a hd (Token.symbol "| ") :: tl
     in
     case fields of
         [] ->
