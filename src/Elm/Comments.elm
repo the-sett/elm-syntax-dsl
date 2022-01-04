@@ -35,6 +35,7 @@ can be extracted to order the exposing clause by.
 
 import Parser exposing (Parser)
 import Pretty exposing (Doc)
+import Elm.Token exposing (Token)
 
 
 type DocComment
@@ -199,7 +200,7 @@ mergeDocTags innerParts =
             DocTags (List.sort tags) :: partsExceptMaybeFirst
 
 
-prettyCommentPart : CommentPart -> Doc
+prettyCommentPart : CommentPart -> Doc Token
 prettyCommentPart part =
     case part of
         Markdown val ->
@@ -259,7 +260,7 @@ fileCommentParser =
         |> Parser.map (\val -> Comment [ Markdown val ])
 
 
-delimiters : Doc -> Doc
+delimiters : Doc Token -> Doc Token
 delimiters doc =
     Pretty.string "{-| "
         |> Pretty.a doc
