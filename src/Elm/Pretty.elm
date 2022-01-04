@@ -163,7 +163,7 @@ prettyModule mod =
 
 prettyModuleName : ModuleName -> Doc Token
 prettyModuleName name =
-    List.map (\n -> Token.plain n) name
+    List.map (\n -> Token.statement n) name
         |> Pretty.join dot
 
 
@@ -187,7 +187,7 @@ prettyModuleNameAlias name =
 
         _ ->
             Token.keyword "as "
-                |> Pretty.a (List.map Token.plain name |> Pretty.join dot)
+                |> Pretty.a (List.map Token.statement name |> Pretty.join dot)
 
 
 prettyDefaultModuleData : DefaultModuleData -> Doc Token
@@ -299,7 +299,7 @@ prettyExposing exposing_ =
         exposings =
             case exposing_ of
                 All _ ->
-                    Token.plain ".." |> Pretty.parens
+                    Token.statement ".." |> Pretty.parens
 
                 Explicit tll ->
                     ImportsAndExposing.sortAndDedupExposings (denodeAll tll)
@@ -422,7 +422,7 @@ prettyTypeAlias tAlias =
         typeAliasPretty =
             [ Token.keyword "type alias"
             , Token.type_ (denode tAlias.name)
-            , List.map Token.plain (denodeAll tAlias.generics) |> Pretty.words
+            , List.map Token.statement (denodeAll tAlias.generics) |> Pretty.words
             , Pretty.string "="
             ]
                 |> Pretty.words
@@ -444,7 +444,7 @@ prettyCustomType type_ =
         customTypePretty =
             [ Token.keyword "type"
             , Token.type_ (denode type_.name)
-            , List.map Token.plain (denodeAll type_.generics) |> Pretty.words
+            , List.map Token.statement (denodeAll type_.generics) |> Pretty.words
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
@@ -466,7 +466,7 @@ prettyValueConstructors constructors =
 
 prettyValueConstructor : ValueConstructor -> Doc Token
 prettyValueConstructor cons =
-    [ Token.plain (denode cons.name)
+    [ Token.statement (denode cons.name)
     , List.map prettyTypeAnnotationParens (denodeAll cons.arguments) |> Pretty.lines
     ]
         |> Pretty.lines
@@ -649,7 +649,7 @@ prettyPatternInner isTop pattern =
                 |> Pretty.parens
 
         RecordPattern fields ->
-            List.map Token.plain (denodeAll fields)
+            List.map Token.statement (denodeAll fields)
                 |> Pretty.join (Pretty.string ", ")
                 |> Pretty.surround Pretty.space Pretty.space
                 |> Pretty.braces
@@ -679,11 +679,11 @@ prettyPatternInner isTop pattern =
                         |> Pretty.surround open close
 
         VarPattern var ->
-            Token.plain var
+            Token.statement var
 
         NamedPattern qnRef listPats ->
             (prettyModuleNameDot qnRef.moduleName
-                |> Pretty.a (Token.plain qnRef.name)
+                |> Pretty.a (Token.statement qnRef.name)
             )
                 :: List.map (prettyPatternInner False) (denodeAll listPats)
                 |> Pretty.words
@@ -691,7 +691,7 @@ prettyPatternInner isTop pattern =
         AsPattern pat name ->
             [ prettyPatternInner False (denode pat)
             , Token.keyword "as"
-            , Token.plain (denode name)
+            , Token.statement (denode name)
             ]
                 |> Pretty.words
 
@@ -836,7 +836,7 @@ prettyExpressionInner context indent expression =
 
         FunctionOrValue modl val ->
             ( prettyModuleNameDot modl
-                |> Pretty.a (Token.plain val)
+                |> Pretty.a (Token.statement val)
             , False
             )
 
@@ -844,7 +844,7 @@ prettyExpressionInner context indent expression =
             prettyIfBlock indent exprBool exprTrue exprFalse
 
         PrefixOperator symbol ->
-            ( Token.plain symbol |> Pretty.parens
+            ( Token.statement symbol |> Pretty.parens
             , False
             )
 
@@ -873,7 +873,7 @@ prettyExpressionInner context indent expression =
                 ( prettyExpr, alwaysBreak ) =
                     prettyExpressionInner topContext 4 (denode expr)
             in
-            ( Token.plain "-"
+            ( Token.statement "-"
                 |> Pretty.a prettyExpr
             , alwaysBreak
             )
@@ -914,7 +914,7 @@ prettyExpressionInner context indent expression =
             prettyRecordAccess expr field
 
         RecordAccessFunction field ->
-            ( Token.plain field
+            ( Token.statement field
             , False
             )
 
@@ -922,7 +922,7 @@ prettyExpressionInner context indent expression =
             prettyRecordUpdateExpression indent var setters
 
         GLSLExpression val ->
-            ( Token.plain "glsl"
+            ( Token.statement "glsl"
             , True
             )
 
@@ -1352,7 +1352,7 @@ prettyRecordAccess expr field =
     in
     ( prettyExpr
         |> Pretty.a dot
-        |> Pretty.a (Token.plain (denode field))
+        |> Pretty.a (Token.statement (denode field))
     , alwaysBreak
     )
 
@@ -1362,7 +1362,7 @@ prettyRecordUpdateExpression indent var setters =
     let
         open =
             [ Pretty.string "{"
-            , Token.plain (denode var)
+            , Token.statement (denode var)
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
@@ -1414,7 +1414,7 @@ prettyTypeAnnotation : TypeAnnotation -> Doc Token
 prettyTypeAnnotation typeAnn =
     case typeAnn of
         GenericType val ->
-            Token.plain val
+            Token.statement val
 
         Typed fqName anns ->
             prettyTyped fqName anns
@@ -1502,7 +1502,7 @@ prettyGenericRecord paramName fields =
     let
         open =
             [ Pretty.string "{"
-            , Token.plain paramName
+            , Token.statement paramName
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
@@ -1539,7 +1539,7 @@ prettyGenericRecord paramName fields =
 
 prettyFieldTypeAnn : ( String, TypeAnnotation ) -> Doc Token
 prettyFieldTypeAnn ( name, ann ) =
-    [ [ Token.plain name
+    [ [ Token.statement name
       , Pretty.string ":"
       ]
         |> Pretty.words
