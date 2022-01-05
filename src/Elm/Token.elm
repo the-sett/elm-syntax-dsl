@@ -1,4 +1,4 @@
-module Elm.Token exposing (Token(..), comment, keyword, literal, number, signature, statement, type_)
+module Elm.Token exposing (Token(..), comment, keyword, literal, number, operator, signature, statement, type_)
 
 import Pretty exposing (Doc)
 
@@ -6,6 +6,7 @@ import Pretty exposing (Doc)
 type Token
     = Keyword
     | Comment
+    | Operator
     | Type
     | Statement
     | Signature
@@ -21,6 +22,10 @@ keyword str =
 comment : String -> Doc Token
 comment str =
     Pretty.taggedString str Comment
+
+operator : String -> Doc Token
+operator str =
+    Pretty.taggedString str Operator
 
 
 type_ : String -> Doc Token

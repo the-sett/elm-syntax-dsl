@@ -321,7 +321,7 @@ prettyTopLevelExpose : TopLevelExpose -> Doc Token
 prettyTopLevelExpose tlExpose =
     case tlExpose of
         InfixExpose val ->
-            Pretty.string val
+            Token.statement val
                 |> Pretty.parens
 
         FunctionExpose val ->
@@ -423,7 +423,7 @@ prettyTypeAlias tAlias =
             [ Token.keyword "type alias"
             , Token.type_ (denode tAlias.name)
             , List.map Token.statement (denodeAll tAlias.generics) |> Pretty.words
-            , Pretty.string "="
+            , Token.operator "="
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
@@ -448,7 +448,7 @@ prettyCustomType type_ =
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
-                |> Pretty.a (Pretty.string "= ")
+                |> Pretty.a (Token.operator "= ")
                 |> Pretty.a (prettyValueConstructors (denodeAll type_.constructors))
                 |> Pretty.nest 4
     in
@@ -461,7 +461,7 @@ prettyCustomType type_ =
 prettyValueConstructors : List ValueConstructor -> Doc Token
 prettyValueConstructors constructors =
     List.map prettyValueConstructor constructors
-        |> Pretty.join (Pretty.line |> Pretty.a (Pretty.string "| "))
+        |> Pretty.join (Pretty.line |> Pretty.a (Token.operator "| "))
 
 
 prettyValueConstructor : ValueConstructor -> Doc Token
@@ -502,7 +502,7 @@ prettyInfix infix_ =
     , Pretty.string (dirToString (denode infix_.direction))
     , Pretty.string (String.fromInt (denode infix_.precedence))
     , Pretty.string (denode infix_.operator) |> Pretty.parens
-    , Pretty.string "="
+    , Token.operator "="
     , Pretty.string (denode infix_.function)
     ]
         |> Pretty.words
@@ -513,7 +513,7 @@ prettyInfix infix_ =
 prettyDestructuring : Pattern -> Expression -> Doc Token
 prettyDestructuring pattern expr =
     [ [ prettyPattern pattern
-      , Pretty.string "="
+      , Token.operator "="
       ]
         |> Pretty.words
     , prettyExpression expr
@@ -532,7 +532,7 @@ prettyDocumentation docs =
 prettySignature : Signature -> Doc Token
 prettySignature sig =
     [ [ Token.signature (denode sig.name)
-      , Pretty.string ":"
+      , Token.operator ":"
       ]
         |> Pretty.words
     , prettyTypeAnnotation (denode sig.typeAnnotation)
@@ -547,7 +547,7 @@ prettyFunctionImplementation impl =
     Pretty.words
         [ Token.signature (denode impl.name)
         , prettyArgs (denodeAll impl.arguments)
-        , Pretty.string "="
+        , Token.operator "="
         ]
         |> Pretty.a Pretty.line
         |> Pretty.a (prettyExpression (denode impl.expression))
@@ -617,10 +617,10 @@ prettyPatternInner : Bool -> Pattern -> Doc Token
 prettyPatternInner isTop pattern =
     case adjustPatternParentheses isTop pattern of
         AllPattern ->
-            Pretty.string "_"
+            Token.statement "_"
 
         UnitPattern ->
-            Pretty.string "()"
+            Token.statement "()"
 
         CharPattern val ->
             Token.literal (escapeChar val)
@@ -656,7 +656,7 @@ prettyPatternInner isTop pattern =
 
         UnConsPattern hdPat tlPat ->
             [ prettyPatternInner False (denode hdPat)
-            , Pretty.string "::"
+            , Token.operator "::"
             , prettyPatternInner False (denode tlPat)
             ]
                 |> Pretty.words
@@ -824,7 +824,7 @@ prettyExpressionInner : Context -> Int -> Expression -> ( Doc Token, Bool )
 prettyExpressionInner context indent expression =
     case adjustExpressionParentheses context expression of
         UnitExpr ->
-            ( Pretty.string "()"
+            ( Token.statement "()"
             , False
             )
 
@@ -849,7 +849,7 @@ prettyExpressionInner context indent expression =
             )
 
         Operator symbol ->
-            ( Pretty.string symbol
+            ( Token.operator symbol
             , False
             )
 
@@ -981,7 +981,7 @@ prettyOperatorApplicationLeft indent symbol _ exprl exprr =
         alwaysBreak =
             alwaysBreakLeft || alwaysBreakRight
     in
-    ( [ [ prettyExpressionLeft, Pretty.string symbol ] |> Pretty.words
+    ( [ [ prettyExpressionLeft, Token.operator symbol ] |> Pretty.words
       , prettyExpressionRight
       ]
         |> Pretty.lines
@@ -1028,7 +1028,7 @@ prettyOperatorApplicationRight indent symbol _ exprl exprr =
             case rightSide of
                 ( hdExpr, hdBreak ) :: tl ->
                     List.append (denode left |> expandExpr leftIndent context)
-                        (( Pretty.string sym |> Pretty.a Pretty.space |> Pretty.a hdExpr, hdBreak ) :: tl)
+                        (( Token.operator sym |> Pretty.a Pretty.space |> Pretty.a hdExpr, hdBreak ) :: tl)
 
                 [] ->
                     []
@@ -1199,7 +1199,7 @@ prettyLetDeclaration indent letDecl =
 
         LetDestructuring pattern expr ->
             [ prettyPatternInner False (denode pattern)
-            , Pretty.string "="
+            , Token.operator "="
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
@@ -1253,7 +1253,7 @@ prettyLambdaExpression indent lambda =
         ( prettyExpr, alwaysBreak ) =
             prettyExpressionInner topContext 4 (denode lambda.expression)
     in
-    ( [ Pretty.string "\\"
+    ( [ Token.operator "\\"
             |> Pretty.a (List.map (prettyPatternInner False) (denodeAll lambda.args) |> Pretty.words)
             |> Pretty.a (Pretty.string " ->")
       , prettyExpr
@@ -1302,8 +1302,8 @@ prettySetter ( fld, val ) =
         ( prettyExpr, alwaysBreak ) =
             prettyExpressionInner topContext 4 (denode val)
     in
-    ( [ [ Pretty.string (denode fld)
-        , Pretty.string "="
+    ( [ [ Token.statement (denode fld)
+        , Token.operator "="
         ]
             |> Pretty.words
       , prettyExpr
@@ -1377,7 +1377,7 @@ prettyRecordUpdateExpression indent var setters =
                     []
 
                 hd :: tl ->
-                    Pretty.a hd (Pretty.string "| ") :: tl
+                    Pretty.a hd (Token.operator "| ") :: tl
     in
     case setters of
         [] ->
@@ -1420,7 +1420,7 @@ prettyTypeAnnotation typeAnn =
             prettyTyped fqName anns
 
         Unit ->
-            Pretty.string "()"
+            Token.statement "()"
 
         Tupled anns ->
             prettyTupled anns
@@ -1517,7 +1517,7 @@ prettyGenericRecord paramName fields =
                     []
 
                 hd :: tl ->
-                    Pretty.a hd (Pretty.string "| ") :: tl
+                    Pretty.a hd (Token.operator "| ") :: tl
     in
     case fields of
         [] ->
@@ -1540,7 +1540,7 @@ prettyGenericRecord paramName fields =
 prettyFieldTypeAnn : ( String, TypeAnnotation ) -> Doc Token
 prettyFieldTypeAnn ( name, ann ) =
     [ [ Token.statement name
-      , Pretty.string ":"
+      , Token.operator ":"
       ]
         |> Pretty.words
     , prettyTypeAnnotation ann
@@ -1641,7 +1641,7 @@ decrementIndent currentIndent spaces =
 
 dot : Doc Token
 dot =
-    Pretty.string "."
+    Token.operator "."
 
 
 quotes : Doc Token -> Doc Token
@@ -1651,7 +1651,7 @@ quotes doc =
 
 tripleQuotes : Doc Token -> Doc Token
 tripleQuotes doc =
-    Pretty.surround (Pretty.string "\"\"\"") (Pretty.string "\"\"\"") doc
+    Pretty.surround (Token.literal "\"\"\"") (Token.literal "\"\"\"") doc
 
 
 singleQuotes : Doc Token -> Doc Token
