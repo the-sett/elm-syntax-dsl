@@ -299,7 +299,7 @@ prettyExposing exposing_ =
         exposings =
             case exposing_ of
                 All _ ->
-                    Token.statement ".." |> Pretty.parens
+                    Pretty.string "(..)"
 
                 Explicit tll ->
                     ImportsAndExposing.sortAndDedupExposings (denodeAll tll)
@@ -337,7 +337,7 @@ prettyTopLevelExpose tlExpose =
 
                 Just _ ->
                     Token.type_ exposedType.name
-                        |> Pretty.a (Token.statement "(..)")
+                        |> Pretty.a (Pretty.string "(..)")
 
 
 
