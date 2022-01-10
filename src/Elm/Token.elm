@@ -14,42 +14,46 @@ type Token
     | Number
 
 
+toToken : Token -> String -> Doc Token
+toToken t str = 
+    Pretty.taggedString str t
+
+
 keyword : String -> Doc Token
-keyword str =
-    Pretty.taggedString str Keyword
+keyword  =
+    toToken Keyword
 
 
 comment : String -> Doc Token
-comment str =
-    Pretty.taggedString str Comment
+comment =
+    toToken Comment
+
 
 operator : String -> Doc Token
-operator str =
-    Pretty.taggedString str Operator
+operator =
+    toToken Operator
 
 
 type_ : String -> Doc Token
-type_ str =
-    Pretty.taggedString str Type
+type_ =
+    toToken Type
 
 
 statement : String -> Doc Token
-statement str =
-    Pretty.taggedString str Statement
+statement =
+    toToken Statement
 
 
 signature : String -> Doc Token
-signature str =
-    Pretty.taggedString str Signature
+signature =
+    toToken Signature
 
 
 literal : String -> Doc Token
-literal str =
-    Pretty.taggedString str Literal
+literal =
+    toToken Literal
 
 
 number : String -> Doc Token
-number str =
-    Pretty.taggedString str Number
-
-
+number =
+    toToken Number
