@@ -163,7 +163,7 @@ prettyModule mod =
 
 prettyModuleName : ModuleName -> Doc Token
 prettyModuleName name =
-    List.map Token.statement name
+    List.map Token.type_ name
         |> Pretty.join dot
 
 
@@ -187,7 +187,7 @@ prettyModuleNameAlias name =
 
         _ ->
             Token.keyword "as "
-                |> Pretty.a (List.map Token.statement name |> Pretty.join dot)
+                |> Pretty.a (List.map Token.type_ name |> Pretty.join dot)
 
 
 prettyDefaultModuleData : DefaultModuleData -> Doc Token
@@ -466,7 +466,7 @@ prettyValueConstructors constructors =
 
 prettyValueConstructor : ValueConstructor -> Doc Token
 prettyValueConstructor cons =
-    [ Token.statement (denode cons.name)
+    [ Token.type_ (denode cons.name)
     , List.map prettyTypeAnnotationParens (denodeAll cons.arguments) |> Pretty.lines
     ]
         |> Pretty.lines
@@ -683,7 +683,7 @@ prettyPatternInner isTop pattern =
 
         NamedPattern qnRef listPats ->
             (prettyModuleNameDot qnRef.moduleName
-                |> Pretty.a (Token.statement qnRef.name)
+                |> Pretty.a (Token.type_ qnRef.name)
             )
                 :: List.map (prettyPatternInner False) (denodeAll listPats)
                 |> Pretty.words
@@ -820,6 +820,26 @@ prettyExpression expression =
         |> Tuple.first
 
 
+prettyFunctionOrValue : ModuleName -> String -> ( Doc Token, Bool )
+prettyFunctionOrValue modl val =
+    let 
+        token = 
+            case String.uncons val of
+                Just (c, _) ->
+                    if Char.isUpper c then
+                        Token.type_ val
+
+                    else
+                        Token.statement val
+                Nothing ->
+                    Token.statement val
+    in  
+    ( prettyModuleNameDot modl
+        |> Pretty.a token
+    , False
+    )
+
+
 prettyExpressionInner : Context -> Int -> Expression -> ( Doc Token, Bool )
 prettyExpressionInner context indent expression =
     case adjustExpressionParentheses context expression of
@@ -835,10 +855,7 @@ prettyExpressionInner context indent expression =
             prettyOperatorApplication indent symbol dir exprl exprr
 
         FunctionOrValue modl val ->
-            ( prettyModuleNameDot modl
-                |> Pretty.a (Token.statement val)
-            , False
-            )
+            prettyFunctionOrValue modl val
 
         IfBlock exprBool exprTrue exprFalse ->
             prettyIfBlock indent exprBool exprTrue exprFalse
