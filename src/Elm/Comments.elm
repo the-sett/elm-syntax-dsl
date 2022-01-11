@@ -218,7 +218,7 @@ prettyMarkdown val =
     -- Why is softline so slow?
     Pretty.string val
         |> Pretty.a Pretty.line
-        |> Pretty.a Pretty.line
+        -- |> Pretty.a Pretty.line
 
 
 prettyCode val =
