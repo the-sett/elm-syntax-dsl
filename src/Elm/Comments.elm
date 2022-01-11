@@ -232,6 +232,7 @@ prettyTags tags =
         |> Pretty.join (Pretty.string ", ")
     ]
         |> Pretty.words
+        |> Pretty.a Pretty.line
 
 
 partToStringAndTags : Int -> CommentPart -> ( String, List String )
