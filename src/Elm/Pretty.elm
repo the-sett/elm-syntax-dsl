@@ -258,7 +258,8 @@ prettyComments comments =
             Pretty.empty
 
         _ ->
-            List.map Pretty.string comments
+            List.foldl (\line lines -> String.split "\n" line ++ lines) [] comments
+                |> List.map Pretty.string
                 |> Pretty.lines
                 |> Pretty.a Pretty.line
                 |> Pretty.a Pretty.line
