@@ -219,7 +219,7 @@ prettyMarkdown val =
     -- Why is softline so slow?
     Pretty.string val
         |> Pretty.a Pretty.line
-        |> Pretty.a Pretty.line
+        -- |> Pretty.a Pretty.line
 
 
 prettyCode val =
@@ -233,6 +233,7 @@ prettyTags tags =
         |> Pretty.join (Pretty.string ", ")
     ]
         |> Pretty.words
+        |> Pretty.a Pretty.line
 
 
 partToStringAndTags : Int -> CommentPart -> ( String, List String )
