@@ -51,7 +51,7 @@ a `String`, for convenience:
 
 import Bool.Extra
 import Elm.CodeGen exposing (Declaration(..), File)
-import Elm.Comments
+import Elm.CommentBuilder exposing (Comment, CommentPart(..), DocComment, FileComment)
 import Elm.Syntax.Declaration
 import Elm.Syntax.Documentation exposing (Documentation)
 import Elm.Syntax.Exposing exposing (Exposing(..), TopLevelExpose(..))
@@ -67,11 +67,87 @@ import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.Type exposing (Type, ValueConstructor)
 import Elm.Syntax.TypeAlias exposing (TypeAlias)
 import Elm.Syntax.TypeAnnotation exposing (RecordField, TypeAnnotation(..))
-import Elm.Token as Token exposing (Token)
 import Hex
 import ImportsAndExposing
+import Parser exposing (Parser)
 import Pretty exposing (Doc)
 import Util exposing (denode, denodeAll, denodeMaybe, nodify, nodifyAll)
+
+
+{-| A custom type defines tags for pretty printing. Elm.Pretty uses this
+to generated tagged strings which you can use Pretty.Renderer to generate
+non-`String` output.
+-}
+type Token
+    = Keyword
+    | Comment
+    | Operator
+    | Type
+    | Statement
+    | Signature
+    | Literal
+    | Number
+
+
+toToken : Token -> String -> Doc Token
+toToken t str =
+    Pretty.taggedString str t
+
+
+{-| Create keywords such as `let`, `if`, `case` and so on
+-}
+keyword : String -> Doc Token
+keyword =
+    toToken Keyword
+
+
+{-| Create comments.
+-}
+tokenComment : String -> Doc Token
+tokenComment =
+    toToken Comment
+
+
+{-| Create operators such as `+`, `-`, `*`, `/` and so on
+-}
+operator : String -> Doc Token
+operator =
+    toToken Operator
+
+
+{-| Create types such as `String`, `Int`, `MyType`.
+-}
+type_ : String -> Doc Token
+type_ =
+    toToken Type
+
+
+{-| Create statements such as `map`, `update`, `view` and so on
+-}
+statement : String -> Doc Token
+statement =
+    toToken Statement
+
+
+{-| Create function signature, either top level or inside of let closure, usually followed by pattern and `=`.
+-}
+signature : String -> Doc Token
+signature =
+    toToken Signature
+
+
+{-| Create string and char literal.
+-}
+literal : String -> Doc Token
+literal =
+    toToken Literal
+
+
+{-| Create number literal.
+-}
+number : String -> Doc Token
+number =
+    toToken Number
 
 
 {-| Prepares a file of Elm code for layout by the pretty printer.
@@ -97,7 +173,7 @@ prepareLayout width file =
                 Just comment ->
                     let
                         ( fileCommentStr, innerTags ) =
-                            Elm.Comments.prettyFileComment width comment
+                            layoutFileComment width comment
                     in
                     ( { moduleDefinition = file.moduleDefinition
                       , imports = file.imports
@@ -398,7 +474,7 @@ prettyDocComment : Int -> Declaration -> Elm.Syntax.Declaration.Declaration
 prettyDocComment width decl =
     case decl of
         DeclWithComment comment declFn ->
-            declFn (Elm.Comments.prettyDocComment width comment)
+            declFn (layoutDocComment width comment)
 
         DeclNoComment declNoComment ->
             declNoComment
@@ -823,18 +899,19 @@ prettyExpression expression =
 
 prettyFunctionOrValue : ModuleName -> String -> ( Doc Token, Bool )
 prettyFunctionOrValue modl val =
-    let 
-        token = 
+    let
+        token =
             case String.uncons val of
-                Just (c, _) ->
+                Just ( c, _ ) ->
                     if Char.isUpper c then
                         Token.type_ val
 
                     else
                         Token.statement val
+
                 Nothing ->
                     Token.statement val
-    in  
+    in
     ( prettyModuleNameDot modl
         |> Pretty.a token
     , False
@@ -1837,3 +1914,205 @@ precedence symbol =
 
         _ ->
             0
+
+
+{-| Gets the parts of a comment in the correct order.
+-}
+getParts : Comment a -> List CommentPart
+getParts (Comment parts) =
+    List.reverse parts
+
+
+{-| Pretty prints a document comment.
+
+Where possible the comment will be re-flowed to fit the specified page width.
+
+-}
+layoutDocComment : Int -> Comment DocComment -> String
+layoutDocComment width comment =
+    List.map prettyCommentPart (getParts comment)
+        |> Pretty.lines
+        |> delimiters
+        |> Pretty.pretty width
+
+
+{-| Pretty prints a file comment.
+
+Where possible the comment will be re-flowed to fit the specified page width.
+
+-}
+layoutFileComment : Int -> Comment FileComment -> ( String, List (List String) )
+layoutFileComment width comment =
+    let
+        ( parts, splits ) =
+            layoutTags width (getParts comment)
+    in
+    ( List.map prettyCommentPart parts
+        |> Pretty.lines
+        |> delimiters
+        |> Pretty.pretty width
+    , splits
+    )
+
+
+{-| Combines lists of doc tags that are together in the comment into single lists,
+then breaks those lists up to fit the page width.
+-}
+layoutTags : Int -> List CommentPart -> ( List CommentPart, List (List String) )
+layoutTags width parts =
+    List.foldr
+        (\part ( accumParts, accumDocTags ) ->
+            case part of
+                DocTags tags ->
+                    let
+                        splits =
+                            fitAndSplit width tags
+                    in
+                    ( List.map DocTags splits ++ accumParts
+                    , accumDocTags ++ splits
+                    )
+
+                otherPart ->
+                    ( otherPart :: accumParts, accumDocTags )
+        )
+        ( [], [] )
+        (mergeDocTags parts)
+
+
+{-| Takes tags from the input and builds them into an output list until the
+given width limit cannot be kept to. When the width limit is breached the output
+spills over into more lists.
+
+Each list must contain at least one tag, even if this were to breach the width
+limit.
+
+-}
+fitAndSplit : Int -> List String -> List (List String)
+fitAndSplit width tags =
+    case tags of
+        [] ->
+            []
+
+        t :: ts ->
+            let
+                ( splitsExceptLast, lastSplit, _ ) =
+                    List.foldl
+                        (\tag ( allSplits, curSplit, remaining ) ->
+                            if String.length tag <= remaining then
+                                ( allSplits, tag :: curSplit, remaining - String.length tag )
+
+                            else
+                                ( allSplits ++ [ List.reverse curSplit ], [ tag ], width - String.length tag )
+                        )
+                        ( [], [ t ], width - String.length t )
+                        ts
+            in
+            splitsExceptLast ++ [ List.reverse lastSplit ]
+
+
+{-| Merges neighbouring lists of doc tags together.
+-}
+mergeDocTags : List CommentPart -> List CommentPart
+mergeDocTags innerParts =
+    let
+        ( partsExceptMaybeFirst, maybeFirstPart ) =
+            List.foldr
+                (\part ( accum, context ) ->
+                    case context of
+                        Nothing ->
+                            case part of
+                                DocTags tags ->
+                                    ( accum, Just tags )
+
+                                otherPart ->
+                                    ( otherPart :: accum, Nothing )
+
+                        Just contextTags ->
+                            case part of
+                                DocTags tags ->
+                                    ( accum, Just (contextTags ++ tags) )
+
+                                otherPart ->
+                                    ( otherPart :: DocTags (List.sort contextTags) :: accum, Nothing )
+                )
+                ( [], Nothing )
+                innerParts
+    in
+    case maybeFirstPart of
+        Nothing ->
+            partsExceptMaybeFirst
+
+        Just tags ->
+            DocTags (List.sort tags) :: partsExceptMaybeFirst
+
+
+prettyCommentPart : CommentPart -> Doc Token
+prettyCommentPart part =
+    case part of
+        Markdown val ->
+            prettyMarkdown val
+
+        Code val ->
+            prettyCode val
+
+        DocTags tags ->
+            prettyTags tags
+
+
+prettyMarkdown val =
+    -- List.map Pretty.string (String.words val)
+    --     |> Pretty.join Pretty.softline
+    -- Why is softline so slow?
+    Pretty.string val
+        |> Pretty.a Pretty.line
+
+
+
+-- |> Pretty.a Pretty.line
+
+
+prettyCode val =
+    Pretty.string val
+        |> Pretty.indent 4
+
+
+prettyTags tags =
+    [ Pretty.string "@docs"
+    , List.map Pretty.string tags
+        |> Pretty.join (Pretty.string ", ")
+    ]
+        |> Pretty.words
+        |> Pretty.a Pretty.line
+
+
+partToStringAndTags : Int -> CommentPart -> ( String, List String )
+partToStringAndTags width part =
+    case part of
+        Markdown val ->
+            ( val, [] )
+
+        Code val ->
+            ( "    " ++ val, [] )
+
+        DocTags tags ->
+            ( "@doc " ++ String.join ", " tags, tags )
+
+
+docCommentParser : Parser (Comment DocComment)
+docCommentParser =
+    Parser.getSource
+        |> Parser.map (\val -> Comment [ Markdown val ])
+
+
+fileCommentParser : Parser (Comment FileComment)
+fileCommentParser =
+    Parser.getSource
+        |> Parser.map (\val -> Comment [ Markdown val ])
+
+
+delimiters : Doc Token -> Doc Token
+delimiters doc =
+    Pretty.string "{-| "
+        |> Pretty.a doc
+        |> Pretty.a Pretty.line
+        |> Pretty.a (Pretty.string "-}")

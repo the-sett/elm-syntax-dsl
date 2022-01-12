@@ -123,7 +123,7 @@ These types are all declared in `elm-syntax` but are re-exported here for conven
 
 -}
 
-import Elm.Comments as Comments exposing (Comment, CommentPart(..), DocComment, FileComment)
+import Elm.CommentBuilder as Comments exposing (Comment, CommentPart(..), DocComment, FileComment)
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Exposing exposing (Exposing(..), TopLevelExpose(..))
 import Elm.Syntax.Expression exposing (Case, CaseBlock, Expression(..), Function, FunctionImplementation, LetBlock, LetDeclaration(..), RecordSetter)
