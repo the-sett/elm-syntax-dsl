@@ -67,6 +67,7 @@ import Elm.Syntax.Signature exposing (Signature)
 import Elm.Syntax.Type exposing (Type, ValueConstructor)
 import Elm.Syntax.TypeAlias exposing (TypeAlias)
 import Elm.Syntax.TypeAnnotation exposing (RecordField, TypeAnnotation(..))
+import Elm.Token as Token exposing (Token)
 import Hex
 import ImportsAndExposing
 import Pretty exposing (Doc)
@@ -83,7 +84,7 @@ Elm inside something else with the pretty printer. The `pretty` function can be
 used to go directly from a `File` to a `String`, if that is more convenient.
 
 -}
-prepareLayout : Int -> File -> Doc
+prepareLayout : Int -> File -> Doc Token
 prepareLayout width file =
     let
         layoutDeclComments decls =
@@ -123,7 +124,7 @@ prepareLayout width file =
         |> Pretty.a (prettyDeclarations (denodeAll innerFile.declarations))
 
 
-importsPretty : Elm.Syntax.File.File -> Doc
+importsPretty : Elm.Syntax.File.File -> Doc Token
 importsPretty file =
     case file.imports of
         [] ->
@@ -147,7 +148,7 @@ pretty width file =
 
 {-| Pretty prints a module definition.
 -}
-prettyModule : Module -> Doc
+prettyModule : Module -> Doc Token
 prettyModule mod =
     case mod of
         NormalModule defaultModuleData ->
@@ -160,54 +161,54 @@ prettyModule mod =
             prettyEffectModuleData effectModuleData
 
 
-prettyModuleName : ModuleName -> Doc
+prettyModuleName : ModuleName -> Doc Token
 prettyModuleName name =
-    List.map Pretty.string name
+    List.map Token.type_ name
         |> Pretty.join dot
 
 
-prettyModuleNameDot : ModuleName -> Doc
+prettyModuleNameDot : ModuleName -> Doc Token
 prettyModuleNameDot name =
     case name of
         [] ->
             Pretty.empty
 
         _ ->
-            List.map Pretty.string name
+            List.map Token.type_ name
                 |> Pretty.join dot
                 |> Pretty.a dot
 
 
-prettyModuleNameAlias : ModuleName -> Doc
+prettyModuleNameAlias : ModuleName -> Doc Token
 prettyModuleNameAlias name =
     case name of
         [] ->
             Pretty.empty
 
         _ ->
-            Pretty.string "as "
-                |> Pretty.a (List.map Pretty.string name |> Pretty.join dot)
+            Token.keyword "as "
+                |> Pretty.a (List.map Token.type_ name |> Pretty.join dot)
 
 
-prettyDefaultModuleData : DefaultModuleData -> Doc
+prettyDefaultModuleData : DefaultModuleData -> Doc Token
 prettyDefaultModuleData moduleData =
     Pretty.words
-        [ Pretty.string "module"
+        [ Token.keyword "module"
         , prettyModuleName (denode moduleData.moduleName)
         , prettyExposing (denode moduleData.exposingList)
         ]
 
 
-prettyPortModuleData : DefaultModuleData -> Doc
+prettyPortModuleData : DefaultModuleData -> Doc Token
 prettyPortModuleData moduleData =
     Pretty.words
-        [ Pretty.string "port module"
+        [ Token.keyword "port module"
         , prettyModuleName (denode moduleData.moduleName)
         , prettyExposing (denode moduleData.exposingList)
         ]
 
 
-prettyEffectModuleData : EffectModuleData -> Doc
+prettyEffectModuleData : EffectModuleData -> Doc Token
 prettyEffectModuleData moduleData =
     let
         prettyCmdAndSub maybeCmd maybeSub =
@@ -243,7 +244,7 @@ prettyEffectModuleData moduleData =
                         |> Just
     in
     Pretty.words
-        [ Pretty.string "effect module"
+        [ Token.keyword "effect module"
         , prettyModuleName (denode moduleData.moduleName)
         , prettyCmdAndSub (denodeMaybe moduleData.command) (denodeMaybe moduleData.subscription)
             |> prettyMaybe identity
@@ -251,14 +252,15 @@ prettyEffectModuleData moduleData =
         ]
 
 
-prettyComments : List String -> Doc
+prettyComments : List String -> Doc Token
 prettyComments comments =
     case comments of
         [] ->
             Pretty.empty
 
         _ ->
-            List.map Pretty.string comments
+            List.foldl (\line lines -> String.split "\n" line ++ lines) [] comments
+                |> List.map Token.comment
                 |> Pretty.lines
                 |> Pretty.a Pretty.line
                 |> Pretty.a Pretty.line
@@ -269,17 +271,17 @@ prettyComments comments =
 The list will be de-duplicated and sorted.
 
 -}
-prettyImports : List Import -> Doc
+prettyImports : List Import -> Doc Token
 prettyImports imports =
     ImportsAndExposing.sortAndDedupImports imports
         |> List.map prettyImport
         |> Pretty.lines
 
 
-prettyImport : Import -> Doc
+prettyImport : Import -> Doc Token
 prettyImport import_ =
     Pretty.join Pretty.space
-        [ Pretty.string "import"
+        [ Token.keyword "import"
         , prettyModuleName (denode import_.moduleName)
         , prettyMaybe prettyModuleNameAlias (denodeMaybe import_.moduleAlias)
         , prettyMaybe prettyExposing (denodeMaybe import_.exposingList)
@@ -292,50 +294,50 @@ statement.
 The exposed values will be de-duplicated and sorted.
 
 -}
-prettyExposing : Exposing -> Doc
+prettyExposing : Exposing -> Doc Token
 prettyExposing exposing_ =
     let
         exposings =
             case exposing_ of
                 All _ ->
-                    Pretty.string ".." |> Pretty.parens
+                    Pretty.string "(..)"
 
                 Explicit tll ->
                     ImportsAndExposing.sortAndDedupExposings (denodeAll tll)
                         |> prettyTopLevelExposes
                         |> Pretty.parens
     in
-    Pretty.string "exposing"
+    Token.keyword "exposing"
         |> Pretty.a Pretty.space
         |> Pretty.a exposings
 
 
-prettyTopLevelExposes : List TopLevelExpose -> Doc
+prettyTopLevelExposes : List TopLevelExpose -> Doc Token
 prettyTopLevelExposes exposes =
     List.map prettyTopLevelExpose exposes
         |> Pretty.join (Pretty.string ", ")
 
 
-prettyTopLevelExpose : TopLevelExpose -> Doc
+prettyTopLevelExpose : TopLevelExpose -> Doc Token
 prettyTopLevelExpose tlExpose =
     case tlExpose of
         InfixExpose val ->
-            Pretty.string val
+            Token.statement val
                 |> Pretty.parens
 
         FunctionExpose val ->
-            Pretty.string val
+            Token.signature val
 
         TypeOrAliasExpose val ->
-            Pretty.string val
+            Token.type_ val
 
         TypeExpose exposedType ->
             case exposedType.open of
                 Nothing ->
-                    Pretty.string exposedType.name
+                    Token.type_ exposedType.name
 
                 Just _ ->
-                    Pretty.string exposedType.name
+                    Token.type_ exposedType.name
                         |> Pretty.a (Pretty.string "(..)")
 
 
@@ -345,7 +347,7 @@ prettyTopLevelExpose tlExpose =
 
 {-| Pretty prints a single top-level declaration.
 -}
-prettyDeclaration : Int -> Declaration -> Doc
+prettyDeclaration : Int -> Declaration -> Doc Token
 prettyDeclaration width decl =
     let
         innerDecl =
@@ -356,7 +358,7 @@ prettyDeclaration width decl =
 
 {-| Pretty prints an elm-syntax declaration.
 -}
-prettyElmSyntaxDeclaration : Elm.Syntax.Declaration.Declaration -> Doc
+prettyElmSyntaxDeclaration : Elm.Syntax.Declaration.Declaration -> Doc Token
 prettyElmSyntaxDeclaration decl =
     case decl of
         Elm.Syntax.Declaration.FunctionDeclaration fn ->
@@ -378,7 +380,7 @@ prettyElmSyntaxDeclaration decl =
             prettyDestructuring (denode pattern) (denode expr)
 
 
-prettyDeclarations : List Elm.Syntax.Declaration.Declaration -> Doc
+prettyDeclarations : List Elm.Syntax.Declaration.Declaration -> Doc Token
 prettyDeclarations decls =
     List.map
         (\decl ->
@@ -404,7 +406,7 @@ prettyDocComment width decl =
 
 {-| Pretty prints an Elm function, which may include documentation and a signature too.
 -}
-prettyFun : Function -> Doc
+prettyFun : Function -> Doc Token
 prettyFun fn =
     [ prettyMaybe prettyDocumentation (denodeMaybe fn.documentation)
     , prettyMaybe prettySignature (denodeMaybe fn.signature)
@@ -415,13 +417,13 @@ prettyFun fn =
 
 {-| Pretty prints a type alias definition, which may include documentation too.
 -}
-prettyTypeAlias : TypeAlias -> Doc
+prettyTypeAlias : TypeAlias -> Doc Token
 prettyTypeAlias tAlias =
     let
         typeAliasPretty =
-            [ Pretty.string "type alias"
-            , Pretty.string (denode tAlias.name)
-            , List.map Pretty.string (denodeAll tAlias.generics) |> Pretty.words
+            [ Token.keyword "type alias"
+            , Token.type_ (denode tAlias.name)
+            , List.map Token.statement (denodeAll tAlias.generics) |> Pretty.words
             , Pretty.string "="
             ]
                 |> Pretty.words
@@ -437,13 +439,13 @@ prettyTypeAlias tAlias =
 
 {-| Pretty prints a custom type declaration, which may include documentation too.
 -}
-prettyCustomType : Type -> Doc
+prettyCustomType : Type -> Doc Token
 prettyCustomType type_ =
     let
         customTypePretty =
-            [ Pretty.string "type"
-            , Pretty.string (denode type_.name)
-            , List.map Pretty.string (denodeAll type_.generics) |> Pretty.words
+            [ Token.keyword "type"
+            , Token.type_ (denode type_.name)
+            , List.map Token.statement (denodeAll type_.generics) |> Pretty.words
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
@@ -457,15 +459,15 @@ prettyCustomType type_ =
         |> Pretty.lines
 
 
-prettyValueConstructors : List ValueConstructor -> Doc
+prettyValueConstructors : List ValueConstructor -> Doc Token
 prettyValueConstructors constructors =
     List.map prettyValueConstructor constructors
         |> Pretty.join (Pretty.line |> Pretty.a (Pretty.string "| "))
 
 
-prettyValueConstructor : ValueConstructor -> Doc
+prettyValueConstructor : ValueConstructor -> Doc Token
 prettyValueConstructor cons =
-    [ Pretty.string (denode cons.name)
+    [ Token.type_ (denode cons.name)
     , List.map prettyTypeAnnotationParens (denodeAll cons.arguments) |> Pretty.lines
     ]
         |> Pretty.lines
@@ -475,15 +477,15 @@ prettyValueConstructor cons =
 
 {-| Pretty prints a port declaration.
 -}
-prettyPortDeclaration : Signature -> Doc
+prettyPortDeclaration : Signature -> Doc Token
 prettyPortDeclaration sig =
-    [ Pretty.string "port"
+    [ Token.keyword "port"
     , prettySignature sig
     ]
         |> Pretty.words
 
 
-prettyInfix : Infix -> Doc
+prettyInfix : Infix -> Doc Token
 prettyInfix infix_ =
     let
         dirToString direction =
@@ -497,19 +499,19 @@ prettyInfix infix_ =
                 Non ->
                     "non"
     in
-    [ Pretty.string "infix"
-    , Pretty.string (dirToString (denode infix_.direction))
-    , Pretty.string (String.fromInt (denode infix_.precedence))
-    , Pretty.string (denode infix_.operator) |> Pretty.parens
+    [ Token.signature "infix"
+    , Token.statement (dirToString (denode infix_.direction))
+    , Token.number (String.fromInt (denode infix_.precedence))
+    , Token.statement (denode infix_.operator) |> Pretty.parens
     , Pretty.string "="
-    , Pretty.string (denode infix_.function)
+    , Token.statement (denode infix_.function)
     ]
         |> Pretty.words
 
 
 {-| Pretty prints a destructuring declaration.
 -}
-prettyDestructuring : Pattern -> Expression -> Doc
+prettyDestructuring : Pattern -> Expression -> Doc Token
 prettyDestructuring pattern expr =
     [ [ prettyPattern pattern
       , Pretty.string "="
@@ -521,16 +523,16 @@ prettyDestructuring pattern expr =
         |> Pretty.nest 4
 
 
-prettyDocumentation : Documentation -> Doc
+prettyDocumentation : Documentation -> Doc Token
 prettyDocumentation docs =
-    Pretty.string docs
+    Token.comment docs
 
 
 {-| Pretty prints a type signature.
 -}
-prettySignature : Signature -> Doc
+prettySignature : Signature -> Doc Token
 prettySignature sig =
-    [ [ Pretty.string (denode sig.name)
+    [ [ Token.signature (denode sig.name)
       , Pretty.string ":"
       ]
         |> Pretty.words
@@ -541,10 +543,10 @@ prettySignature sig =
         |> Pretty.group
 
 
-prettyFunctionImplementation : FunctionImplementation -> Doc
+prettyFunctionImplementation : FunctionImplementation -> Doc Token
 prettyFunctionImplementation impl =
     Pretty.words
-        [ Pretty.string (denode impl.name)
+        [ Token.signature (denode impl.name)
         , prettyArgs (denodeAll impl.arguments)
         , Pretty.string "="
         ]
@@ -553,7 +555,7 @@ prettyFunctionImplementation impl =
         |> Pretty.nest 4
 
 
-prettyArgs : List Pattern -> Doc
+prettyArgs : List Pattern -> Doc Token
 prettyArgs args =
     List.map (prettyPatternInner False) args
         |> Pretty.words
@@ -565,7 +567,7 @@ prettyArgs args =
 
 {-| Pretty prints a pattern.
 -}
-prettyPattern : Pattern -> Doc
+prettyPattern : Pattern -> Doc Token
 prettyPattern pattern =
     prettyPatternInner True pattern
 
@@ -612,31 +614,31 @@ adjustPatternParentheses isTop pattern =
         |> addParens
 
 
-prettyPatternInner : Bool -> Pattern -> Doc
+prettyPatternInner : Bool -> Pattern -> Doc Token
 prettyPatternInner isTop pattern =
     case adjustPatternParentheses isTop pattern of
         AllPattern ->
-            Pretty.string "_"
+            Token.statement "_"
 
         UnitPattern ->
-            Pretty.string "()"
+            Token.statement "()"
 
         CharPattern val ->
-            Pretty.string (escapeChar val)
+            Token.literal (escapeChar val)
                 |> singleQuotes
 
         StringPattern val ->
-            Pretty.string val
+            Token.literal val
                 |> quotes
 
         IntPattern val ->
-            Pretty.string (String.fromInt val)
+            Token.number (String.fromInt val)
 
         HexPattern val ->
-            Pretty.string (toHexString val)
+            Token.number (toHexString val)
 
         FloatPattern val ->
-            Pretty.string (String.fromFloat val)
+            Token.number (String.fromFloat val)
 
         TuplePattern vals ->
             Pretty.space
@@ -648,14 +650,14 @@ prettyPatternInner isTop pattern =
                 |> Pretty.parens
 
         RecordPattern fields ->
-            List.map Pretty.string (denodeAll fields)
+            List.map Token.statement (denodeAll fields)
                 |> Pretty.join (Pretty.string ", ")
                 |> Pretty.surround Pretty.space Pretty.space
                 |> Pretty.braces
 
         UnConsPattern hdPat tlPat ->
             [ prettyPatternInner False (denode hdPat)
-            , Pretty.string "::"
+            , Token.operator "::"
             , prettyPatternInner False (denode tlPat)
             ]
                 |> Pretty.words
@@ -678,19 +680,19 @@ prettyPatternInner isTop pattern =
                         |> Pretty.surround open close
 
         VarPattern var ->
-            Pretty.string var
+            Token.statement var
 
         NamedPattern qnRef listPats ->
             (prettyModuleNameDot qnRef.moduleName
-                |> Pretty.a (Pretty.string qnRef.name)
+                |> Pretty.a (Token.type_ qnRef.name)
             )
                 :: List.map (prettyPatternInner False) (denodeAll listPats)
                 |> Pretty.words
 
         AsPattern pat name ->
             [ prettyPatternInner False (denode pat)
-            , Pretty.string "as"
-            , Pretty.string (denode name)
+            , Token.keyword "as"
+            , Token.statement (denode name)
             ]
                 |> Pretty.words
 
@@ -813,17 +815,37 @@ adjustExpressionParentheses context expression =
 
 {-| Pretty prints an expression.
 -}
-prettyExpression : Expression -> Doc
+prettyExpression : Expression -> Doc Token
 prettyExpression expression =
     prettyExpressionInner topContext 4 expression
         |> Tuple.first
 
 
-prettyExpressionInner : Context -> Int -> Expression -> ( Doc, Bool )
+prettyFunctionOrValue : ModuleName -> String -> ( Doc Token, Bool )
+prettyFunctionOrValue modl val =
+    let 
+        token = 
+            case String.uncons val of
+                Just (c, _) ->
+                    if Char.isUpper c then
+                        Token.type_ val
+
+                    else
+                        Token.statement val
+                Nothing ->
+                    Token.statement val
+    in  
+    ( prettyModuleNameDot modl
+        |> Pretty.a token
+    , False
+    )
+
+
+prettyExpressionInner : Context -> Int -> Expression -> ( Doc Token, Bool )
 prettyExpressionInner context indent expression =
     case adjustExpressionParentheses context expression of
         UnitExpr ->
-            ( Pretty.string "()"
+            ( Token.statement "()"
             , False
             )
 
@@ -834,36 +856,33 @@ prettyExpressionInner context indent expression =
             prettyOperatorApplication indent symbol dir exprl exprr
 
         FunctionOrValue modl val ->
-            ( prettyModuleNameDot modl
-                |> Pretty.a (Pretty.string val)
-            , False
-            )
+            prettyFunctionOrValue modl val
 
         IfBlock exprBool exprTrue exprFalse ->
             prettyIfBlock indent exprBool exprTrue exprFalse
 
         PrefixOperator symbol ->
-            ( Pretty.string symbol |> Pretty.parens
+            ( Token.statement symbol |> Pretty.parens
             , False
             )
 
         Operator symbol ->
-            ( Pretty.string symbol
+            ( Token.operator symbol
             , False
             )
 
         Integer val ->
-            ( Pretty.string (String.fromInt val)
+            ( Token.number (String.fromInt val)
             , False
             )
 
         Hex val ->
-            ( Pretty.string (toHexString val)
+            ( Token.number (toHexString val)
             , False
             )
 
         Floatable val ->
-            ( Pretty.string (String.fromFloat val)
+            ( Token.number (String.fromFloat val)
             , False
             )
 
@@ -872,7 +891,7 @@ prettyExpressionInner context indent expression =
                 ( prettyExpr, alwaysBreak ) =
                     prettyExpressionInner topContext 4 (denode expr)
             in
-            ( Pretty.string "-"
+            ( Token.statement "-"
                 |> Pretty.a prettyExpr
             , alwaysBreak
             )
@@ -883,7 +902,7 @@ prettyExpressionInner context indent expression =
             )
 
         CharLiteral val ->
-            ( Pretty.string (escapeChar val)
+            ( Token.literal (escapeChar val)
                 |> singleQuotes
             , False
             )
@@ -913,7 +932,7 @@ prettyExpressionInner context indent expression =
             prettyRecordAccess expr field
 
         RecordAccessFunction field ->
-            ( Pretty.string field
+            ( Token.statement field
             , False
             )
 
@@ -921,12 +940,12 @@ prettyExpressionInner context indent expression =
             prettyRecordUpdateExpression indent var setters
 
         GLSLExpression val ->
-            ( Pretty.string "glsl"
+            ( Token.statement "glsl"
             , True
             )
 
 
-prettyApplication : Int -> List (Node Expression) -> ( Doc, Bool )
+prettyApplication : Int -> List (Node Expression) -> ( Doc Token, Bool )
 prettyApplication indent exprs =
     let
         ( prettyExpressions, alwaysBreak ) =
@@ -953,7 +972,7 @@ isEndLineOperator op =
             False
 
 
-prettyOperatorApplication : Int -> String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
+prettyOperatorApplication : Int -> String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc Token, Bool )
 prettyOperatorApplication indent symbol dir exprl exprr =
     if symbol == "<|" then
         prettyOperatorApplicationLeft indent symbol dir exprl exprr
@@ -962,7 +981,7 @@ prettyOperatorApplication indent symbol dir exprl exprr =
         prettyOperatorApplicationRight indent symbol dir exprl exprr
 
 
-prettyOperatorApplicationLeft : Int -> String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
+prettyOperatorApplicationLeft : Int -> String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc Token, Bool )
 prettyOperatorApplicationLeft indent symbol _ exprl exprr =
     let
         context =
@@ -980,7 +999,7 @@ prettyOperatorApplicationLeft indent symbol _ exprl exprr =
         alwaysBreak =
             alwaysBreakLeft || alwaysBreakRight
     in
-    ( [ [ prettyExpressionLeft, Pretty.string symbol ] |> Pretty.words
+    ( [ [ prettyExpressionLeft, Token.operator symbol ] |> Pretty.words
       , prettyExpressionRight
       ]
         |> Pretty.lines
@@ -990,10 +1009,10 @@ prettyOperatorApplicationLeft indent symbol _ exprl exprr =
     )
 
 
-prettyOperatorApplicationRight : Int -> String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc, Bool )
+prettyOperatorApplicationRight : Int -> String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc Token, Bool )
 prettyOperatorApplicationRight indent symbol _ exprl exprr =
     let
-        expandExpr : Int -> Context -> Expression -> List ( Doc, Bool )
+        expandExpr : Int -> Context -> Expression -> List ( Doc Token, Bool )
         expandExpr innerIndent context expr =
             case expr of
                 OperatorApplication sym _ left right ->
@@ -1002,7 +1021,7 @@ prettyOperatorApplicationRight indent symbol _ exprl exprr =
                 _ ->
                     [ prettyExpressionInner context innerIndent expr ]
 
-        innerOpApply : Bool -> String -> Node Expression -> Node Expression -> List ( Doc, Bool )
+        innerOpApply : Bool -> String -> Node Expression -> Node Expression -> List ( Doc Token, Bool )
         innerOpApply isTop sym left right =
             let
                 context =
@@ -1027,7 +1046,7 @@ prettyOperatorApplicationRight indent symbol _ exprl exprr =
             case rightSide of
                 ( hdExpr, hdBreak ) :: tl ->
                     List.append (denode left |> expandExpr leftIndent context)
-                        (( Pretty.string sym |> Pretty.a Pretty.space |> Pretty.a hdExpr, hdBreak ) :: tl)
+                        (( Token.operator sym |> Pretty.a Pretty.space |> Pretty.a hdExpr, hdBreak ) :: tl)
 
                 [] ->
                     []
@@ -1045,10 +1064,10 @@ prettyOperatorApplicationRight indent symbol _ exprl exprr =
     )
 
 
-prettyIfBlock : Int -> Node Expression -> Node Expression -> Node Expression -> ( Doc, Bool )
+prettyIfBlock : Int -> Node Expression -> Node Expression -> Node Expression -> ( Doc Token, Bool )
 prettyIfBlock indent exprBool exprTrue exprFalse =
     let
-        innerIfBlock : Node Expression -> Node Expression -> Node Expression -> List Doc
+        innerIfBlock : Node Expression -> Node Expression -> Node Expression -> List (Doc Token)
         innerIfBlock innerExprBool innerExprTrue innerExprFalse =
             let
                 context =
@@ -1059,13 +1078,13 @@ prettyIfBlock indent exprBool exprTrue exprFalse =
                         ( prettyBoolExpr, alwaysBreak ) =
                             prettyExpressionInner topContext 4 (denode innerExprBool)
                     in
-                    [ [ Pretty.string "if"
+                    [ [ Token.keyword "if"
                       , prettyExpressionInner topContext 4 (denode innerExprBool) |> Tuple.first
                       ]
                         |> Pretty.lines
                         |> optionalGroup alwaysBreak
                         |> Pretty.nest indent
-                    , Pretty.string "then"
+                    , Token.keyword "then"
                     ]
                         |> Pretty.lines
                         |> optionalGroup alwaysBreak
@@ -1077,7 +1096,7 @@ prettyIfBlock indent exprBool exprTrue exprFalse =
 
                 elsePart =
                     Pretty.line
-                        |> Pretty.a (Pretty.string "else")
+                        |> Pretty.a (Token.keyword "else")
 
                 falsePart =
                     case denode innerExprFalse of
@@ -1119,13 +1138,13 @@ prettyIfBlock indent exprBool exprTrue exprFalse =
     )
 
 
-prettyLiteral : String -> Doc
+prettyLiteral : String -> Doc Token
 prettyLiteral val =
-    Pretty.string (escape val)
+    Token.literal (escape val)
         |> quotes
 
 
-prettyTupledExpression : Int -> List (Node Expression) -> ( Doc, Bool )
+prettyTupledExpression : Int -> List (Node Expression) -> ( Doc Token, Bool )
 prettyTupledExpression indent exprs =
     let
         open =
@@ -1154,7 +1173,7 @@ prettyTupledExpression indent exprs =
             )
 
 
-prettyParenthesizedExpression : Int -> Node Expression -> ( Doc, Bool )
+prettyParenthesizedExpression : Int -> Node Expression -> ( Doc Token, Bool )
 prettyParenthesizedExpression indent expr =
     let
         open =
@@ -1175,13 +1194,13 @@ prettyParenthesizedExpression indent expr =
     )
 
 
-prettyLetBlock : Int -> LetBlock -> ( Doc, Bool )
+prettyLetBlock : Int -> LetBlock -> ( Doc Token, Bool )
 prettyLetBlock indent letBlock =
-    ( [ Pretty.string "let"
+    ( [ Token.keyword "let"
       , List.map (prettyLetDeclaration indent) (denodeAll letBlock.declarations)
             |> doubleLines
             |> Pretty.indent indent
-      , Pretty.string "in"
+      , Token.keyword "in"
       , prettyExpressionInner topContext 4 (denode letBlock.expression) |> Tuple.first
       ]
         |> Pretty.lines
@@ -1190,7 +1209,7 @@ prettyLetBlock indent letBlock =
     )
 
 
-prettyLetDeclaration : Int -> LetDeclaration -> Doc
+prettyLetDeclaration : Int -> LetDeclaration -> Doc Token
 prettyLetDeclaration indent letDecl =
     case letDecl of
         LetFunction fn ->
@@ -1209,7 +1228,7 @@ prettyLetDeclaration indent letDecl =
                     )
 
 
-prettyCaseBlock : Int -> CaseBlock -> ( Doc, Bool )
+prettyCaseBlock : Int -> CaseBlock -> ( Doc Token, Bool )
 prettyCaseBlock indent caseBlock =
     let
         casePart =
@@ -1217,13 +1236,13 @@ prettyCaseBlock indent caseBlock =
                 ( caseExpression, alwaysBreak ) =
                     prettyExpressionInner topContext 4 (denode caseBlock.expression)
             in
-            [ [ Pretty.string "case"
+            [ [ Token.keyword "case"
               , caseExpression
               ]
                 |> Pretty.lines
                 |> optionalGroup alwaysBreak
                 |> Pretty.nest indent
-            , Pretty.string "of"
+            , Token.keyword "of"
             ]
                 |> Pretty.lines
                 |> optionalGroup alwaysBreak
@@ -1246,7 +1265,7 @@ prettyCaseBlock indent caseBlock =
     )
 
 
-prettyLambdaExpression : Int -> Lambda -> ( Doc, Bool )
+prettyLambdaExpression : Int -> Lambda -> ( Doc Token, Bool )
 prettyLambdaExpression indent lambda =
     let
         ( prettyExpr, alwaysBreak ) =
@@ -1265,7 +1284,7 @@ prettyLambdaExpression indent lambda =
     )
 
 
-prettyRecordExpr : List (Node RecordSetter) -> ( Doc, Bool )
+prettyRecordExpr : List (Node RecordSetter) -> ( Doc Token, Bool )
 prettyRecordExpr setters =
     let
         open =
@@ -1295,13 +1314,13 @@ prettyRecordExpr setters =
             )
 
 
-prettySetter : ( Node String, Node Expression ) -> ( Doc, Bool )
+prettySetter : ( Node String, Node Expression ) -> ( Doc Token, Bool )
 prettySetter ( fld, val ) =
     let
         ( prettyExpr, alwaysBreak ) =
             prettyExpressionInner topContext 4 (denode val)
     in
-    ( [ [ Pretty.string (denode fld)
+    ( [ [ Token.statement (denode fld)
         , Pretty.string "="
         ]
             |> Pretty.words
@@ -1314,7 +1333,7 @@ prettySetter ( fld, val ) =
     )
 
 
-prettyList : Int -> List (Node Expression) -> ( Doc, Bool )
+prettyList : Int -> List (Node Expression) -> ( Doc Token, Bool )
 prettyList indent exprs =
     let
         open =
@@ -1343,7 +1362,7 @@ prettyList indent exprs =
             )
 
 
-prettyRecordAccess : Node Expression -> Node String -> ( Doc, Bool )
+prettyRecordAccess : Node Expression -> Node String -> ( Doc Token, Bool )
 prettyRecordAccess expr field =
     let
         ( prettyExpr, alwaysBreak ) =
@@ -1351,17 +1370,17 @@ prettyRecordAccess expr field =
     in
     ( prettyExpr
         |> Pretty.a dot
-        |> Pretty.a (Pretty.string (denode field))
+        |> Pretty.a (Token.statement (denode field))
     , alwaysBreak
     )
 
 
-prettyRecordUpdateExpression : Int -> Node String -> List (Node RecordSetter) -> ( Doc, Bool )
+prettyRecordUpdateExpression : Int -> Node String -> List (Node RecordSetter) -> ( Doc Token, Bool )
 prettyRecordUpdateExpression indent var setters =
     let
         open =
             [ Pretty.string "{"
-            , Pretty.string (denode var)
+            , Token.statement (denode var)
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
@@ -1409,17 +1428,17 @@ prettyRecordUpdateExpression indent var setters =
 
 {-| Pretty prints a type annotation.
 -}
-prettyTypeAnnotation : TypeAnnotation -> Doc
+prettyTypeAnnotation : TypeAnnotation -> Doc Token
 prettyTypeAnnotation typeAnn =
     case typeAnn of
         GenericType val ->
-            Pretty.string val
+            Token.statement val
 
         Typed fqName anns ->
             prettyTyped fqName anns
 
         Unit ->
-            Pretty.string "()"
+            Token.statement "()"
 
         Tupled anns ->
             prettyTupled anns
@@ -1434,7 +1453,7 @@ prettyTypeAnnotation typeAnn =
             prettyFunctionTypeAnnotation fromAnn toAnn
 
 
-prettyTyped : Node ( ModuleName, String ) -> List (Node TypeAnnotation) -> Doc
+prettyTyped : Node ( ModuleName, String ) -> List (Node TypeAnnotation) -> Doc Token
 prettyTyped fqName anns =
     let
         ( moduleName, typeName ) =
@@ -1442,7 +1461,7 @@ prettyTyped fqName anns =
 
         typeDoc =
             prettyModuleNameDot moduleName
-                |> Pretty.a (Pretty.string typeName)
+                |> Pretty.a (Token.type_ typeName)
 
         argsDoc =
             List.map prettyTypeAnnotationParens (denodeAll anns)
@@ -1454,7 +1473,7 @@ prettyTyped fqName anns =
         |> Pretty.words
 
 
-prettyTupled : List (Node TypeAnnotation) -> Doc
+prettyTupled : List (Node TypeAnnotation) -> Doc Token
 prettyTupled anns =
     Pretty.space
         |> Pretty.a
@@ -1465,7 +1484,7 @@ prettyTupled anns =
         |> Pretty.parens
 
 
-prettyTypeAnnotationParens : TypeAnnotation -> Doc
+prettyTypeAnnotationParens : TypeAnnotation -> Doc Token
 prettyTypeAnnotationParens typeAnn =
     if isNakedCompound typeAnn then
         prettyTypeAnnotation typeAnn |> Pretty.parens
@@ -1474,7 +1493,7 @@ prettyTypeAnnotationParens typeAnn =
         prettyTypeAnnotation typeAnn
 
 
-prettyRecord : List RecordField -> Doc
+prettyRecord : List RecordField -> Doc Token
 prettyRecord fields =
     let
         open =
@@ -1496,12 +1515,12 @@ prettyRecord fields =
                 |> Pretty.group
 
 
-prettyGenericRecord : String -> List RecordField -> Doc
+prettyGenericRecord : String -> List RecordField -> Doc Token
 prettyGenericRecord paramName fields =
     let
         open =
             [ Pretty.string "{"
-            , Pretty.string paramName
+            , Token.statement paramName
             ]
                 |> Pretty.words
                 |> Pretty.a Pretty.line
@@ -1536,9 +1555,9 @@ prettyGenericRecord paramName fields =
                 |> Pretty.group
 
 
-prettyFieldTypeAnn : ( String, TypeAnnotation ) -> Doc
+prettyFieldTypeAnn : ( String, TypeAnnotation ) -> Doc Token
 prettyFieldTypeAnn ( name, ann ) =
-    [ [ Pretty.string name
+    [ [ Token.statement name
       , Pretty.string ":"
       ]
         |> Pretty.words
@@ -1549,10 +1568,10 @@ prettyFieldTypeAnn ( name, ann ) =
         |> Pretty.group
 
 
-prettyFunctionTypeAnnotation : Node TypeAnnotation -> Node TypeAnnotation -> Doc
+prettyFunctionTypeAnnotation : Node TypeAnnotation -> Node TypeAnnotation -> Doc Token
 prettyFunctionTypeAnnotation left right =
     let
-        expandLeft : TypeAnnotation -> Doc
+        expandLeft : TypeAnnotation -> Doc Token
         expandLeft ann =
             case ann of
                 FunctionTypeAnnotation _ _ ->
@@ -1561,7 +1580,7 @@ prettyFunctionTypeAnnotation left right =
                 _ ->
                     prettyTypeAnnotation ann
 
-        expandRight : TypeAnnotation -> List Doc
+        expandRight : TypeAnnotation -> List (Doc Token)
         expandRight ann =
             case ann of
                 FunctionTypeAnnotation innerLeft innerRight ->
@@ -1570,7 +1589,7 @@ prettyFunctionTypeAnnotation left right =
                 _ ->
                     [ prettyTypeAnnotation ann ]
 
-        innerFnTypeAnn : Node TypeAnnotation -> Node TypeAnnotation -> List Doc
+        innerFnTypeAnn : Node TypeAnnotation -> Node TypeAnnotation -> List (Doc Token)
         innerFnTypeAnn innerLeft innerRight =
             let
                 rightSide =
@@ -1619,7 +1638,7 @@ isNakedCompound typeAnn =
 --== Helpers
 
 
-prettyMaybe : (a -> Doc) -> Maybe a -> Doc
+prettyMaybe : (a -> Doc Token) -> Maybe a -> Doc Token
 prettyMaybe prettyFn maybeVal =
     Maybe.map prettyFn maybeVal
         |> Maybe.withDefault Pretty.empty
@@ -1638,32 +1657,32 @@ decrementIndent currentIndent spaces =
         modded
 
 
-dot : Doc
+dot : Doc Token
 dot =
     Pretty.string "."
 
 
-quotes : Doc -> Doc
+quotes : Doc Token -> Doc Token
 quotes doc =
-    Pretty.surround (Pretty.char '"') (Pretty.char '"') doc
+    Pretty.surround (Token.literal "\"") (Token.literal "\"") doc
 
 
-tripleQuotes : Doc -> Doc
+tripleQuotes : Doc Token -> Doc Token
 tripleQuotes doc =
-    Pretty.surround (Pretty.string "\"\"\"") (Pretty.string "\"\"\"") doc
+    Pretty.surround (Token.literal "\"\"\"") (Token.literal "\"\"\"") doc
 
 
-singleQuotes : Doc -> Doc
+singleQuotes : Doc Token -> Doc Token
 singleQuotes doc =
-    Pretty.surround (Pretty.char '\'') (Pretty.char '\'') doc
+    Pretty.surround (Token.literal "'") (Token.literal "'") doc
 
 
-sqParens : Doc -> Doc
+sqParens : Doc Token -> Doc Token
 sqParens doc =
     Pretty.surround (Pretty.string "[") (Pretty.string "]") doc
 
 
-doubleLines : List Doc -> Doc
+doubleLines : List (Doc Token) -> Doc Token
 doubleLines =
     Pretty.join (Pretty.a Pretty.line Pretty.line)
 
@@ -1696,7 +1715,7 @@ escapeChar val =
             String.fromChar c
 
 
-optionalGroup : Bool -> Doc -> Doc
+optionalGroup : Bool -> Doc Token -> Doc Token
 optionalGroup flag doc =
     if flag then
         doc
@@ -1705,7 +1724,7 @@ optionalGroup flag doc =
         Pretty.group doc
 
 
-optionalParens : Bool -> Doc -> Doc
+optionalParens : Bool -> Doc Token -> Doc Token
 optionalParens flag doc =
     if flag then
         Pretty.parens doc

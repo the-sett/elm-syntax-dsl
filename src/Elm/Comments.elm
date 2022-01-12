@@ -35,6 +35,7 @@ can be extracted to order the exposing clause by.
 
 import Parser exposing (Parser)
 import Pretty exposing (Doc)
+import Elm.Token exposing (Token)
 
 
 type DocComment
@@ -199,7 +200,7 @@ mergeDocTags innerParts =
             DocTags (List.sort tags) :: partsExceptMaybeFirst
 
 
-prettyCommentPart : CommentPart -> Doc
+prettyCommentPart : CommentPart -> Doc Token
 prettyCommentPart part =
     case part of
         Markdown val ->
@@ -218,7 +219,7 @@ prettyMarkdown val =
     -- Why is softline so slow?
     Pretty.string val
         |> Pretty.a Pretty.line
-        |> Pretty.a Pretty.line
+        -- |> Pretty.a Pretty.line
 
 
 prettyCode val =
@@ -232,6 +233,7 @@ prettyTags tags =
         |> Pretty.join (Pretty.string ", ")
     ]
         |> Pretty.words
+        |> Pretty.a Pretty.line
 
 
 partToStringAndTags : Int -> CommentPart -> ( String, List String )
@@ -259,7 +261,7 @@ fileCommentParser =
         |> Parser.map (\val -> Comment [ Markdown val ])
 
 
-delimiters : Doc -> Doc
+delimiters : Doc Token -> Doc Token
 delimiters doc =
     Pretty.string "{-| "
         |> Pretty.a doc
