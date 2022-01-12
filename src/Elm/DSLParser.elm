@@ -17,7 +17,7 @@ determine how to lay out exposing lists to match.
 --exposing ((|.), (|=))
 
 import Elm.CodeGen as CG exposing (Declaration, File)
-import Elm.CommentBuilder as Comments exposing (Comment, CommentPart(..))
+import Elm.Comments as Comments exposing (Comment, CommentPart(..))
 import Elm.Parser
 import Elm.Processing
 import Elm.Syntax.Declaration as ESD

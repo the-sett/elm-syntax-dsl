@@ -1,4 +1,4 @@
-module Elm.CommentBuilder exposing
+module Elm.Comments exposing
     ( Comment(..), CommentPart(..), DocComment, FileComment
     , emptyComment, addPart
     )
