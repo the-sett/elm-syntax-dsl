@@ -1,3 +1,4 @@
 elm-stuff/
 node_modules/
 test/src/elm.js
+.tool-versions
