@@ -583,7 +583,7 @@ unit =
 -}
 apply : List Expression -> Expression
 apply exprs =
-    Application (nodifyAll exprs)
+    Application (Util.nodifyAndParentifyAll 10 Left exprs)
 
 
 {-| Apply a named constructor to a list of arguments.
@@ -692,6 +692,9 @@ tuple exprs =
 
 
 {-| ParenthesizedExpression (Node Expression)
+
+Note: elm-syntax-dsl should insert parentheses automatically in relevant places, however this can still be useful in corner cases.
+
 -}
 parens : Expression -> Expression
 parens expr =
@@ -766,7 +769,7 @@ list exprs =
 -}
 access : Expression -> String -> Expression
 access expr selector =
-    RecordAccess (nodify expr) (nodify selector)
+    RecordAccess (nodify (Util.parentify 10 Left expr)) (nodify selector)
 
 
 {-| RecordAccessFunction String
@@ -1021,8 +1024,8 @@ Yields:
 
 -}
 applyBinOp : Expression -> BinOp -> Expression -> Expression
-applyBinOp exprl (BinOp symbol dir _) exprr =
-    OperatorApplication symbol dir (nodify exprl) (nodify exprr)
+applyBinOp exprl (BinOp symbol dir precedence) exprr =
+    OperatorApplication symbol dir (nodify (Util.parentify precedence dir exprl)) (nodify (Util.parentify precedence dir exprr))
 
 
 {-| There is only one unary operator in Elm, and that is the minus sign prefixed
