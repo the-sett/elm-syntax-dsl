@@ -26,6 +26,35 @@ zeroed out source code position information. As the purpose of this package is c
 of Elm from scratch, rather than the analysis or manipulation of existing Elm, it is ok to
 have the source code positional information zeroed out.
 
+### Automatic insertion of parenthesis.
+
+Parenthesis are inserted into code automatically if they are required by the precedence
+rules of Elm syntax. Note that this is done at the `Expression` level, as expressions
+are built, rather than during pretty printing.
+
+```
+import Elm.CodeGen as CodeGen
+import Elm.Pretty
+import Pretty
+
+expr =
+    CodeGen.apply
+        [ CodeGen.val "map"
+        , CodeGen.construct "C" []
+        , CodeGen.apply [ CodeGen.val "foo", CodeGen.val "arg" ]
+        ]
+
+
+result =
+    Elm.Pretty.prettyExpression expr |> Pretty.pretty 120
+```
+
+Will print the result:
+
+```    
+map C (foo arg)
+```
+
 ## Pretty printing stable under `elm-format`.
 
 The pretty printer aims to be fully stable with respect to `elm-format` in the sense that
