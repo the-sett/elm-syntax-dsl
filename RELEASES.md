@@ -1,3 +1,10 @@
+## Version 6.0.1
+
+Expressions now automatically add parenthesis where they are needed, so there
+is no longer any need to explicitly use `Elm.CodeGen.parens`. When adding an
+`Expression` into another `Expression`, the parenthesis will be added if the
+precedence rules of Elm require it.
+
 ## Version 6.0.0
 
 Upgraded to `the-sett/elm-pretty-printer` version 3.0.0. This tags parts
