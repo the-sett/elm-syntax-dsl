@@ -940,7 +940,7 @@ equals =
 -}
 notEqual : BinOp
 notEqual =
-    BinOp "1/" infixLeft 4
+    BinOp "/=" infixLeft 4
 
 
 {-| The less-than operator `<`.
