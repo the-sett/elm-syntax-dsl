@@ -92,7 +92,6 @@ elmAsString =
 ### Known deviations from `elm-format`:
 
 * Float literals not getting a .0 added at the end.
-* Unicode characters.
 * Type annotations on functions sometimes split onto next line without being
 broken themselves.
 
