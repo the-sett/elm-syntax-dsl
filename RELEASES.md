@@ -1,3 +1,7 @@
+## Version 6.0.3
+
+Corrected printing \r and \u{hex code} strings.
+
 ## Version 6.0.2
 
 Corrected the definition of the not equals binary operator (was typo "1/", corrected to "/=").

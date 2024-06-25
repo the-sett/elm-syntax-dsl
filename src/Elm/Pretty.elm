@@ -85,6 +85,7 @@ import Hex
 import ImportsAndExposing
 import Parser exposing (Parser)
 import Pretty exposing (Doc)
+import Unicode
 import Util exposing (denode, denodeAll, denodeMaybe, nodify, nodifyAll)
 
 
@@ -1788,6 +1789,61 @@ escape val =
         |> String.replace "\"" "\\\""
         |> String.replace "\n" "\\n"
         |> String.replace "\t" "\\t"
+        |> String.replace "\u{000D}" "\\u{000D}"
+        |> hexEscapeNonPrintCharacters
+
+
+hexEscapeNonPrintCharacters : String -> String
+hexEscapeNonPrintCharacters val =
+    val
+        |> String.toList
+        |> List.map
+            (\character ->
+                if characterIsPrint character then
+                    "\\u{" ++ characterHex character ++ "}"
+
+                else
+                    String.fromChar character
+            )
+        |> String.concat
+
+
+characterHex : Char -> String
+characterHex character =
+    String.toUpper (Hex.toString (Char.toCode character))
+
+
+characterIsPrint : Char -> Bool
+characterIsPrint character =
+    case Unicode.getCategory character of
+        Nothing ->
+            False
+
+        Just category ->
+            case category of
+                Unicode.SeparatorLine ->
+                    True
+
+                Unicode.SeparatorParagraph ->
+                    True
+
+                Unicode.OtherControl ->
+                    True
+
+                Unicode.OtherFormat ->
+                    True
+
+                Unicode.OtherSurrogate ->
+                    True
+
+                Unicode.OtherPrivateUse ->
+                    True
+
+                Unicode.OtherNotAssigned ->
+                    True
+
+                _ ->
+                    False
 
 
 escapeChar : Char -> String
