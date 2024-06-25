@@ -1793,6 +1793,32 @@ escape val =
         |> hexEscapeNonPrintCharacters
 
 
+escapeChar : Char -> String
+escapeChar character =
+    case character of
+        '\\' ->
+            "\\\\"
+
+        '\'' ->
+            "\\'"
+
+        '\t' ->
+            "\\t"
+
+        '\n' ->
+            "\\n"
+
+        '\u{000D}' ->
+            "\\u{000D}"
+
+        otherCharacter ->
+            if characterIsPrint otherCharacter then
+                "\\u{" ++ characterHex otherCharacter ++ "}"
+
+            else
+                String.fromChar otherCharacter
+
+
 hexEscapeNonPrintCharacters : String -> String
 hexEscapeNonPrintCharacters val =
     val
@@ -1844,25 +1870,6 @@ characterIsPrint character =
 
                 _ ->
                     False
-
-
-escapeChar : Char -> String
-escapeChar val =
-    case val of
-        '\\' ->
-            "\\\\"
-
-        '\'' ->
-            "\\'"
-
-        '\t' ->
-            "\\t"
-
-        '\n' ->
-            "\\n"
-
-        c ->
-            String.fromChar c
 
 
 optionalGroup : Bool -> Doc Tag -> Doc Tag

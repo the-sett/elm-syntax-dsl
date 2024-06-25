@@ -1,6 +1,6 @@
 ## Version 6.0.3
 
-Corrected printing \r and \u{hex code} strings.
+Corrected printing \r and \u{hex code} strings and characters.
 
 ## Version 6.0.2
 
