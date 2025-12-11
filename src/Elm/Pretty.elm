@@ -1086,10 +1086,10 @@ prettyOperatorApplicationLeft indent symbol _ exprl exprr =
             }
 
         ( prettyExpressionLeft, alwaysBreakLeft ) =
-            prettyExpressionInner context 4 (denode exprl)
+            prettyExpressionInner context indent (denode exprl)
 
         ( prettyExpressionRight, alwaysBreakRight ) =
-            prettyExpressionInner context 4 (denode exprr)
+            prettyExpressionInner context indent (denode exprr)
 
         alwaysBreak =
             alwaysBreakLeft || alwaysBreakRight
@@ -1099,7 +1099,7 @@ prettyOperatorApplicationLeft indent symbol _ exprl exprr =
       ]
         |> Pretty.lines
         |> optionalGroup alwaysBreak
-        |> Pretty.nest 4
+        |> Pretty.nest indent
     , alwaysBreak
     )
 
@@ -1173,16 +1173,19 @@ prettyIfBlock indent exprBool exprTrue exprFalse =
                         ( prettyBoolExpr, alwaysBreak ) =
                             prettyExpressionInner topContext 4 (denode innerExprBool)
                     in
-                    [ [ keyword "if"
-                      , prettyExpressionInner topContext 4 (denode innerExprBool) |> Tuple.first
-                      ]
-                        |> Pretty.lines
-                        |> optionalGroup alwaysBreak
-                        |> Pretty.nest indent
-                    , keyword "then"
-                    ]
-                        |> Pretty.lines
-                        |> optionalGroup alwaysBreak
+                    if alwaysBreak then
+                        [ keyword "if"
+                        , prettyBoolExpr |> Pretty.indent indent
+                        , keyword "then"
+                        ]
+                            |> Pretty.lines
+
+                    else
+                        [ keyword "if"
+                        , prettyBoolExpr
+                        , keyword "then"
+                        ]
+                            |> Pretty.words
 
                 truePart =
                     prettyExpressionInner topContext 4 (denode innerExprTrue)
@@ -2140,8 +2143,12 @@ prettyCommentPart part =
 
 
 prettyMarkdown val =
-    Pretty.string val
-        |> Pretty.a Pretty.line
+    if String.trim val == "" then
+        Pretty.empty
+
+    else
+        Pretty.string val
+            |> Pretty.a Pretty.line
 
 
 prettyCode val =
@@ -2187,5 +2194,4 @@ delimiters : Doc Tag -> Doc Tag
 delimiters doc =
     Pretty.string "{-| "
         |> Pretty.a doc
-        |> Pretty.a Pretty.line
         |> Pretty.a (Pretty.string "-}")
