@@ -975,6 +975,19 @@ adjustExpressionParentheses context expression =
                             ( False, False ) ->
                                 True
 
+                -- CRITICAL: When on RHS of <| (isLeftPipe = True), we must NOT remove
+                -- parens around operator applications like |> chains.
+                -- f <| (a |> b) is NOT the same as f <| a |> b
+                OperatorApplication _ _ _ _ ->
+                    if context.isLeftPipe then
+                        False
+
+                    else if context.isTop then
+                        True
+
+                    else
+                        False
+
                 _ ->
                     case ( context.isTop, context.isLeftPipe, expr ) of
                         ( True, _, _ ) ->

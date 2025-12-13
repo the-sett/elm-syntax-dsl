@@ -40,6 +40,7 @@ suite =
         , typeAnnotationTests
         , declarationTests
         , parenthesesTests
+        , pipeComboFuzzTests
         , hexAndNumericTests
         , escapeSequenceTests
         , complexPatternTests
@@ -1288,8 +1289,354 @@ parenthesesTests =
                         , ( CG.namedPattern "Nothing" [], CG.val "default" )
                         ]
                     )
+
+        -- Critical bug case: f <| (a |> b |> c) must preserve parens
+        , test "CRITICAL: f <| (a |> b |> c) parens must be preserved" <|
+            \_ ->
+                -- D.dullyellow <| (D.fromChars "type " |> D.plus (D.fromName name) |> D.plus ...)
+                -- The parens around the |> chain are essential when used as RHS of <|
+                roundTripExpr "pipel with piper chain"
+                    (CG.applyBinOp
+                        (CG.apply [ CG.fqVal [ "D" ] "dullyellow" ])
+                        CG.pipel
+                        (CG.parens
+                            (CG.applyBinOp
+                                (CG.applyBinOp
+                                    (CG.apply [ CG.fqVal [ "D" ] "fromChars", CG.string "type " ])
+                                    CG.piper
+                                    (CG.apply [ CG.fqVal [ "D" ] "plus", CG.parens (CG.apply [ CG.fqVal [ "D" ] "fromName", CG.val "name" ]) ])
+                                )
+                                CG.piper
+                                (CG.apply
+                                    [ CG.fqVal [ "D" ] "plus"
+                                    , CG.parens
+                                        (CG.apply
+                                            [ CG.fqVal [ "List" ] "foldr"
+                                            , CG.fqVal [ "D" ] "plus"
+                                            , CG.parens (CG.apply [ CG.fqVal [ "D" ] "fromChars", CG.string "=" ])
+                                            , CG.parens (CG.apply [ CG.fqVal [ "List" ] "map", CG.fqVal [ "D" ] "fromName", CG.val "args" ])
+                                            ]
+                                        )
+                                    ]
+                                )
+                            )
+                        )
+                    )
+
+        -- Simpler versions of the same pattern
+        , test "f <| (a |> b) requires parens" <|
+            \_ ->
+                roundTripExpr "pipel piper simple"
+                    (CG.applyBinOp
+                        (CG.val "f")
+                        CG.pipel
+                        (CG.parens (CG.applyBinOp (CG.val "a") CG.piper (CG.val "b")))
+                    )
+        , test "f <| (a |> b |> c) requires parens" <|
+            \_ ->
+                roundTripExpr "pipel piper chain"
+                    (CG.applyBinOp
+                        (CG.val "f")
+                        CG.pipel
+                        (CG.parens
+                            (CG.applyBinOp
+                                (CG.applyBinOp (CG.val "a") CG.piper (CG.val "b"))
+                                CG.piper
+                                (CG.val "c")
+                            )
+                        )
+                    )
+        , test "f <| (a |> b |> c |> d) requires parens" <|
+            \_ ->
+                roundTripExpr "pipel piper long chain"
+                    (CG.applyBinOp
+                        (CG.val "f")
+                        CG.pipel
+                        (CG.parens
+                            (CG.applyBinOp
+                                (CG.applyBinOp
+                                    (CG.applyBinOp (CG.val "a") CG.piper (CG.val "b"))
+                                    CG.piper
+                                    (CG.val "c")
+                                )
+                                CG.piper
+                                (CG.val "d")
+                            )
+                        )
+                    )
+        , test "f <| g <| (a |> b) requires parens on inner" <|
+            \_ ->
+                roundTripExpr "double pipel with piper"
+                    (CG.applyBinOp
+                        (CG.val "f")
+                        CG.pipel
+                        (CG.applyBinOp
+                            (CG.val "g")
+                            CG.pipel
+                            (CG.parens (CG.applyBinOp (CG.val "a") CG.piper (CG.val "b")))
+                        )
+                    )
+        , test "(a |> b) <| x requires parens on left" <|
+            \_ ->
+                roundTripExpr "piper then pipel"
+                    (CG.applyBinOp
+                        (CG.parens (CG.applyBinOp (CG.val "a") CG.piper (CG.val "b")))
+                        CG.pipel
+                        (CG.val "x")
+                    )
+        , test "f (a |> b |> c) requires parens in application" <|
+            \_ ->
+                roundTripExpr "apply with piper chain"
+                    (CG.apply
+                        [ CG.val "f"
+                        , CG.parens
+                            (CG.applyBinOp
+                                (CG.applyBinOp (CG.val "a") CG.piper (CG.val "b"))
+                                CG.piper
+                                (CG.val "c")
+                            )
+                        ]
+                    )
+
+        -- Tests that explicitly check the printed output contains parens
+        , test "OUTPUT CHECK: f <| (a |> b) must have paren after <|" <|
+            \_ ->
+                checkPrintedContains "(<| with |> must have paren)"
+                    (CG.applyBinOp
+                        (CG.val "f")
+                        CG.pipel
+                        (CG.parens (CG.applyBinOp (CG.val "a") CG.piper (CG.val "b")))
+                    )
+                    "<|\n        (a"
+        , test "OUTPUT CHECK: f <| (a |> b |> c) must have opening paren" <|
+            \_ ->
+                checkPrintedContains "(<| with |> chain must have paren)"
+                    (CG.applyBinOp
+                        (CG.val "f")
+                        CG.pipel
+                        (CG.parens
+                            (CG.applyBinOp
+                                (CG.applyBinOp (CG.val "a") CG.piper (CG.val "b"))
+                                CG.piper
+                                (CG.val "c")
+                            )
+                        )
+                    )
+                    "(a"
         ]
 
+
+{-| Check that the pretty-printed output contains a specific substring.
+-}
+checkPrintedContains : String -> Expression -> String -> Expect.Expectation
+checkPrintedContains label expr expectedSubstring =
+    let
+        file =
+            wrapExprInFile expr
+
+        printed =
+            prettyPrintFile file
+    in
+    if String.contains expectedSubstring printed then
+        Expect.pass
+
+    else
+        Expect.fail
+            ("Expected output to contain: "
+                ++ expectedSubstring
+                ++ "\n\nActual output:\n"
+                ++ printed
+            )
+
+
+-- ============================================================================
+-- Fuzz tests for <| and |> combinations
+-- ============================================================================
+
+
+pipeComboFuzzTests : Test
+pipeComboFuzzTests =
+    describe "Fuzz: Pipe operator combinations"
+        [ fuzz pipeLeftWithPipeRightChain "f <| (a |> b |> ...) preserves parens" <|
+            \expr ->
+                roundTripExpr "fuzz pipel piper" expr
+        , fuzz pipeRightThenPipeLeft "(a |> b) <| x preserves parens" <|
+            \expr ->
+                roundTripExpr "fuzz piper pipel" expr
+        , fuzz nestedPipeLeftWithPipeRight "f <| g <| (a |> b) preserves parens" <|
+            \expr ->
+                roundTripExpr "fuzz nested pipel piper" expr
+        , fuzz mixedPipeChain "mixed pipe chains preserve structure" <|
+            \expr ->
+                roundTripExpr "fuzz mixed pipes" expr
+        , fuzz pipeRightChainInApplication "f (a |> b |> c) preserves parens" <|
+            \expr ->
+                roundTripExpr "fuzz piper in apply" expr
+        , fuzz pipeLeftWithComplexRhs "f <| (complex |> chain) preserves parens" <|
+            \expr ->
+                roundTripExpr "fuzz pipel complex rhs" expr
+        ]
+
+
+{-| Generate: f <| (a |> b |> c |> ...)
+The parens are critical here because without them the expression is ambiguous.
+-}
+pipeLeftWithPipeRightChain : Fuzzer Expression
+pipeLeftWithPipeRightChain =
+    Fuzz.map2
+        (\fnName chainLength ->
+            let
+                -- Build a |> chain: a |> b |> c |> ...
+                pipeRightChain =
+                    List.range 1 chainLength
+                        |> List.foldl
+                            (\i acc ->
+                                CG.applyBinOp acc CG.piper (CG.val ("step" ++ String.fromInt i))
+                            )
+                            (CG.val "start")
+            in
+            CG.applyBinOp
+                (CG.val fnName)
+                CG.pipel
+                (CG.parens pipeRightChain)
+        )
+        Fuzzers.identifier
+        (Fuzz.intRange 1 4)
+
+
+{-| Generate: (a |> b) <| x
+-}
+pipeRightThenPipeLeft : Fuzzer Expression
+pipeRightThenPipeLeft =
+    Fuzz.map3
+        (\a b x ->
+            CG.applyBinOp
+                (CG.parens (CG.applyBinOp (CG.val a) CG.piper (CG.val b)))
+                CG.pipel
+                (CG.val x)
+        )
+        Fuzzers.identifier
+        Fuzzers.identifier
+        Fuzzers.identifier
+
+
+{-| Generate: f <| g <| (a |> b)
+-}
+nestedPipeLeftWithPipeRight : Fuzzer Expression
+nestedPipeLeftWithPipeRight =
+    Fuzz.map4
+        (\f g a b ->
+            CG.applyBinOp
+                (CG.val f)
+                CG.pipel
+                (CG.applyBinOp
+                    (CG.val g)
+                    CG.pipel
+                    (CG.parens (CG.applyBinOp (CG.val a) CG.piper (CG.val b)))
+                )
+        )
+        Fuzzers.identifier
+        Fuzzers.identifier
+        Fuzzers.identifier
+        Fuzzers.identifier
+
+
+{-| Generate various mixed pipe patterns
+-}
+mixedPipeChain : Fuzzer Expression
+mixedPipeChain =
+    Fuzz.oneOf
+        [ -- f <| (a |> b)
+          Fuzz.map3
+            (\f a b ->
+                CG.applyBinOp (CG.val f) CG.pipel (CG.parens (CG.applyBinOp (CG.val a) CG.piper (CG.val b)))
+            )
+            Fuzzers.identifier
+            Fuzzers.identifier
+            Fuzzers.identifier
+        , -- (f <| a) |> b
+          Fuzz.map3
+            (\f a b ->
+                CG.applyBinOp (CG.parens (CG.applyBinOp (CG.val f) CG.pipel (CG.val a))) CG.piper (CG.val b)
+            )
+            Fuzzers.identifier
+            Fuzzers.identifier
+            Fuzzers.identifier
+        , -- f <| (a |> b |> c)
+          Fuzz.map4
+            (\f a b c ->
+                CG.applyBinOp
+                    (CG.val f)
+                    CG.pipel
+                    (CG.parens (CG.applyBinOp (CG.applyBinOp (CG.val a) CG.piper (CG.val b)) CG.piper (CG.val c)))
+            )
+            Fuzzers.identifier
+            Fuzzers.identifier
+            Fuzzers.identifier
+            Fuzzers.identifier
+        , -- (a |> b) <| (c |> d)
+          Fuzz.map4
+            (\a b c d ->
+                CG.applyBinOp
+                    (CG.parens (CG.applyBinOp (CG.val a) CG.piper (CG.val b)))
+                    CG.pipel
+                    (CG.parens (CG.applyBinOp (CG.val c) CG.piper (CG.val d)))
+            )
+            Fuzzers.identifier
+            Fuzzers.identifier
+            Fuzzers.identifier
+            Fuzzers.identifier
+        ]
+
+
+{-| Generate: f (a |> b |> c)
+Pipe chain as argument to function application.
+-}
+pipeRightChainInApplication : Fuzzer Expression
+pipeRightChainInApplication =
+    Fuzz.map2
+        (\fnName chainLength ->
+            let
+                pipeRightChain =
+                    List.range 1 chainLength
+                        |> List.foldl
+                            (\i acc ->
+                                CG.applyBinOp acc CG.piper (CG.val ("fn" ++ String.fromInt i))
+                            )
+                            (CG.val "input")
+            in
+            CG.apply [ CG.val fnName, CG.parens pipeRightChain ]
+        )
+        Fuzzers.identifier
+        (Fuzz.intRange 1 3)
+
+
+{-| Generate: f <| (expr |> g |> h) with more complex inner expressions
+-}
+pipeLeftWithComplexRhs : Fuzzer Expression
+pipeLeftWithComplexRhs =
+    Fuzz.map3
+        (\fnName innerExpr chainLength ->
+            let
+                pipeRightChain =
+                    List.range 1 chainLength
+                        |> List.foldl
+                            (\i acc ->
+                                CG.applyBinOp acc CG.piper (CG.val ("transform" ++ String.fromInt i))
+                            )
+                            innerExpr
+            in
+            CG.applyBinOp (CG.val fnName) CG.pipel (CG.parens pipeRightChain)
+        )
+        Fuzzers.identifier
+        (Fuzz.oneOf
+            [ Fuzz.map (\s -> CG.string s) (Fuzz.constant "test")
+            , Fuzz.map (\n -> CG.int n) (Fuzz.intRange 0 100)
+            , Fuzz.map (\name -> CG.apply [ CG.val "fn", CG.val name ]) Fuzzers.identifier
+            , Fuzz.map (\name -> CG.record [ ( "x", CG.val name ) ]) Fuzzers.identifier
+            ]
+        )
+        (Fuzz.intRange 1 3)
 
 
 -- ============================================================================
