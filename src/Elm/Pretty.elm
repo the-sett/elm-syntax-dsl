@@ -726,14 +726,14 @@ prettySignature sig =
         nameDoc =
             signature (denode sig.name)
 
-        typeDoc =
-            prettyTypeAnnotation (denode sig.typeAnnotation)
+        ( typeDocFlat, typeDocBroken ) =
+            prettyTypeAnnotationParts (denode sig.typeAnnotation)
 
         flat =
             Pretty.words
                 [ nameDoc
                 , Pretty.string ":"
-                , typeDoc
+                , typeDocFlat
                 ]
 
         broken =
@@ -741,7 +741,7 @@ prettySignature sig =
                 [ nameDoc
                 , Pretty.string ":"
                 ]
-            , typeDoc |> Pretty.indent 4
+            , typeDocBroken |> Pretty.indent 4
             ]
                 |> Pretty.lines
     in
@@ -1699,6 +1699,23 @@ prettyTypeAnnotation typeAnn =
             prettyFunctionTypeAnnotation fromAnn toAnn
 
 
+{-| Returns both flat and broken versions of a type annotation.
+For function types, the broken version has each arrow on its own line.
+-}
+prettyTypeAnnotationParts : TypeAnnotation -> ( Doc Tag, Doc Tag )
+prettyTypeAnnotationParts typeAnn =
+    case typeAnn of
+        FunctionTypeAnnotation fromAnn toAnn ->
+            prettyFunctionTypeAnnotationParts fromAnn toAnn
+
+        _ ->
+            let
+                doc =
+                    prettyTypeAnnotation typeAnn
+            in
+            ( doc, doc )
+
+
 prettyTyped : Node ( ModuleName, String ) -> List (Node TypeAnnotation) -> Doc Tag
 prettyTyped fqName anns =
     let
@@ -1843,6 +1860,56 @@ prettyFunctionTypeAnnotation left right =
     innerFnTypeAnn left right
         |> Pretty.lines
         |> Pretty.group
+
+
+{-| Returns both flat and broken versions of a function type annotation.
+-}
+prettyFunctionTypeAnnotationParts : Node TypeAnnotation -> Node TypeAnnotation -> ( Doc Tag, Doc Tag )
+prettyFunctionTypeAnnotationParts left right =
+    let
+        expandLeft : TypeAnnotation -> Doc Tag
+        expandLeft ann =
+            case ann of
+                FunctionTypeAnnotation _ _ ->
+                    prettyTypeAnnotationParens ann
+
+                _ ->
+                    prettyTypeAnnotation ann
+
+        expandRight : TypeAnnotation -> List (Doc Tag)
+        expandRight ann =
+            case ann of
+                FunctionTypeAnnotation innerLeft innerRight ->
+                    innerFnTypeAnn innerLeft innerRight
+
+                _ ->
+                    [ prettyTypeAnnotation ann ]
+
+        innerFnTypeAnn : Node TypeAnnotation -> Node TypeAnnotation -> List (Doc Tag)
+        innerFnTypeAnn innerLeft innerRight =
+            let
+                rightSide =
+                    denode innerRight |> expandRight
+            in
+            case rightSide of
+                hd :: tl ->
+                    (denode innerLeft |> expandLeft)
+                        :: ([ Pretty.string "->", hd ] |> Pretty.words)
+                        :: tl
+
+                [] ->
+                    []
+
+        parts =
+            innerFnTypeAnn left right
+
+        flat =
+            parts |> Pretty.join (Pretty.string " ")
+
+        broken =
+            parts |> Pretty.lines
+    in
+    ( flat, broken )
 
 
 {-| A type annotation is a naked compound if it is made up of multiple parts that
