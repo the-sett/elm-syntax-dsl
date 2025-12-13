@@ -1196,58 +1196,37 @@ prettyOperatorApplicationLeft indent symbol _ exprl exprr =
             , isLeftPipe = True
             }
 
-        ( prettyExpressionLeft, alwaysBreakLeft ) =
+        ( prettyLhs, alwaysBreakLeft ) =
             prettyExpressionInner context indent (denode exprl)
 
-        ( prettyExpressionRight, alwaysBreakRight ) =
+        ( prettyRhs, alwaysBreakRight ) =
             prettyExpressionInner context indent (denode exprr)
 
-        flatSep =
-            -- " <| " in flat mode
-            Pretty.space
-                |> Pretty.a (operator symbol)
-                |> Pretty.a Pretty.space
+        -- LHS with operator placement decision.
+        -- Inner group decides placement based on whether LHS breaks:
+        --   Flat:   " <|" (trailing)
+        --   Broken: "\n<|" (leading, at base column)
+        lhsWithOpPlacement =
+            Pretty.group
+                (prettyLhs
+                    |> Pretty.a
+                        (Pretty.flatAlt
+                            (Pretty.space |> Pretty.a (operator symbol))
+                            (Pretty.line |> Pretty.a (operator symbol))
+                        )
+                )
 
-        -- When LHS is multi-line, <| goes at start of its own line
-        brokenSepLeading =
-            Pretty.line
-                |> Pretty.a (operator symbol)
-                |> Pretty.a Pretty.space
-
-        -- When LHS fits on one line but we need to break, <| stays at end
-        brokenSepTrailing =
-            Pretty.space
-                |> Pretty.a (operator symbol)
-                |> Pretty.a Pretty.line
+        -- RHS indented by `indent` from base, with line break before it.
+        -- The line break becomes a space if everything fits on one line,
+        -- or a newline + indent if it needs to break.
+        rhsPart =
+            Pretty.nest indent
+                (Pretty.line |> Pretty.a prettyRhs)
     in
-    if alwaysBreakLeft then
-        -- LHS is multi-line, use leading <| style
-        ( prettyExpressionLeft
-            |> Pretty.a brokenSepLeading
-            |> Pretty.a prettyExpressionRight
-            |> Pretty.nest indent
-        , True
-        )
-
-    else if alwaysBreakRight then
-        -- RHS is multi-line but LHS is flat, use trailing <| style
-        ( prettyExpressionLeft
-            |> Pretty.a brokenSepTrailing
-            |> Pretty.a prettyExpressionRight
-            |> Pretty.nest indent
-        , True
-        )
-
-    else
-        -- Neither is forced to break, let group decide
-        ( Pretty.group
-            (prettyExpressionLeft
-                |> Pretty.a (Pretty.flatAlt flatSep brokenSepTrailing)
-                |> Pretty.a prettyExpressionRight
-            )
-            |> Pretty.nest indent
-        , False
-        )
+    -- IMPORTANT: do NOT wrap the whole thing in Pretty.nest indent
+    ( lhsWithOpPlacement |> Pretty.a rhsPart
+    , alwaysBreakLeft || alwaysBreakRight
+    )
 
 
 prettyOperatorApplicationRight : Int -> String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc Tag, Bool )
