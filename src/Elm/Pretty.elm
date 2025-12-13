@@ -958,61 +958,76 @@ adjustExpressionParentheses context expression =
                     expr
 
         shouldRemove expr =
-            case ( context.isTop, context.isLeftPipe, expr ) of
-                ( True, _, _ ) ->
-                    True
-
-                ( _, True, _ ) ->
-                    True
-
-                ( False, _, Application _ ) ->
-                    if context.precedence < 11 then
-                        True
-
-                    else
+            -- Operators like ++ need parens to be used as values, never remove them
+            case expr of
+                FunctionOrValue _ name ->
+                    if isOperator name then
                         False
 
-                ( False, _, FunctionOrValue _ _ ) ->
-                    True
+                    else
+                        case ( context.isTop, context.isLeftPipe ) of
+                            ( True, _ ) ->
+                                True
 
-                ( False, _, Integer _ ) ->
-                    True
+                            ( _, True ) ->
+                                True
 
-                ( False, _, Hex _ ) ->
-                    True
+                            ( False, False ) ->
+                                True
 
-                ( False, _, Floatable _ ) ->
-                    True
+                _ ->
+                    case ( context.isTop, context.isLeftPipe, expr ) of
+                        ( True, _, _ ) ->
+                            True
 
-                ( False, _, Negation _ ) ->
-                    True
+                        ( _, True, _ ) ->
+                            True
 
-                ( False, _, Literal _ ) ->
-                    True
+                        ( False, _, Application _ ) ->
+                            if context.precedence < 11 then
+                                True
 
-                ( False, _, CharLiteral _ ) ->
-                    True
+                            else
+                                False
 
-                ( False, _, TupledExpression _ ) ->
-                    True
+                        ( False, _, Integer _ ) ->
+                            True
 
-                ( False, _, RecordExpr _ ) ->
-                    True
+                        ( False, _, Hex _ ) ->
+                            True
 
-                ( False, _, ListExpr _ ) ->
-                    True
+                        ( False, _, Floatable _ ) ->
+                            True
 
-                ( False, _, RecordAccess _ _ ) ->
-                    True
+                        ( False, _, Negation _ ) ->
+                            True
 
-                ( False, _, RecordAccessFunction _ ) ->
-                    True
+                        ( False, _, Literal _ ) ->
+                            True
 
-                ( False, _, RecordUpdateExpression _ _ ) ->
-                    True
+                        ( False, _, CharLiteral _ ) ->
+                            True
 
-                ( _, _, _ ) ->
-                    False
+                        ( False, _, TupledExpression _ ) ->
+                            True
+
+                        ( False, _, RecordExpr _ ) ->
+                            True
+
+                        ( False, _, ListExpr _ ) ->
+                            True
+
+                        ( False, _, RecordAccess _ _ ) ->
+                            True
+
+                        ( False, _, RecordAccessFunction _ ) ->
+                            True
+
+                        ( False, _, RecordUpdateExpression _ _ ) ->
+                            True
+
+                        ( _, _, _ ) ->
+                            False
     in
     removeParens expression
         |> addParens
@@ -1175,6 +1190,20 @@ isEndLineOperator op =
             True
 
         _ ->
+            False
+
+
+{-| Check if a name is an operator symbol that requires parentheses when used as a value.
+Operators start with one of these characters and can only be used in infix position
+without parens, so (++) is valid but ++ alone is not.
+-}
+isOperator : String -> Bool
+isOperator name =
+    case String.uncons name of
+        Just ( c, _ ) ->
+            List.member c [ '+', '-', '*', '/', '=', '<', '>', '&', '|', '^', '%', '$', '#', '@', '~', '!', '?', '.', ':', '\\' ]
+
+        Nothing ->
             False
 
 
