@@ -1199,8 +1199,13 @@ prettyOperatorApplicationLeft indent symbol _ exprl exprr =
         ( prettyLhs, alwaysBreakLeft ) =
             prettyExpressionInner context indent (denode exprl)
 
+        -- Always use 4-space indent for <| RHS, regardless of context.
+        -- This matches elm-format behavior where <| chains use consistent 4-space nesting.
+        pipeIndent =
+            4
+
         ( prettyRhs, alwaysBreakRight ) =
-            prettyExpressionInner context indent (denode exprr)
+            prettyExpressionInner context pipeIndent (denode exprr)
 
         -- LHS with operator placement decision.
         -- Inner group decides placement based on whether LHS breaks:
@@ -1216,11 +1221,11 @@ prettyOperatorApplicationLeft indent symbol _ exprl exprr =
                         )
                 )
 
-        -- RHS indented by `indent` from base, with line break before it.
+        -- RHS indented by 4 spaces from base, with line break before it.
         -- The line break becomes a space if everything fits on one line,
-        -- or a newline + indent if it needs to break.
+        -- or a newline + 4-space indent if it needs to break.
         rhsPart =
-            Pretty.nest indent
+            Pretty.nest pipeIndent
                 (Pretty.line |> Pretty.a prettyRhs)
     in
     -- IMPORTANT: do NOT wrap the whole thing in Pretty.nest indent
