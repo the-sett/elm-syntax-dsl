@@ -238,6 +238,17 @@ pretty : Int -> File -> String
 pretty width file =
     prepareLayout width file
         |> Pretty.pretty width
+        |> stripTrailingWhitespace
+
+
+{-| Removes trailing whitespace from each line.
+-}
+stripTrailingWhitespace : String -> String
+stripTrailingWhitespace str =
+    str
+        |> String.lines
+        |> List.map String.trimRight
+        |> String.join "\n"
 
 
 {-| Pretty prints a module definition.
@@ -390,26 +401,45 @@ The exposed values will be de-duplicated and sorted.
 -}
 prettyExposing : Exposing -> Doc Tag
 prettyExposing exposing_ =
-    let
-        exposings =
-            case exposing_ of
-                All _ ->
-                    Pretty.string "(..)"
+    case exposing_ of
+        All _ ->
+            keyword "exposing"
+                |> Pretty.a Pretty.space
+                |> Pretty.a (Pretty.string "(..)")
 
-                Explicit tll ->
+        Explicit tll ->
+            let
+                itemDocs =
                     ImportsAndExposing.sortAndDedupExposings (denodeAll tll)
-                        |> prettyTopLevelExposes
-                        |> Pretty.parens
-    in
-    keyword "exposing"
-        |> Pretty.a Pretty.space
-        |> Pretty.a exposings
+                        |> List.map prettyTopLevelExpose
+
+                flat =
+                    -- flat: "exposing (Foo, Bar)"
+                    keyword "exposing"
+                        |> Pretty.a Pretty.space
+                        |> Pretty.a (Pretty.char '(')
+                        |> Pretty.a (Pretty.join (Pretty.string ", ") itemDocs)
+                        |> Pretty.a (Pretty.char ')')
+
+                broken =
+                    -- broken: "exposing\n    ( Foo\n    , Bar\n    )"
+                    keyword "exposing"
+                        |> Pretty.a
+                            (Pretty.line
+                                |> Pretty.a (Pretty.string "( ")
+                                |> Pretty.a (Pretty.separators ", " itemDocs)
+                                |> Pretty.a Pretty.line
+                                |> Pretty.a (Pretty.string ")")
+                                |> Pretty.nest 4
+                            )
+            in
+            Pretty.group (Pretty.flatAlt flat broken)
 
 
 prettyTopLevelExposes : List TopLevelExpose -> Doc Tag
 prettyTopLevelExposes exposes =
     List.map prettyTopLevelExpose exposes
-        |> Pretty.join (Pretty.string ", ")
+        |> Pretty.separators ", "
 
 
 prettyTopLevelExpose : TopLevelExpose -> Doc Tag
@@ -626,15 +656,30 @@ prettyDocumentation docs =
 -}
 prettySignature : Signature -> Doc Tag
 prettySignature sig =
-    [ [ signature (denode sig.name)
-      , Pretty.string ":"
-      ]
-        |> Pretty.words
-    , prettyTypeAnnotation (denode sig.typeAnnotation)
-    ]
-        |> Pretty.lines
-        |> Pretty.nest 4
-        |> Pretty.group
+    let
+        nameDoc =
+            signature (denode sig.name)
+
+        typeDoc =
+            prettyTypeAnnotation (denode sig.typeAnnotation)
+
+        flat =
+            Pretty.words
+                [ nameDoc
+                , Pretty.string ":"
+                , typeDoc
+                ]
+
+        broken =
+            [ Pretty.words
+                [ nameDoc
+                , Pretty.string ":"
+                ]
+            , typeDoc |> Pretty.indent 4
+            ]
+                |> Pretty.lines
+    in
+    Pretty.group (Pretty.flatAlt flat broken)
 
 
 prettyFunctionImplementation : FunctionImplementation -> Doc Tag
@@ -1091,17 +1136,52 @@ prettyOperatorApplicationLeft indent symbol _ exprl exprr =
         ( prettyExpressionRight, alwaysBreakRight ) =
             prettyExpressionInner context indent (denode exprr)
 
-        alwaysBreak =
-            alwaysBreakLeft || alwaysBreakRight
+        flatSep =
+            -- " <| " in flat mode
+            Pretty.space
+                |> Pretty.a (operator symbol)
+                |> Pretty.a Pretty.space
+
+        -- When LHS is multi-line, <| goes at start of its own line
+        brokenSepLeading =
+            Pretty.line
+                |> Pretty.a (operator symbol)
+                |> Pretty.a Pretty.space
+
+        -- When LHS fits on one line but we need to break, <| stays at end
+        brokenSepTrailing =
+            Pretty.space
+                |> Pretty.a (operator symbol)
+                |> Pretty.a Pretty.line
     in
-    ( [ [ prettyExpressionLeft, operator symbol ] |> Pretty.words
-      , prettyExpressionRight
-      ]
-        |> Pretty.lines
-        |> optionalGroup alwaysBreak
-        |> Pretty.nest indent
-    , alwaysBreak
-    )
+    if alwaysBreakLeft then
+        -- LHS is multi-line, use leading <| style
+        ( prettyExpressionLeft
+            |> Pretty.a brokenSepLeading
+            |> Pretty.a prettyExpressionRight
+            |> Pretty.nest indent
+        , True
+        )
+
+    else if alwaysBreakRight then
+        -- RHS is multi-line but LHS is flat, use trailing <| style
+        ( prettyExpressionLeft
+            |> Pretty.a brokenSepTrailing
+            |> Pretty.a prettyExpressionRight
+            |> Pretty.nest indent
+        , True
+        )
+
+    else
+        -- Neither is forced to break, let group decide
+        ( Pretty.group
+            (prettyExpressionLeft
+                |> Pretty.a (Pretty.flatAlt flatSep brokenSepTrailing)
+                |> Pretty.a prettyExpressionRight
+            )
+            |> Pretty.nest indent
+        , False
+        )
 
 
 prettyOperatorApplicationRight : Int -> String -> InfixDirection -> Node Expression -> Node Expression -> ( Doc Tag, Bool )
@@ -1170,22 +1250,28 @@ prettyIfBlock indent exprBool exprTrue exprFalse =
 
                 ifPart =
                     let
-                        ( prettyBoolExpr, alwaysBreak ) =
+                        ( prettyBoolExpr, condAlwaysBreak ) =
                             prettyExpressionInner topContext 4 (denode innerExprBool)
+
+                        flatHeader =
+                            [ keyword "if"
+                            , prettyBoolExpr
+                            , keyword "then"
+                            ]
+                                |> Pretty.words
+
+                        brokenHeader =
+                            [ keyword "if"
+                            , prettyBoolExpr |> Pretty.indent indent
+                            , keyword "then"
+                            ]
+                                |> Pretty.lines
                     in
-                    if alwaysBreak then
-                        [ keyword "if"
-                        , prettyBoolExpr |> Pretty.indent indent
-                        , keyword "then"
-                        ]
-                            |> Pretty.lines
+                    if condAlwaysBreak then
+                        brokenHeader
 
                     else
-                        [ keyword "if"
-                        , prettyBoolExpr
-                        , keyword "then"
-                        ]
-                            |> Pretty.words
+                        Pretty.group (Pretty.flatAlt flatHeader brokenHeader)
 
                 truePart =
                     prettyExpressionInner topContext 4 (denode innerExprTrue)
@@ -1274,18 +1360,13 @@ prettyTupledExpression indent exprs =
 prettyParenthesizedExpression : Int -> Node Expression -> ( Doc Tag, Bool )
 prettyParenthesizedExpression indent expr =
     let
-        open =
-            Pretty.string "("
-
-        close =
-            Pretty.a (Pretty.string ")") Pretty.tightline
-
         ( prettyExpr, alwaysBreak ) =
             prettyExpressionInner topContext (decrementIndent indent 1) (denode expr)
     in
-    ( prettyExpr
-        |> Pretty.nest 1
-        |> Pretty.surround open close
+    ( Pretty.string "("
+        |> Pretty.a (prettyExpr |> Pretty.nest 1)
+        |> Pretty.a Pretty.tightline
+        |> Pretty.a (Pretty.string ")")
         |> Pretty.align
         |> optionalGroup alwaysBreak
     , alwaysBreak
@@ -1389,8 +1470,8 @@ prettyRecordExpr setters =
             Pretty.a Pretty.space (Pretty.string "{")
 
         close =
-            Pretty.a (Pretty.string "}")
-                Pretty.line
+            Pretty.line
+                |> Pretty.a (Pretty.string "}")
     in
     case setters of
         [] ->
@@ -1438,7 +1519,8 @@ prettyList indent exprs =
             Pretty.a Pretty.space (Pretty.string "[")
 
         close =
-            Pretty.a (Pretty.string "]") Pretty.line
+            Pretty.line
+                |> Pretty.a (Pretty.string "]")
     in
     case exprs of
         [] ->
@@ -1593,64 +1675,52 @@ prettyTypeAnnotationParens typeAnn =
 
 prettyRecord : List RecordField -> Doc Tag
 prettyRecord fields =
-    let
-        open =
-            Pretty.a Pretty.space (Pretty.string "{")
-
-        close =
-            Pretty.a (Pretty.string "}") Pretty.line
-    in
     case fields of
         [] ->
             Pretty.string "{}"
 
         _ ->
-            fields
-                |> List.map (Tuple.mapBoth denode denode)
-                |> List.map prettyFieldTypeAnn
-                |> Pretty.separators ", "
-                |> Pretty.surround open close
-                |> Pretty.group
+            let
+                fieldsDoc =
+                    fields
+                        |> List.map (Tuple.mapBoth denode denode)
+                        |> List.map prettyFieldTypeAnn
+                        |> Pretty.separators ", "
+            in
+            Pretty.group
+                (Pretty.string "{ "
+                    |> Pretty.a fieldsDoc
+                    |> Pretty.a Pretty.line
+                    |> Pretty.a (Pretty.string "}")
+                )
 
 
 prettyGenericRecord : String -> List RecordField -> Doc Tag
 prettyGenericRecord paramName fields =
-    let
-        open =
-            [ Pretty.string "{"
-            , statement paramName
-            ]
-                |> Pretty.words
-                |> Pretty.a Pretty.line
-
-        close =
-            Pretty.a (Pretty.string "}")
-                Pretty.line
-
-        addBarToFirst exprs =
-            case exprs of
-                [] ->
-                    []
-
-                hd :: tl ->
-                    Pretty.a hd (Pretty.string "| ") :: tl
-    in
     case fields of
         [] ->
             Pretty.string "{}"
 
         _ ->
-            open
-                |> Pretty.a
-                    (fields
+            let
+                fieldsDoc =
+                    fields
                         |> List.map (Tuple.mapBoth denode denode)
                         |> List.map prettyFieldTypeAnn
-                        |> addBarToFirst
                         |> Pretty.separators ", "
-                    )
-                |> Pretty.nest 4
-                |> Pretty.surround Pretty.empty close
-                |> Pretty.group
+            in
+            Pretty.group
+                (Pretty.string "{"
+                    |> Pretty.a Pretty.space
+                    |> Pretty.a (statement paramName)
+                    |> Pretty.a
+                        (Pretty.line
+                            |> Pretty.a (Pretty.string "| ")
+                            |> Pretty.a fieldsDoc
+                        )
+                    |> Pretty.a Pretty.line
+                    |> Pretty.a (Pretty.string "}")
+                )
 
 
 prettyFieldTypeAnn : ( String, TypeAnnotation ) -> Doc Tag
