@@ -2284,6 +2284,11 @@ prettyMarkdown val =
     if String.trim val == "" then
         Pretty.empty
 
+    else if String.contains "\n\n" val then
+        Pretty.string val
+            |> Pretty.a Pretty.line
+            |> Pretty.a Pretty.line
+
     else
         Pretty.string val
             |> Pretty.a Pretty.line
