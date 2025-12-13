@@ -40,6 +40,8 @@ suite =
         , typeAnnotationTests
         , declarationTests
         , parenthesesTests
+        , negationTests
+        , negationFuzzTests
         , pipeComboFuzzTests
         , hexAndNumericTests
         , escapeSequenceTests
@@ -1447,6 +1449,200 @@ checkPrintedContains label expr expectedSubstring =
                 ++ "\n\nActual output:\n"
                 ++ printed
             )
+
+
+-- ============================================================================
+-- Negation with function application tests
+-- ============================================================================
+
+
+negationTests : Test
+negationTests =
+    describe "Negation with function application"
+        [ -- Exact bug case: -(Index.toHuman index) -> -Index.toHuman index
+          test "CRITICAL: -(Index.toHuman index) must preserve parens" <|
+            \_ ->
+                roundTripExpr "negate qualified fn app"
+                    (CG.negate
+                        (CG.parens
+                            (CG.apply [ CG.fqVal [ "Index" ] "toHuman", CG.val "index" ])
+                        )
+                    )
+        , test "OUTPUT CHECK: -(f x) must have parens" <|
+            \_ ->
+                checkPrintedContains "negate fn app parens"
+                    (CG.negate (CG.parens (CG.apply [ CG.val "f", CG.val "x" ])))
+                    "-(f"
+        , test "OUTPUT CHECK: -(Index.toHuman index) must have parens" <|
+            \_ ->
+                checkPrintedContains "negate qualified fn app parens"
+                    (CG.negate (CG.parens (CG.apply [ CG.fqVal [ "Index" ] "toHuman", CG.val "index" ])))
+                    "-(Index.toHuman"
+        , test "-(f x y) must preserve parens" <|
+            \_ ->
+                roundTripExpr "negate multi arg fn"
+                    (CG.negate (CG.parens (CG.apply [ CG.val "f", CG.val "x", CG.val "y" ])))
+        , test "-(a + b) must preserve parens" <|
+            \_ ->
+                roundTripExpr "negate binop"
+                    (CG.negate (CG.parens (CG.applyBinOp (CG.val "a") CG.plus (CG.val "b"))))
+        , test "-f x (negation of f, then apply x) round-trips" <|
+            \_ ->
+                -- This is different: negate f, then apply to x
+                roundTripExpr "negate then apply"
+                    (CG.apply [ CG.negate (CG.val "f"), CG.val "x" ])
+        , test "a + -(f x) must preserve parens in binop" <|
+            \_ ->
+                roundTripExpr "binop with negate fn"
+                    (CG.applyBinOp
+                        (CG.val "a")
+                        CG.plus
+                        (CG.parens (CG.negate (CG.parens (CG.apply [ CG.val "f", CG.val "x" ]))))
+                    )
+        , test "-(List.length xs) must preserve parens" <|
+            \_ ->
+                roundTripExpr "negate List.length"
+                    (CG.negate (CG.parens (CG.apply [ CG.fqVal [ "List" ] "length", CG.val "xs" ])))
+        , test "-(String.length s) must preserve parens" <|
+            \_ ->
+                roundTripExpr "negate String.length"
+                    (CG.negate (CG.parens (CG.apply [ CG.fqVal [ "String" ] "length", CG.val "s" ])))
+        , test "-((f x) + (g y)) must preserve all parens" <|
+            \_ ->
+                roundTripExpr "negate complex binop"
+                    (CG.negate
+                        (CG.parens
+                            (CG.applyBinOp
+                                (CG.parens (CG.apply [ CG.val "f", CG.val "x" ]))
+                                CG.plus
+                                (CG.parens (CG.apply [ CG.val "g", CG.val "y" ]))
+                            )
+                        )
+                    )
+        ]
+
+
+negationFuzzTests : Test
+negationFuzzTests =
+    describe "Fuzz: Negation patterns"
+        [ fuzz negateSimpleApplication "-(f x) preserves parens" <|
+            \expr ->
+                roundTripExpr "fuzz negate app" expr
+        , fuzz negateQualifiedApplication "-(Module.f x) preserves parens" <|
+            \expr ->
+                roundTripExpr "fuzz negate qualified app" expr
+        , fuzz negateMultiArgApplication "-(f x y z) preserves parens" <|
+            \expr ->
+                roundTripExpr "fuzz negate multi app" expr
+        , fuzz negateBinaryOp "-(a op b) preserves parens" <|
+            \expr ->
+                roundTripExpr "fuzz negate binop" expr
+        , fuzz negateInBinaryOp "a + -(f x) preserves structure" <|
+            \expr ->
+                roundTripExpr "fuzz binop with negate" expr
+        ]
+
+
+{-| Generate: -(f x)
+-}
+negateSimpleApplication : Fuzzer Expression
+negateSimpleApplication =
+    Fuzz.map2
+        (\fn arg ->
+            CG.negate (CG.parens (CG.apply [ CG.val fn, CG.val arg ]))
+        )
+        Fuzzers.identifier
+        Fuzzers.identifier
+
+
+{-| Generate: -(Module.f x)
+-}
+negateQualifiedApplication : Fuzzer Expression
+negateQualifiedApplication =
+    Fuzz.map3
+        (\moduleName fn arg ->
+            CG.negate (CG.parens (CG.apply [ CG.fqVal [ moduleName ] fn, CG.val arg ]))
+        )
+        Fuzzers.typeIdentifier
+        Fuzzers.identifier
+        Fuzzers.identifier
+
+
+{-| Generate: -(f x y) or -(f x y z)
+-}
+negateMultiArgApplication : Fuzzer Expression
+negateMultiArgApplication =
+    Fuzz.map2
+        (\fn argCount ->
+            let
+                args =
+                    List.range 1 argCount
+                        |> List.map (\i -> CG.val ("arg" ++ String.fromInt i))
+            in
+            CG.negate (CG.parens (CG.apply (CG.val fn :: args)))
+        )
+        Fuzzers.identifier
+        (Fuzz.intRange 1 4)
+
+
+{-| Generate: -(a + b), -(a * b), etc.
+-}
+negateBinaryOp : Fuzzer Expression
+negateBinaryOp =
+    Fuzz.map3
+        (\a b opChoice ->
+            let
+                op =
+                    case opChoice of
+                        0 ->
+                            CG.plus
+
+                        1 ->
+                            CG.minus
+
+                        2 ->
+                            CG.mult
+
+                        _ ->
+                            CG.div
+            in
+            CG.negate (CG.parens (CG.applyBinOp (CG.val a) op (CG.val b)))
+        )
+        Fuzzers.identifier
+        Fuzzers.identifier
+        (Fuzz.intRange 0 3)
+
+
+{-| Generate: a + -(f x), a * -(f x), etc.
+-}
+negateInBinaryOp : Fuzzer Expression
+negateInBinaryOp =
+    Fuzz.map4
+        (\a fn arg opChoice ->
+            let
+                op =
+                    case opChoice of
+                        0 ->
+                            CG.plus
+
+                        1 ->
+                            CG.minus
+
+                        2 ->
+                            CG.mult
+
+                        _ ->
+                            CG.div
+
+                negatedApp =
+                    CG.negate (CG.parens (CG.apply [ CG.val fn, CG.val arg ]))
+            in
+            CG.applyBinOp (CG.val a) op (CG.parens negatedApp)
+        )
+        Fuzzers.identifier
+        Fuzzers.identifier
+        Fuzzers.identifier
+        (Fuzz.intRange 0 3)
 
 
 -- ============================================================================

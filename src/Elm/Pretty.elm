@@ -1122,8 +1122,16 @@ prettyExpressionInner context indent expression =
 
         Negation expr ->
             let
+                -- Use a non-top context to preserve parens around Application.
+                -- -(f x) must NOT become -f x, as that changes the meaning.
+                negationContext =
+                    { precedence = 11
+                    , isTop = False
+                    , isLeftPipe = False
+                    }
+
                 ( prettyExpr, alwaysBreak ) =
-                    prettyExpressionInner topContext 4 (denode expr)
+                    prettyExpressionInner negationContext 4 (denode expr)
             in
             ( statement "-"
                 |> Pretty.a prettyExpr
