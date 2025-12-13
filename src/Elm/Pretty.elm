@@ -1780,9 +1780,11 @@ prettyGenericRecord paramName fields =
                     |> Pretty.a Pretty.space
                     |> Pretty.a (statement paramName)
                     |> Pretty.a
-                        (Pretty.line
-                            |> Pretty.a (Pretty.string "| ")
-                            |> Pretty.a fieldsDoc
+                        (Pretty.nest 4
+                            (Pretty.line
+                                |> Pretty.a (Pretty.string "| ")
+                                |> Pretty.a fieldsDoc
+                            )
                         )
                     |> Pretty.a Pretty.line
                     |> Pretty.a (Pretty.string "}")
