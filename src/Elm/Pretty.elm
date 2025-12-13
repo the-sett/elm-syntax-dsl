@@ -385,12 +385,78 @@ prettyImports imports =
 
 prettyImport : Import -> Doc Tag
 prettyImport import_ =
-    Pretty.join Pretty.space
-        [ keyword "import"
-        , prettyModuleName (denode import_.moduleName)
-        , prettyMaybe prettyModuleNameAlias (denodeMaybe import_.moduleAlias)
-        , prettyMaybe prettyExposing (denodeMaybe import_.exposingList)
-        ]
+    let
+        header =
+            Pretty.words
+                [ keyword "import"
+                , prettyModuleName (denode import_.moduleName)
+                , prettyMaybe prettyModuleNameAlias (denodeMaybe import_.moduleAlias)
+                ]
+    in
+    case denodeMaybe import_.exposingList of
+        Nothing ->
+            header
+
+        Just exposing_ ->
+            let
+                -- Build flat and broken forms without nested groups
+                ( exposingFlat, exposingBroken ) =
+                    prettyExposingParts exposing_
+
+                flat =
+                    header
+                        |> Pretty.a Pretty.space
+                        |> Pretty.a exposingFlat
+
+                broken =
+                    header
+                        |> Pretty.a
+                            (Pretty.line
+                                |> Pretty.a (Pretty.indent 4 exposingBroken)
+                            )
+            in
+            Pretty.group (Pretty.flatAlt flat broken)
+
+
+{-| Returns (flat, broken) forms of an exposing clause without wrapping in group.
+-}
+prettyExposingParts : Exposing -> ( Doc Tag, Doc Tag )
+prettyExposingParts exposing_ =
+    case exposing_ of
+        All _ ->
+            let
+                doc =
+                    keyword "exposing"
+                        |> Pretty.a Pretty.space
+                        |> Pretty.a (Pretty.string "(..)")
+            in
+            ( doc, doc )
+
+        Explicit tll ->
+            let
+                itemDocs =
+                    ImportsAndExposing.sortAndDedupExposings (denodeAll tll)
+                        |> List.map prettyTopLevelExpose
+
+                flat =
+                    keyword "exposing"
+                        |> Pretty.a Pretty.space
+                        |> Pretty.a (Pretty.char '(')
+                        |> Pretty.a (Pretty.join (Pretty.string ", ") itemDocs)
+                        |> Pretty.a (Pretty.char ')')
+
+                broken =
+                    keyword "exposing"
+                        |> Pretty.a
+                            (Pretty.line
+                                |> Pretty.a (Pretty.string "( ")
+                                |> Pretty.a (Pretty.separators ", " itemDocs)
+                                |> Pretty.a Pretty.line
+                                |> Pretty.a (Pretty.string ")")
+                                |> Pretty.nest 4
+                            )
+            in
+            ( flat, broken )
 
 
 {-| Pretty prints the contents of an exposing statement, as found on a module or import
