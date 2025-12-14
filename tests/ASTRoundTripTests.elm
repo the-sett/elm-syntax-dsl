@@ -1,11 +1,11 @@
-module RoundTripTests exposing (suite)
+module ASTRoundTripTests exposing (suite)
 
-{-| Property-based tests for round-tripping Elm code through:
+{-| Property-based tests for round-tripping Elm code from AST to AST:
 
-1.  Generate random Elm code using Elm.CodeGen
-2.  Pretty print the code using Elm.Pretty
-3.  Parse the code using Elm.DSLParser
-4.  Check that the re-parsed code matches the original structure
+1.  Generate random Elm code using Elm.CodeGen (AST)
+2.  Pretty print the code using Elm.Pretty (AST -> String)
+3.  Parse the code using Elm.DSLParser (String -> AST)
+4.  Check that parsing succeeded (AST structure is valid)
 
 -}
 
@@ -26,7 +26,7 @@ import Test exposing (Test, describe, fuzz, test)
 
 suite : Test
 suite =
-    describe "Round-trip tests"
+    describe "AST Round-trip tests"
         [ literalTests
         , variableTests
         , applicationTests
