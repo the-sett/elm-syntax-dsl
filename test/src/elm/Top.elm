@@ -77,7 +77,7 @@ update msg model =
                 Ok file ->
                     let
                         pretty =
-                            Elm.Pretty.pretty 120 file
+                            Elm.Pretty.prettyWithRibbon { pageWidth = 120, ribbonWidth = 80 } file
                     in
                     ( model, codeOutPort ( name, pretty ) )
 

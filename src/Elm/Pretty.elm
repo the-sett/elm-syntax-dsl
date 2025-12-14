@@ -1,6 +1,6 @@
 module Elm.Pretty exposing
     ( Tag(..)
-    , prepareLayout, pretty
+    , prepareLayout, pretty, prettyWithRibbon
     , prettyModule
     , prettyImports, prettyExposing
     , prettyDeclaration, prettyFun, prettyTypeAlias, prettyCustomType, prettyPortDeclaration, prettyDestructuring
@@ -51,7 +51,7 @@ a `String`, for convenience:
 
 # Pretty prints an entire Elm file.
 
-@docs prepareLayout, pretty
+@docs prepareLayout, pretty, prettyWithRibbon
 
 
 # Pretty printing snippets of Elm.
@@ -238,6 +238,32 @@ pretty : Int -> File -> String
 pretty width file =
     prepareLayout width file
         |> Pretty.pretty width
+        |> stripTrailingWhitespace
+
+
+{-| Prints a file of Elm code with both page width and ribbon width constraints.
+
+The ribbon width limits the number of non-indentation characters per line.
+At indentation level `i`, the effective line width becomes `min(pageWidth, i + ribbonWidth)`.
+
+This is useful for keeping deeply nested code more compact. For example, with
+`pageWidth = 120` and `ribbonWidth = 80`, code at indentation level 50 would
+break at column 130 (50 + 80) rather than 120, but the ribbon ensures that
+the actual content on each line stays readable.
+
+    -- Standard 120-column layout with 80-character ribbon
+    prettyWithRibbon { pageWidth = 120, ribbonWidth = 80 } file
+
+    -- Narrower ribbon for more aggressive line breaking
+    prettyWithRibbon { pageWidth = 120, ribbonWidth = 60 } file
+
+If `ribbonWidth >= pageWidth`, this behaves identically to `pretty pageWidth`.
+
+-}
+prettyWithRibbon : { pageWidth : Int, ribbonWidth : Int } -> File -> String
+prettyWithRibbon { pageWidth, ribbonWidth } file =
+    prepareLayout pageWidth file
+        |> Pretty.prettyWithRibbon { pageWidth = pageWidth, ribbonWidth = ribbonWidth }
         |> stripTrailingWhitespace
 
 
