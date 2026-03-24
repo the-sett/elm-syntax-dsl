@@ -63,7 +63,6 @@ a `String`, for convenience:
 
 -}
 
-import Bool.Extra
 import Elm.CodeGen exposing (Declaration(..), File)
 import Elm.Comments as Comments
 import Elm.Syntax.Declaration
@@ -1046,7 +1045,7 @@ prettyApplication indent exprs =
         ( prettyExpressions, alwaysBreak ) =
             List.map (prettyExpressionInner { precedence = 11, isTop = False, isLeftPipe = False } 4) (denodeAll exprs)
                 |> List.unzip
-                |> Tuple.mapSecond Bool.Extra.any
+                |> Tuple.mapSecond listAny
     in
     ( prettyExpressions
         |> Pretty.lines
@@ -1149,7 +1148,7 @@ prettyOperatorApplicationRight indent symbol _ exprl exprr =
         ( prettyExpressions, alwaysBreak ) =
             innerOpApply True symbol exprl exprr
                 |> List.unzip
-                |> Tuple.mapSecond Bool.Extra.any
+                |> Tuple.mapSecond listAny
     in
     ( prettyExpressions
         |> Pretty.join (Pretty.nest indent Pretty.line)
@@ -1257,7 +1256,7 @@ prettyTupledExpression indent exprs =
                 ( prettyExpressions, alwaysBreak ) =
                     List.map (prettyExpressionInner topContext (decrementIndent indent 2)) (denodeAll exprs)
                         |> List.unzip
-                        |> Tuple.mapSecond Bool.Extra.any
+                        |> Tuple.mapSecond listAny
             in
             ( prettyExpressions
                 |> Pretty.separators ", "
@@ -1398,7 +1397,7 @@ prettyRecordExpr setters =
                 ( prettyExpressions, alwaysBreak ) =
                     List.map prettySetter (denodeAll setters)
                         |> List.unzip
-                        |> Tuple.mapSecond Bool.Extra.any
+                        |> Tuple.mapSecond listAny
             in
             ( prettyExpressions
                 |> Pretty.separators ", "
@@ -1446,7 +1445,7 @@ prettyList indent exprs =
                 ( prettyExpressions, alwaysBreak ) =
                     List.map (prettyExpressionInner topContext (decrementIndent indent 2)) (denodeAll exprs)
                         |> List.unzip
-                        |> Tuple.mapSecond Bool.Extra.any
+                        |> Tuple.mapSecond listAny
             in
             ( prettyExpressions
                 |> Pretty.separators ", "
@@ -1501,7 +1500,7 @@ prettyRecordUpdateExpression indent var setters =
                 ( prettyExpressions, alwaysBreak ) =
                     List.map prettySetter (denodeAll setters)
                         |> List.unzip
-                        |> Tuple.mapSecond Bool.Extra.any
+                        |> Tuple.mapSecond listAny
             in
             ( open
                 |> Pretty.a
@@ -2189,3 +2188,8 @@ delimiters doc =
         |> Pretty.a doc
         |> Pretty.a Pretty.line
         |> Pretty.a (Pretty.string "-}")
+
+
+listAny : List Bool -> Bool
+listAny l =
+    List.any identity l
